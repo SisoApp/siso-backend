@@ -1,4 +1,4 @@
-package com.siso.siso;
+package com.siso;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
