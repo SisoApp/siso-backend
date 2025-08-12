@@ -1,4 +1,4 @@
-package com.siso.siso;
+package com.siso;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
