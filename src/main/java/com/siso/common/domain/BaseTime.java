@@ -1,4 +1,4 @@
-package com.siso.common;
+package com.siso.common.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
