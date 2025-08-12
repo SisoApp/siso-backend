@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### SISO Backend ###
+# 사용자 업로드 파일들 (런타임에 생성됨)
+uploads/
+# 로그 파일들
+logs/
+*.log
