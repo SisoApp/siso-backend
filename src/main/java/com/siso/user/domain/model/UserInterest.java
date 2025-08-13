@@ -30,8 +30,4 @@ public class UserInterest {
         this.user = user;
         this.interest = interest;
     }
-
-    public void updateInterest(Interest interest) {
-        this.interest = interest;
-    }
 }

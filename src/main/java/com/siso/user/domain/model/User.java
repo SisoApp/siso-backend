@@ -76,11 +76,15 @@ public class User extends BaseTime {
         this.refreshToken = refreshToken;
     }
 
-    public void updateIsOnline(Boolean isOnline) {
+    public void updateNotificationSubScribed(boolean notificationSubscribed) {
+        this.notificationSubscribed = notificationSubscribed;
+    }
+
+    public void updateIsOnline(boolean isOnline) {
         this.isOnline = isOnline;
     }
 
-    public void updateIsBlock(Boolean isBlock) {
+    public void updateIsBlock(boolean isBlock) {
         this.isBlock = isBlock;
     }
 }

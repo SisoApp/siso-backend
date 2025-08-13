@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,23 +21,31 @@ public class UserInterestService {
     private final UserInterestRepository userInterestRepository;
     private final UserRepository userRepository;
 
-    @Transactional
-    public UserInterest findByInterestId(Long id) {
-        return userInterestRepository.findById(id).orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    // 사용자의 관심사 목록 조회
+    @Transactional(readOnly = true)
+    public List<UserInterest> getUserInterestByUserId(Long userId) {
+        return userInterestRepository.findByUserId(userId);
     }
 
+    // 사용자의 관심사 선택
+    @Transactional
     public void selectUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
 
         User user = userRepository.findById(userId).orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
 
+        List<UserInterest> newUserInterests = new ArrayList<>();
         for (Interest interest : interests) {
             UserInterest userInterest = new UserInterest(user, interest);
             user.addInterest(interest);
-            userInterestRepository.save(userInterest);
+            newUserInterests.add(userInterest);
         }
+
+        userInterestRepository.saveAll(newUserInterests);
     }
 
+    // 사용자의 관심사 수정
+    @Transactional
     public void updateUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
 
@@ -48,10 +57,6 @@ public class UserInterestService {
                 .collect(Collectors.toList());
 
         userInterestRepository.saveAll(newUserInterests);
-    }
-
-    public List<UserInterest> getUserInterestByUserId(Long userId) {
-        return userInterestRepository.findByUserId(userId);
     }
 
     private void validateInterestCount(List<Interest> interests) {
