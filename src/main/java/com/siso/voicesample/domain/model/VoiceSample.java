@@ -1,6 +1,6 @@
 package com.siso.voicesample.domain.model;
 
-import com.siso.common.BaseTime;
+import com.siso.common.domain.BaseTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
