@@ -39,7 +39,7 @@ public class UserProfile {
     private PreferenceContact preferenceContact;
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_profile_id") // FK는 image 테이블에 있어야 함
+    @JoinColumn(name = "user_profile_id")
     private List<UserProfileImage> profileImages = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
