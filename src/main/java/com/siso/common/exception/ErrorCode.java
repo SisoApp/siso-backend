@@ -8,7 +8,10 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
     // 사용자
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
+
+    // 매칭
+    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND,"매칭 정보가 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
