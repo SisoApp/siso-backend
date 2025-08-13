@@ -1,0 +1,396 @@
+package com.siso.voicesample.application.service;
+
+import com.siso.voicesample.domain.model.VoiceSample;
+import com.siso.voicesample.domain.repository.VoiceSampleRepository;
+import com.siso.voicesample.application.dto.VoiceSampleRequestDto;
+import com.siso.voicesample.application.dto.VoiceSampleResponseDto;
+import com.siso.voicesample.infrastructure.properties.VoiceSampleProperties;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import com.mpatric.mp3agic.Mp3File;
+import ws.schild.jave.MultimediaObject;
+import ws.schild.jave.info.MultimediaInfo;
+
+/**
+ * 음성 샘플 비즈니스 로직 처리 서비스
+ * 
+ * 주요 기능:
+ * - 음성 파일 업로드 및 메타데이터 추출 (duration 자동 계산)
+ * - 음성 샘플 CRUD 작업 (생성, 조회, 수정, 삭제)
+ * - 파일 저장소 관리 (로컬 파일 시스템)
+ * - 재생 시간 제한 (30초) 처리
+ * 
+ * 지원 파일 형식: MP3, WAV, M4A, AAC, OGG, WEBM, FLAC
+ * 파일 크기 제한: 50MB
+ * 
+ * @author SISO Team
+ * @version 1.0
+ * @since 2025-01-01
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class VoiceSampleService {
+    
+    // === 의존성 주입 ===
+    /** 음성 샘플 데이터 접근 레이어 */
+    private final VoiceSampleRepository voiceSampleRepository;
+    
+    /** 음성 샘플 관련 설정 프로퍼티 */
+    private final VoiceSampleProperties voiceSampleProperties;
+    
+    // ===================== 공개 API 메서드들 =====================
+    
+    /**
+     * 음성 파일 업로드 및 저장
+     * 
+     * 처리 과정:
+     * 1. 파일 검증 (형식, 크기)
+     * 2. 고유 파일명으로 저장
+     * 3. Duration 자동 추출 (JAVE 라이브러리 → MP3AGIC → 파일크기 추정 순)
+     * 4. 데이터베이스에 메타데이터 저장
+     * 
+     * @param file 업로드할 음성 파일 (MultipartFile)
+     * @param request 사용자 ID 등 추가 정보
+     * @return 저장된 음성 샘플 정보 (실제 duration + 재생 제한 30초)
+     * @throws IllegalArgumentException 파일 검증 실패 시
+     * @throws RuntimeException 파일 저장 실패 시
+     */
+    @Transactional
+    public VoiceSampleResponseDto uploadVoiceSample(MultipartFile file, VoiceSampleRequestDto request) {
+        // 통합 파일 처리: 검증 → 저장 → duration 추출
+        FileProcessResult result = processAudioFile(file);
+        
+        log.info("음성 파일 길이: {}초", result.duration);
+        
+        // 엔티티 생성 및 저장
+        Long userId = request.getUserId() != null ? request.getUserId() : 1L; // 테스트용 기본값
+        VoiceSample voiceSample = VoiceSample.builder()
+                .userId(userId)
+                .url(result.fileUrl)
+                .duration(result.duration)    // 실제 파일 길이
+                .fileSize(result.fileSize)
+                .build();
+        
+        VoiceSample savedVoiceSample = voiceSampleRepository.save(voiceSample);
+        
+        log.info("음성 샘플 업로드 완료 - ID: {}, 사용자: {}", savedVoiceSample.getId(), userId);
+        
+        return VoiceSampleResponseDto.fromEntity(savedVoiceSample);
+    }
+    
+    /**
+     * 특정 사용자의 음성 샘플 목록 조회
+     * 
+     * @param userId 조회할 사용자 ID
+     * @return 해당 사용자의 음성 샘플 목록 (생성일 기준 내림차순 정렬)
+     */
+    public List<VoiceSampleResponseDto> getVoiceSamplesByUserId(Long userId) {
+        List<VoiceSample> voiceSamples = voiceSampleRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return voiceSamples.stream()
+                .map(VoiceSampleResponseDto::fromEntity) // 엔티티 → DTO 변환
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 음성 샘플 단일 조회
+     * 
+     * @param id 조회할 음성 샘플 ID
+     * @return 음성 샘플 상세 정보
+     * @throws RuntimeException 해당 ID의 음성 샘플이 존재하지 않는 경우
+     */
+    public VoiceSampleResponseDto getVoiceSample(Long id) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+        return VoiceSampleResponseDto.fromEntity(voiceSample);
+    }
+    
+    /**
+     * 음성 샘플 수정 (파일 교체)
+     * 
+     * 처리 과정:
+     * 1. 기존 음성 샘플 조회
+     * 2. 새 파일이 있는 경우: 기존 파일 삭제 → 새 파일 처리 (검증, 저장, duration 추출)
+     * 3. 메타데이터 업데이트 (userId, url, duration, fileSize)
+     * 4. 데이터베이스 저장 (updatedAt 자동 갱신)
+     * 
+     * @param id 수정할 음성 샘플 ID
+     * @param file 새로운 음성 파일 (null 가능 - 메타데이터만 수정 시)
+     * @param request 수정할 정보 (userId 등)
+     * @return 수정된 음성 샘플 정보
+     * @throws RuntimeException 해당 ID의 음성 샘플이 존재하지 않는 경우
+     */
+    @Transactional
+    public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
+        // 기존 음성 샘플 조회
+        VoiceSample existingVoiceSample = voiceSampleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+        
+        // 새 파일이 제공된 경우에만 파일 교체
+        String newFileUrl = existingVoiceSample.getUrl();
+        Integer newFileSize = existingVoiceSample.getFileSize();
+        Integer newDuration = existingVoiceSample.getDuration();
+        
+        if (file != null && !file.isEmpty()) {
+            // 기존 파일 삭제 (실패해도 계속 진행)
+            deleteAudioFile(existingVoiceSample.getUrl());
+            
+            // 통합 파일 처리: 검증 → 저장 → duration 추출
+            FileProcessResult result = processAudioFile(file);
+            
+            newFileUrl = result.fileUrl;
+            newFileSize = result.fileSize;
+            newDuration = result.duration;
+            
+            log.info("파일 교체 완료 - 새 파일 길이: {}초", newDuration);
+        }
+        
+        // userId 처리 (새 값이 있으면 사용, 없으면 기존값 유지)
+        Long userId = request.getUserId() != null ? request.getUserId() : existingVoiceSample.getUserId();
+        
+        // 기존 엔티티 업데이트 (BaseTime의 updatedAt 자동 갱신)
+        existingVoiceSample.setUserId(userId);
+        existingVoiceSample.setUrl(newFileUrl);
+        existingVoiceSample.setDuration(newDuration);
+        existingVoiceSample.setFileSize(newFileSize);
+        
+        VoiceSample savedVoiceSample = voiceSampleRepository.save(existingVoiceSample);
+        
+        log.info("음성 샘플 수정 완료 - ID: {}, 사용자: {}", savedVoiceSample.getId(), userId);
+        
+        return VoiceSampleResponseDto.fromEntity(savedVoiceSample);
+    }
+    
+    /**
+     * 음성 샘플 삭제
+     * 
+     * 처리 과정:
+     * 1. 기존 음성 샘플 조회
+     * 2. 파일 시스템에서 음성 파일 삭제 (실패해도 계속 진행)
+     * 3. 데이터베이스에서 레코드 삭제
+     * 
+     * @param id 삭제할 음성 샘플 ID
+     * @throws RuntimeException 해당 ID의 음성 샘플이 존재하지 않는 경우
+     */
+    @Transactional
+    public void deleteVoiceSample(Long id) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+        
+        // 파일 삭제 (실패해도 DB 삭제는 진행)
+        deleteAudioFile(voiceSample.getUrl());
+        
+        // 데이터베이스에서 레코드 삭제
+        voiceSampleRepository.delete(voiceSample);
+        log.info("음성 샘플 삭제 완료 - ID: {}", id);
+    }
+    
+    // ===================== 내부 헬퍼 메서드들 =====================
+    
+    /**
+     * 통합 파일 처리 메서드
+     * 
+     * 음성 파일의 전체 처리 과정을 하나의 메서드에서 담당:
+     * 1. 파일 검증 (빈 파일, 파일명, 확장자, 크기)
+     * 2. 고유 파일명 생성 및 파일 저장
+     * 3. Duration 자동 추출
+     * 4. 결과 반환 (URL, duration, fileSize)
+     * 
+     * @param file 처리할 음성 파일
+     * @return 파일 처리 결과 (URL, duration, fileSize)
+     * @throws IllegalArgumentException 파일 검증 실패 시
+     * @throws RuntimeException 파일 저장 실패 시
+     */
+    private FileProcessResult processAudioFile(MultipartFile file) {
+        try {
+            // === 1. 파일 검증 ===
+            if (file.isEmpty()) {
+                throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+            }
+            
+            String originalFileName = file.getOriginalFilename();
+            if (originalFileName == null) {
+                throw new IllegalArgumentException("파일명이 올바르지 않습니다.");
+            }
+            
+            // 지원 형식 검증 (프로퍼티 활용)
+            String fileName = originalFileName.toLowerCase();
+            String extension = originalFileName.contains(".") 
+                    ? originalFileName.substring(originalFileName.lastIndexOf(".")) : "";
+            
+            if (!voiceSampleProperties.isSupportedFormat(extension)) {
+                throw new IllegalArgumentException("지원하는 음성 파일 형식: " + voiceSampleProperties.getSupportedFormatsAsString());
+            }
+            
+            // 파일 크기 검증 (프로퍼티 활용)
+            if (file.getSize() > voiceSampleProperties.getMaxFileSize()) {
+                throw new IllegalArgumentException("파일 크기는 " + voiceSampleProperties.getMaxFileSizeInMB() + "MB를 초과할 수 없습니다.");
+            }
+            
+            // === 2. 파일 저장 ===
+            // 업로드 디렉토리 생성
+            Path uploadPath = Paths.get(voiceSampleProperties.getUploadDir());
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+            
+            // 고유 파일명 생성 (타임스탬프 + UUID + 확장자)
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String uniqueFileName = timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
+            
+            // 파일 저장
+            Path filePath = uploadPath.resolve(uniqueFileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            
+            // === 3. Duration 자동 추출 ===
+            Integer duration = extractDurationFromFile(filePath);
+            
+            // === 4. 결과 반환 ===
+            String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
+            return new FileProcessResult(fileUrl, duration, (int) file.getSize());
+            
+        } catch (IOException e) {
+            log.error("파일 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("파일 처리에 실패했습니다.", e);
+        }
+    }
+    
+    /**
+     * 음성 파일에서 Duration 자동 추출
+     * 
+     * 추출 방법 (우선순위 순):
+     * 1. JAVE 라이브러리 (FFmpeg 기반) - 모든 형식 지원, 가장 정확
+     * 2. MP3AGIC 라이브러리 - MP3 전용, 정확한 메타데이터 추출
+     * 3. 파일 크기 기반 추정 - 최후의 수단, 대략적인 값
+     * 4. 기본값 6초 - 모든 방법 실패 시
+     * 
+     * @param filePath 분석할 음성 파일 경로
+     * @return 추출된 duration (초 단위), 최소 1초
+     */
+    private Integer extractDurationFromFile(Path filePath) {
+        try {
+            // === 1차 시도: JAVE 라이브러리 (FFmpeg 기반) ===
+            MultimediaObject multimediaObject = new MultimediaObject(filePath.toFile());
+            MultimediaInfo info = multimediaObject.getInfo();
+            long durationInMillis = info.getDuration();
+            int durationInSeconds = (int) (durationInMillis / 1000);
+            
+            log.info("JAVE로 duration 추출 성공: {}초 (파일: {})", durationInSeconds, filePath.getFileName());
+            return Math.max(1, durationInSeconds);
+            
+        } catch (Exception e) {
+            log.warn("JAVE 라이브러리 실패, 대체 방법 시도: {}", e.getMessage());
+            
+            try {
+                String fileName = filePath.getFileName().toString().toLowerCase();
+                
+                // === 2차 시도: MP3AGIC 라이브러리 (MP3 전용) ===
+                if (fileName.endsWith(".mp3")) {
+                    Mp3File mp3file = new Mp3File(filePath.toString());
+                    int durationInSeconds = (int) mp3file.getLengthInSeconds();
+                    
+                    log.info("MP3AGIC으로 duration 추출 성공: {}초", durationInSeconds);
+                    return Math.max(1, durationInSeconds);
+                }
+                
+                // === 3차 시도: 파일 크기 기반 추정 ===
+                long fileSize = filePath.toFile().length();
+                int estimatedDuration;
+                
+                if (fileName.endsWith(".m4a") || fileName.endsWith(".aac")) {
+                    // M4A/AAC: 256kbps 가정
+                    estimatedDuration = (int) (fileSize / 32000);
+                } else if (fileName.endsWith(".wav")) {
+                    // WAV: 44.1kHz, 16bit, stereo 무압축 가정
+                    estimatedDuration = (int) (fileSize / 176400);
+                } else {
+                    // 기타 형식: 128kbps 가정
+                    estimatedDuration = (int) (fileSize / 16000);
+                }
+                
+                log.info("파일 크기 기반 duration 추정: {}초 (크기: {} bytes)", estimatedDuration, fileSize);
+                return Math.max(1, estimatedDuration);
+                
+            } catch (Exception fallbackException) {
+                // === 4차 시도: 기본값 ===
+                log.warn("모든 duration 추출 방법 실패: {}, 기본값 6초 사용", fallbackException.getMessage());
+                return 6; // 일반적인 음성 샘플 길이
+            }
+        }
+    }
+    
+    /**
+     * 음성 파일 삭제
+     * 
+     * URL에서 파일명을 추출하여 파일 시스템에서 삭제
+     * 실패해도 예외를 던지지 않고 경고 로그만 남김
+     * 
+     * @param fileUrl 삭제할 파일의 URL (예: http://localhost:8080/api/voice-samples/files/20250101_120000_abcd1234.mp3)
+     */
+    private void deleteAudioFile(String fileUrl) {
+        try {
+            if (fileUrl != null && fileUrl.contains("/files/")) {
+                // URL에서 파일명 추출
+                String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(fileName);
+                
+                // 파일 존재 시 삭제
+                boolean deleted = Files.deleteIfExists(filePath);
+                if (deleted) {
+                    log.info("파일 삭제 성공: {}", fileName);
+                } else {
+                    log.warn("파일이 존재하지 않음: {}", fileName);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("파일 삭제 실패: {}", e.getMessage());
+        }
+    }
+    
+    // ===================== 내부 데이터 클래스 =====================
+    
+    /**
+     * 파일 처리 결과를 담는 내부 클래스
+     * 
+     * processAudioFile() 메서드의 반환값으로 사용
+     * 파일 처리 후 생성된 URL, 추출된 duration, 파일 크기를 포함
+     */
+    private static class FileProcessResult {
+        /** 생성된 파일 접근 URL */
+        final String fileUrl;
+        /** 추출된 음성 길이 (초 단위) */
+        final Integer duration;
+        /** 파일 크기 (바이트) */
+        final Integer fileSize;
+        
+        /**
+         * 파일 처리 결과 생성자
+         * 
+         * @param fileUrl 파일 접근 URL
+         * @param duration 음성 길이 (초)
+         * @param fileSize 파일 크기 (바이트)
+         */
+        FileProcessResult(String fileUrl, Integer duration, Integer fileSize) {
+            this.fileUrl = fileUrl;
+            this.duration = duration;
+            this.fileSize = fileSize;
+        }
+    }
+}

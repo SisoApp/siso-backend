@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/sisodb
+    username: siso
+    password: siso
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update # 테스트용으로 임시 변경 - 로그인일때 가능하면 update로 되돌리기
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+
+
+# ===== 음성 샘플 관련 설정 =====
+app:
+  voice-sample:
+    upload-dir: uploads/voice-samples        # 파일 저장 디렉토리
+    base-url: http://localhost:8080          # 파일 접근 기본 URL
+    max-file-size: 52428800                  # 50MB in bytes
+    supported-formats:                           # 지원 파일 형식
+      - mp3
+      - wav
+      - m4a
+      - aac
+      - ogg
+      - webm
+      - flac
+    max-duration: 30                         # 최대 녹음 시간 (초 단위)
