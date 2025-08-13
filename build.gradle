@@ -28,8 +28,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-validation' // Jakarta Validation 지원
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+	implementation 'com.mpatric:mp3agic:0.9.1' // MP3 파일 메타데이터 추출용
+	implementation 'org.gagravarr:vorbis-java-core:0.8' // OGG 파일 지원용
+	implementation 'ws.schild:jave-all-deps:3.3.1' // 모든 오디오 형식 지원 (FFmpeg 기반)
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
