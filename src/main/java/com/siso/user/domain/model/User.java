@@ -1,6 +1,7 @@
 package com.siso.user.domain.model;
 
-import com.siso.common.BaseTime;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.siso.common.domain.BaseTime;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -8,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -28,6 +31,10 @@ public class User extends BaseTime {
     @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<UserInterest> userInterests = new ArrayList<>();
+
     @Column(name = "is_online", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean isOnline = false;
 
@@ -42,6 +49,12 @@ public class User extends BaseTime {
 
     @Column(name = "deleted_at", nullable = false)
     private LocalDateTime deletedAt;
+
+    // 양방향 연관 관계 설정
+    public void addInterest(Interest interest) {
+        UserInterest userInterest = new UserInterest(this, interest);
+        this.userInterests.add(userInterest);
+    }
 
     @Builder
     public User(Provider provider, String phoneNumber, String refreshToken, Boolean isOnline, Boolean isBlock, Boolean isDeleted, LocalDateTime deletedAt) {
