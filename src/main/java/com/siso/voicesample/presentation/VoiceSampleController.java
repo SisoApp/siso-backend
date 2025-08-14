@@ -1,10 +1,11 @@
 package com.siso.voicesample.presentation;
 
-import com.siso.voicesample.application.dto.VoiceSampleRequestDto;
-import com.siso.voicesample.application.dto.VoiceSampleResponseDto;
+import com.siso.voicesample.dto.VoiceSampleRequestDto;
+import com.siso.voicesample.dto.VoiceSampleResponseDto;
 import com.siso.voicesample.application.service.VoiceSampleService;
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -154,38 +155,50 @@ public class VoiceSampleController {
             
             // 파일 존재 여부 및 읽기 가능 여부 확인
             if (resource.exists() && resource.isReadable()) {
+                // 파일 확장자에 따른 적절한 Content-Type 설정
+                MediaType contentType = getMediaTypeForFilename(filename);
+                
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"") // inline은 브라우저에서 바로 재생
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM) // 바이너리 파일 타입
+                        .contentType(contentType) // 음성 타입에 맞는 Content-Type
                         .body(resource);
             } else {
-                return ResponseEntity.notFound().build(); // 404 Not Found
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_NOT_FOUND);
             }
         } catch (MalformedURLException e) {
-            // log.error("파일 다운로드 중 오류: {}", e.getMessage());
-            return ResponseEntity.badRequest().build(); // 400 Bad Request
+            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
         }
     }
     
-    // ===== 예외 처리 메서드들 =====
+    // ===== 헬퍼 메서드들 =====
     
     /**
-     * IllegalArgumentException 처리
-     * 주로 잘못된 파라미터나 파일 검증 실패 시 발생
+     * 파일명에서 확장자를 추출하여 적절한 MediaType 반환
+     * 음성 파일 재생을 위한 올바른 Content-Type 설정
+     * 
+     * @param filename 파일명
+     * @return 해당 파일의 MediaType
      */
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
-        // log.warn("잘못된 요청: {}", e.getMessage());
-        return ResponseEntity.badRequest().body(e.getMessage()); // 400 Bad Request
-    }
-    
-    /**
-     * RuntimeException 처리
-     * 예상치 못한 서버 내부 오류 시 발생
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException e) {
-        // log.error("서버 오류: {}", e.getMessage());
-        return ResponseEntity.internalServerError().body("서버 내부 오류가 발생했습니다."); // 500 Internal Server Error
+    private MediaType getMediaTypeForFilename(String filename) {
+        String extension = filename.toLowerCase();
+        
+        if (extension.endsWith(".mp3")) {
+            return MediaType.parseMediaType("audio/mpeg");
+        } else if (extension.endsWith(".wav")) {
+            return MediaType.parseMediaType("audio/wav");
+        } else if (extension.endsWith(".m4a")) {
+            return MediaType.parseMediaType("audio/mp4");
+        } else if (extension.endsWith(".aac")) {
+            return MediaType.parseMediaType("audio/aac");
+        } else if (extension.endsWith(".ogg")) {
+            return MediaType.parseMediaType("audio/ogg");
+        } else if (extension.endsWith(".webm")) {
+            return MediaType.parseMediaType("audio/webm");
+        } else if (extension.endsWith(".flac")) {
+            return MediaType.parseMediaType("audio/flac");
+        } else {
+            // 기본값: 일반 음성 타입
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 }

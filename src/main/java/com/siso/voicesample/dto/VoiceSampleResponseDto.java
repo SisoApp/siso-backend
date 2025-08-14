@@ -1,4 +1,4 @@
-package com.siso.voicesample.application.dto;
+package com.siso.voicesample.dto;
 
 import com.siso.voicesample.domain.model.VoiceSample;
 import lombok.Data;

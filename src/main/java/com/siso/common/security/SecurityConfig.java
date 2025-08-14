@@ -14,6 +14,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/voice-samples/**").permitAll() // 로그인일때 가능 - 테스트용으로 임시 허용
+                .requestMatchers("/api/images/**").permitAll() // 테스트용으로 이미지 API 허용
                 .anyRequest().authenticated()
         )
         .csrf(csrf -> csrf.disable()); // API 테스트용 CSRF 비활성화
