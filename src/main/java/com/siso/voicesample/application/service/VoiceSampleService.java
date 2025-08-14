@@ -2,9 +2,11 @@ package com.siso.voicesample.application.service;
 
 import com.siso.voicesample.domain.model.VoiceSample;
 import com.siso.voicesample.domain.repository.VoiceSampleRepository;
-import com.siso.voicesample.application.dto.VoiceSampleRequestDto;
-import com.siso.voicesample.application.dto.VoiceSampleResponseDto;
+import com.siso.voicesample.dto.VoiceSampleRequestDto;
+import com.siso.voicesample.dto.VoiceSampleResponseDto;
 import com.siso.voicesample.infrastructure.properties.VoiceSampleProperties;
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -118,7 +120,7 @@ public class VoiceSampleService {
      */
     public VoiceSampleResponseDto getVoiceSample(Long id) {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
         return VoiceSampleResponseDto.fromEntity(voiceSample);
     }
     
@@ -141,7 +143,7 @@ public class VoiceSampleService {
     public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
         // 기존 음성 샘플 조회
         VoiceSample existingVoiceSample = voiceSampleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
         
         // 새 파일이 제공된 경우에만 파일 교체
         String newFileUrl = existingVoiceSample.getUrl();
@@ -192,7 +194,7 @@ public class VoiceSampleService {
     @Transactional
     public void deleteVoiceSample(Long id) {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("음성 샘플을 찾을 수 없습니다. ID: " + id));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
         
         // 파일 삭제 (실패해도 DB 삭제는 진행)
         deleteAudioFile(voiceSample.getUrl());
@@ -222,12 +224,12 @@ public class VoiceSampleService {
         try {
             // === 1. 파일 검증 ===
             if (file.isEmpty()) {
-                throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_EMPTY);
             }
             
             String originalFileName = file.getOriginalFilename();
             if (originalFileName == null) {
-                throw new IllegalArgumentException("파일명이 올바르지 않습니다.");
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_FILENAME);
             }
             
             // 지원 형식 검증 (프로퍼티 활용)
@@ -236,12 +238,12 @@ public class VoiceSampleService {
                     ? originalFileName.substring(originalFileName.lastIndexOf(".")) : "";
             
             if (!voiceSampleProperties.isSupportedFormat(extension)) {
-                throw new IllegalArgumentException("지원하는 음성 파일 형식: " + voiceSampleProperties.getSupportedFormatsAsString());
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_UNSUPPORTED_FORMAT);
             }
             
             // 파일 크기 검증 (프로퍼티 활용)
             if (file.getSize() > voiceSampleProperties.getMaxFileSize()) {
-                throw new IllegalArgumentException("파일 크기는 " + voiceSampleProperties.getMaxFileSizeInMB() + "MB를 초과할 수 없습니다.");
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_TOO_LARGE);
             }
             
             // === 2. 파일 저장 ===
@@ -268,7 +270,7 @@ public class VoiceSampleService {
             
         } catch (IOException e) {
             log.error("파일 처리 중 오류 발생: {}", e.getMessage());
-            throw new RuntimeException("파일 처리에 실패했습니다.", e);
+            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_UPLOAD_FAILED);
         }
     }
     
