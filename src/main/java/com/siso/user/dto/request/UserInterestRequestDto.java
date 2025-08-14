@@ -6,6 +6,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class InterestRequestDto {
+public class UserInterestRequestDto {
     private String name;
 }

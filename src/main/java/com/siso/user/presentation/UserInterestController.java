@@ -3,7 +3,7 @@ package com.siso.user.presentation;
 import com.siso.common.response.SisoResponse;
 import com.siso.user.application.UserInterestService;
 import com.siso.user.domain.model.Interest;
-import com.siso.user.dto.request.InterestRequestDto;
+import com.siso.user.dto.request.UserInterestRequestDto;
 import com.siso.user.dto.response.UserInterestResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class UserInterestController {
 
     // 사용자의 관심사 선택
     @PostMapping("/select")
-    public SisoResponse<Void> selectUserInterests(@PathVariable Long userId, @RequestBody @Valid List<InterestRequestDto> interestsDto) {
+    public SisoResponse<Void> selectUserInterests(@PathVariable Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
                 .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
                 .collect(Collectors.toList());
@@ -42,7 +42,7 @@ public class UserInterestController {
 
     // 사용자의 관심사 수정
     @PatchMapping("/update")
-    public SisoResponse<Void> updateUserInterests(@PathVariable Long userId, @RequestBody @Valid List<InterestRequestDto> interestsDto) {
+    public SisoResponse<Void> updateUserInterests(@PathVariable Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
                 .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
                 .collect(Collectors.toList());
