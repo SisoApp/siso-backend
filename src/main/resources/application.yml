@@ -15,6 +15,10 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
 # ===== 음성 샘플 관련 설정 =====
 app:
   voice-sample:

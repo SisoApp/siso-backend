@@ -1,0 +1,2 @@
+swagger: openapi.json
+endpoint: http://localhost:8080

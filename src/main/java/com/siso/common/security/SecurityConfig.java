@@ -35,9 +35,9 @@ public class SecurityConfig {
 //                        ).authenticated()
 
 
+
                         // 개발 단계: 모든 /api/** 경로 허용
                         .requestMatchers("/api/**").permitAll()
-
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 );
