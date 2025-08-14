@@ -1,5 +1,6 @@
 package com.siso.user.application;
 
+import com.siso.image.domain.model.Image;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
 import com.siso.user.domain.repository.UserProfileRepository;
@@ -52,12 +53,12 @@ public class UserProfileService {
                 .sex(userProfileDto.getSex())
                 .build();
 
-        if (userProfileDto.getProfileImages() != null) {
-            userProfileDto.getProfileImages().forEach(url -> {
-                if (url != null && !url.isBlank()) {
+        if (userProfileDto.getImage() != null) {
+            userProfileDto.getImage().forEach(path -> {
+                if (path != null && !path.isBlank()) {
                     userProfile.addImage(
-                            UserProfileImage.builder()
-                                    .url(url)
+                            Image.builder()
+                                    .path(path)
                                     .build()
                     );
                 }

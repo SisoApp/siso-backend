@@ -45,7 +45,7 @@ public class UserProfile {
 
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_profile_id")
-    private List<UserProfileImage> profileImages = new ArrayList<>();
+    private List<Image> profileImages = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private Location location;
@@ -57,7 +57,7 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public void addImage(UserProfileImage image) {
+    public void addImage(Image image) {
         this.profileImages.add(image);
     }
 }

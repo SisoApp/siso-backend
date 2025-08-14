@@ -17,7 +17,7 @@ public class UserProfileDto {
     private String nickname;
     private String introduce;
     private PreferenceContact preferenceContact;
-    private List<String> profileImages;
+    private List<String> Image;
     private Location location;
     private Sex sex;
     private Long userId;
