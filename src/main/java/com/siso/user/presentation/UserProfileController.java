@@ -2,6 +2,8 @@ package com.siso.user.presentation;
 
 import com.siso.user.application.UserProfileService;
 import com.siso.user.dto.UserProfileDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,5 +47,4 @@ public class UserProfileController {
         userProfileService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
 }
