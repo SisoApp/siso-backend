@@ -87,17 +87,17 @@ public class ImageController {
         ImageResponseDto response = imageService.getImage(id);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * 이미지 수정 API (파일 교체)
-     * 
-     * 
+     *
+     *
      * @param id 수정할 이미지 ID
-     * @param userId 수정할 사용자 ID (프로필 사진용)
+//     * @param userId 수정할 사용자 ID (프로필 사진용)
      * @param file 새로운 이미지 파일 (선택사항)
      * @param request 수정할 이미지 정보
      * @return 수정된 이미지 정보
-     * 
+     *
      * PUT /api/images/{id}
      * Content-Type: multipart/form-data
      * - file: 새 이미지 파일 (선택사항)
