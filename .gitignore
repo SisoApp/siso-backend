@@ -42,3 +42,5 @@ uploads/
 # 로그 파일들
 logs/
 *.log
+# 민감한 설정 파일들
+src/main/resources/application-secret.yml
