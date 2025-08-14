@@ -61,6 +61,19 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+      # Deploy
+    - name: Deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: |
+        aws deploy create-deployment \
+        --application-name siso \
+        --deployment-group-name siso-group \
+        --file-exists-behavior OVERWRITE \
+        --s3-location bucket=siso-deploy,bundleType=zip,key=siso.zip \ 
+        --region ap-northeast-2
+
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
     #
