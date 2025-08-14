@@ -1,0 +1,263 @@
+openapi: 3.0.1
+info:
+  title: Siso API
+  description: Siso API 명세서
+  version: "1.0"
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+paths:
+  /api/voice-samples/{id}:
+    get:
+      tags:
+      - voice-sample-controller
+      operationId: getVoiceSample
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VoiceSampleResponseDto"
+    put:
+      tags:
+      - voice-sample-controller
+      operationId: updateVoiceSample
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                arg2:
+                  $ref: "#/components/schemas/VoiceSampleRequestDto"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VoiceSampleResponseDto"
+    delete:
+      tags:
+      - voice-sample-controller
+      operationId: deleteVoiceSample
+      parameters: []
+      responses:
+        "200":
+          description: OK
+  /api/images/{id}:
+    get:
+      tags:
+      - image-controller
+      operationId: getImage
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ImageResponseDto"
+    put:
+      tags:
+      - image-controller
+      operationId: updateImage
+      parameters: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                arg2:
+                  $ref: "#/components/schemas/ImageRequestDto"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ImageResponseDto"
+    delete:
+      tags:
+      - image-controller
+      operationId: deleteImage
+      parameters: []
+      responses:
+        "200":
+          description: OK
+  /api/voice-samples/upload:
+    post:
+      tags:
+      - voice-sample-controller
+      operationId: uploadVoiceSample
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                arg1:
+                  $ref: "#/components/schemas/VoiceSampleRequestDto"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VoiceSampleResponseDto"
+  /api/images/upload:
+    post:
+      tags:
+      - image-controller
+      operationId: uploadImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                arg1:
+                  $ref: "#/components/schemas/ImageRequestDto"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ImageResponseDto"
+  /api/voice-samples/user/{userId}:
+    get:
+      tags:
+      - voice-sample-controller
+      operationId: getVoiceSamplesByUserId
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VoiceSampleResponseDto"
+  /api/voice-samples/files/{filename}:
+    get:
+      tags:
+      - voice-sample-controller
+      operationId: downloadFile
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+  /api/images/user/{userId}:
+    get:
+      tags:
+      - image-controller
+      operationId: getImagesByUserId
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ImageResponseDto"
+  /api/images/files/{filename}:
+    get:
+      tags:
+      - image-controller
+      operationId: downloadFile_1
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    VoiceSampleRequestDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+    VoiceSampleResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        url:
+          type: string
+        duration:
+          type: integer
+          format: int32
+        fileSize:
+          type: integer
+          format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ImageRequestDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+    ImageResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        path:
+          type: string
+        serverImageName:
+          type: string
+        originalName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

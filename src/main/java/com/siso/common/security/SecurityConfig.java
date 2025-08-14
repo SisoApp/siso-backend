@@ -18,6 +18,7 @@ public class SecurityConfig {
                         // Swagger/OpenAPI UI 허용
                         .requestMatchers(
                                 "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()

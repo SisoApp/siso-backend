@@ -1,2 +1,6 @@
-swagger: openapi.json
+dry-run: false
+color: true
+hookfiles: ./hooks.js
+language: nodejs
+api: ./openapi.yaml
 endpoint: http://localhost:8080
