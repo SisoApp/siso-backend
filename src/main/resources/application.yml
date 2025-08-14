@@ -1,4 +1,9 @@
 spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/sisodb}
+    username: ${DB_USERNAME:siso}
+    password: ${DB_PASSWORD:siso}
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     open-in-view: false
