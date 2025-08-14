@@ -1,7 +1,10 @@
 package com.siso.user.domain.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -10,6 +13,8 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name = "profiles")
+@Builder
+@AllArgsConstructor
 public class UserProfile {
 
     @Id
@@ -43,12 +48,16 @@ public class UserProfile {
     private List<UserProfileImage> profileImages = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-    private Location Location;
+    private Location location;
 
     @Enumerated(EnumType.STRING)
-    private Sex Sex;
+    private Sex sex;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public void addImage(UserProfileImage image) {
+        this.profileImages.add(image);
+    }
 }
