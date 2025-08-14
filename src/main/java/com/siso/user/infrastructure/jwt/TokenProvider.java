@@ -31,7 +31,7 @@ public class TokenProvider implements AuthenticationProvider {
         String refreshToken = (String) authentication.getCredentials();
 
         // DB에서 사용자 정보와 리프레시 토큰 조회
-        User user = userRepository.findByPhoneNumber(phoneNumber)
+        User user = userRepository.findActiveUserByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
 
         String foundRefreshToken = user.getRefreshToken();

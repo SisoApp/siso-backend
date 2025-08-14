@@ -15,6 +15,9 @@ public enum ErrorCode {
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 일치하지 않습니다."),
 
+    // OAuth2
+    OAUTH2_PHONE_NUMBER_REQUIRED(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공 동의가 필요합니다."),
+
     // 관심사
     TOO_MANY_INTERESTS(HttpStatus.NOT_FOUND, "5개를 초과 하여 선택할 수 없습니다."),
     NO_INTERESTS_SELECTED(HttpStatus.NOT_FOUND,"최소 한 개 이상 선택 해야 합니다."),

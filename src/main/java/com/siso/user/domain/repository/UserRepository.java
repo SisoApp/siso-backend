@@ -15,7 +15,11 @@ public interface UserRepository extends Repository<User, Long> {
 
     void save(User user);
 
-    Optional<User> findByPhoneNumber(String phoneNumber);
+    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.isDeleted = false AND u.isBlock = false")
+    Optional<User> findActiveUserByPhoneNumber(@Param("phoneNumber") String phoneNumber);
 
-    Optional<User> findByPhoneNumberAndProvider(@Param("phoneNumber") String phoneNumber, @Param("provider") Provider provider);
+    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.provider = :provider AND u.isDeleted = false AND u.isBlock = false")
+    Optional<User> findActiveUserByPhoneNumberAndProvider(@Param("phoneNumber") String phoneNumber, @Param("provider") Provider provider);
+
+    Optional<User> findByPhoneNumber(String phoneNumber);
 }

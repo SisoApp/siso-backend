@@ -15,8 +15,7 @@ public class UserSignUpService {
 
     @Transactional
     public User saveOrUpdateUser(OAuth2UserInfo userInfo) {
-        // 전화번호와 제공자로 사용자 조회
-        User user = userRepository.findByPhoneNumberAndProvider(userInfo.getPhoneNumber(), Provider.valueOf(userInfo.getProvider()))
+        User user = userRepository.findActiveUserByPhoneNumberAndProvider(userInfo.getPhoneNumber(), Provider.valueOf(userInfo.getProvider()))
                 .orElse(null);
 
         if (user == null) {
@@ -32,7 +31,7 @@ public class UserSignUpService {
                     .build();
             userRepository.save(user);
         } else {
-            // 기존 사용자 로그인: isOnline 상태 업데이트
+            // 기존 사용자 로그인
             user.updateIsOnline(true);
             userRepository.save(user);
         }

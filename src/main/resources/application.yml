@@ -10,11 +10,29 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update # 테스트용으로 임시 변경 - 로그인일때 가능하면 update로 되돌리기
-
   servlet:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: bacd247c935658de63e92542078bc4f4
+            #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
+            scope: phone_number
+            client-name: Kakao
+            authorization-grant-type: authorization_code
+            redirect-uri: http://siso.com/kakao
+            provider: kakao
+            #            https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=bacd247c935658de63e92542078bc4f4&redirect_uri=http://siso.com/kakao
+        provider:
+          kakao:
+            user-name-attribute: kakao_account
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
 
 # ===== 음성 샘플 관련 설정 =====
 app:

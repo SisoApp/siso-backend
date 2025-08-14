@@ -14,25 +14,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User findById(Long userId) {
-        return userRepository.findById(userId)
+    public User findByPhoneNumber(String phoneNumber) {
+        return userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Transactional
-    public void deleteUser(Long userId) {
-        User foundUser = findById(userId);
-        foundUser.deleteUser();
-    }
-
-    public void registerUser(User user) {
+    public void deleteUser(String phoneNumber) {
+        User user = findByPhoneNumber(phoneNumber);
+        user.deleteUser();
         userRepository.save(user);
     }
 
-    public UserResponseDto getUserProfile(String phoneNumber) {
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-
+    public UserResponseDto getUserInfo(String phoneNumber) {
+        User user = findByPhoneNumber(phoneNumber);
         return new UserResponseDto(user.getProvider(), user.getPhoneNumber());
+    }
+
+    @Transactional
+    public void updateNotificationSubscribed(String phoneNumber, boolean subscribed) {
+        User user = findByPhoneNumber(phoneNumber);
+        user.updateNotificationSubScribed(subscribed);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void logout(String phoneNumber) {
+        User user = findByPhoneNumber(phoneNumber);
+        // 리프레시 토큰 무효화 및 온라인 상태 변경
+        user.updateRefreshToken("");
+        user.updateIsOnline(false);
+        userRepository.save(user);
     }
 }

@@ -1,5 +1,7 @@
 package com.siso.user.infrastructure.oauth2;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
@@ -17,7 +19,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
-//    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
 
     @Override
@@ -26,18 +28,15 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // phoneNumber가 사용자 식별자이므로, oAuth2User의 attributes에서 추출
         String phoneNumber = (String) oAuth2User.getAttributes().get("phoneNumber"); // 파싱 로직에 맞춰 키 변경
 
-//        String accessToken = jwtTokenUtil.generateToken(phoneNumber, JwtTokenUtil.ACCESS_TOKEN_TTL);
-//        String refreshToken = jwtTokenUtil.generateRefreshToken(JwtTokenUtil.REFRESH_TOKEN_TTL);
+        String accessToken = jwtTokenUtil.generateAccessToken(phoneNumber);
+        String refreshToken = jwtTokenUtil.generateRefreshToken(phoneNumber);
 
         // DB에 리프레시 토큰 저장
-        User user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
-//        user.updateRefreshToken(refreshToken);
-        userRepository.save(user);
+        jwtTokenUtil.storeRefreshToken(phoneNumber, refreshToken);
 
         // 쿠키에 토큰 담아 클라이언트로 전달
-//        response.addCookie(jwtTokenUtil.createCookie("accessToken", accessToken, false));
-//        response.addCookie(jwtTokenUtil.createCookie("refreshToken", refreshToken, true));
+        response.addCookie(jwtTokenUtil.createCookie("accessToken", accessToken, false));
+        response.addCookie(jwtTokenUtil.createCookie("refreshToken", refreshToken, true));
 
         // 클라이언트로 리다이렉트
         response.sendRedirect("http://localhost:3000/oauth-callback");

@@ -62,14 +62,14 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    // 리프레시 토큰 생성 로직 (subject 없이)
-    private String createRefreshToken(long TTL) {
-        return Jwts.builder()
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + TTL))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
-                .compact();
-    }
+//    // 리프레시 토큰 생성 로직 (subject 없이)
+//    private String createRefreshToken(long TTL) {
+//        return Jwts.builder()
+//                .setIssuedAt(new Date(System.currentTimeMillis()))
+//                .setExpiration(new Date(System.currentTimeMillis() + TTL))
+//                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+//                .compact();
+//    }
 
     // 액세스 토큰 생성
     public String generateAccessToken(String phoneNumber) {
@@ -83,11 +83,11 @@ public class JwtTokenUtil {
         return createToken(claims, phoneNumber, REFRESH_TOKEN_TTL);
     }
 
-    // 토큰 유효성 검사
-    public Boolean validateToken(String token, String phoneNumber) {
-        final String extractedPhoneNumber = extractPhoneNumber(token);
-        return extractedPhoneNumber.equals(phoneNumber) && !isTokenExpired(token);
-    }
+//    // 토큰 유효성 검사
+//    public Boolean validateToken(String token, String phoneNumber) {
+//        final String extractedPhoneNumber = extractPhoneNumber(token);
+//        return extractedPhoneNumber.equals(phoneNumber) && !isTokenExpired(token);
+//    }
 
     // 쿠키 생성
     public Cookie createCookie(String key, String value, boolean isRefreshToken) {
@@ -115,7 +115,7 @@ public class JwtTokenUtil {
 
     // 리프레시 토큰을 DB에 저장
     public void storeRefreshToken(String phoneNumber, String newRefreshToken){
-        User user = userRepository.findByPhoneNumber(phoneNumber)
+        User user = userRepository.findActiveUserByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
         user.updateRefreshToken(newRefreshToken);
         userRepository.save(user);
