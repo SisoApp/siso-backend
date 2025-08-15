@@ -18,18 +18,14 @@ public class AppleOAuth2UserInfo implements OAuth2UserInfo {
     }
 
     @Override
-    public String getProviderId() {
-        return attributes.get("sub").toString();
-    }
-
-    @Override
-    public String getProvider() {
-        return "APPLE";
+    public String getId() {
+        return (String) attributes.get("sub"); // 'sub' 클레임이 Apple의 고유 ID입니다.
     }
 
     @Override
     public String getPhoneNumber() {
-        // 애플은 전화번호를 제공하지 않으므로 null 반환
-        return null;
+        // Apple은 'phone_number' 스코프를 통해 전화번호를 제공할 수 있습니다.
+        // 실제 구현 시 제공되는 클레임에 따라 로직을 수정해야 합니다.
+        return (String) attributes.get("phone_number");
     }
 }

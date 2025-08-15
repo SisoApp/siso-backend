@@ -17,6 +17,10 @@ public enum ErrorCode {
 
     // OAuth2
     OAUTH2_PHONE_NUMBER_REQUIRED(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공 동의가 필요합니다."),
+    OAUTH2_PHONE_NUMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공이 되지 않은 상태입니다."),
+
+    // 소셜 로그인 관련 에러
+    UNSUPPORTED_SOCIAL_LOGIN(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인입니다."),
 
     // 관심사
     TOO_MANY_INTERESTS(HttpStatus.NOT_FOUND, "5개를 초과 하여 선택할 수 없습니다."),

@@ -13,7 +13,7 @@ public interface UserRepository extends Repository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.isBlock = false AND u.isDeleted = false")
     Optional<User> findById(@Param("id") Long id);
 
-    void save(User user);
+    User save(User user);
 
     @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.isDeleted = false AND u.isBlock = false")
     Optional<User> findActiveUserByPhoneNumber(@Param("phoneNumber") String phoneNumber);
@@ -22,4 +22,6 @@ public interface UserRepository extends Repository<User, Long> {
     Optional<User> findActiveUserByPhoneNumberAndProvider(@Param("phoneNumber") String phoneNumber, @Param("provider") Provider provider);
 
     Optional<User> findByPhoneNumber(String phoneNumber);
+
+    Optional<User> findByRefreshToken(String refreshToken);
 }

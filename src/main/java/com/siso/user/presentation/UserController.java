@@ -5,7 +5,6 @@ import com.siso.user.application.UserService;
 import com.siso.user.dto.request.NotificationRequestDto;
 import com.siso.user.dto.response.UserResponseDto;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -47,14 +46,6 @@ public class UserController {
     public SisoResponse<Void> logout(Authentication authentication, HttpServletResponse httpServletResponse) {
         String phoneNumber = authentication.getName();
         userService.logout(phoneNumber);
-
-        // 클라이언트 쿠키에서 토큰 삭제
-        httpServletResponse.addCookie(jwtTokenUtil.accessTokenRemover());
-        // 리프레시 토큰은 /api/auth/refresh 경로에서만 사용되므로 해당 경로의 쿠키를 삭제
-        Cookie refreshTokenRemover = jwtTokenUtil.createCookie("refreshToken", null, true);
-        refreshTokenRemover.setMaxAge(0);
-        httpServletResponse.addCookie(refreshTokenRemover);
-
         return SisoResponse.success(null);
     }
 }

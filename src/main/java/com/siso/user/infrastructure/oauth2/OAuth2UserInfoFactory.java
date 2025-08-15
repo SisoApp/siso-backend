@@ -1,15 +1,19 @@
 package com.siso.user.infrastructure.oauth2;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.Provider;
+
 import java.util.Map;
 
 public class OAuth2UserInfoFactory {
     public static OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
-        if (registrationId.equalsIgnoreCase("kakao")) {
+        if (registrationId.equalsIgnoreCase(Provider.KAKAO.toString())) {
             return new KakaoOAuth2UserInfo(attributes);
-        } else if (registrationId.equalsIgnoreCase("apple")) {
+        } else if (registrationId.equalsIgnoreCase(Provider.APPLE.toString())) {
             return new AppleOAuth2UserInfo(attributes);
         } else {
-            throw new IllegalArgumentException("지원하지 않는 소셜 로그인입니다: " + registrationId);
+            throw new ExpectedException(ErrorCode.UNSUPPORTED_SOCIAL_LOGIN);
         }
     }
 }

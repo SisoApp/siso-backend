@@ -56,15 +56,21 @@ public class User extends BaseTime {
         this.userInterests.add(userInterest);
     }
 
+//    @Builder
+//    public User(Provider provider, String phoneNumber, String refreshToken, Boolean isOnline, Boolean isBlock, Boolean isDeleted, LocalDateTime deletedAt) {
+//        this.provider = provider;
+//        this.phoneNumber = phoneNumber;
+//        this.refreshToken = refreshToken;
+//        this.isOnline = isOnline;
+//        this.isBlock = isBlock;
+//        this.isDeleted = isDeleted;
+//        this.deletedAt = deletedAt;
+//    }
+
     @Builder
-    public User(Provider provider, String phoneNumber, String refreshToken, Boolean isOnline, Boolean isBlock, Boolean isDeleted, LocalDateTime deletedAt) {
+    public User(Provider provider, String phoneNumber) {
         this.provider = provider;
         this.phoneNumber = phoneNumber;
-        this.refreshToken = refreshToken;
-        this.isOnline = isOnline;
-        this.isBlock = isBlock;
-        this.isDeleted = isDeleted;
-        this.deletedAt = deletedAt;
     }
 
     public void deleteUser() {

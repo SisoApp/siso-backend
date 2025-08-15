@@ -42,7 +42,7 @@ public class UserService {
     public void logout(String phoneNumber) {
         User user = findByPhoneNumber(phoneNumber);
         // 리프레시 토큰 무효화 및 온라인 상태 변경
-        user.updateRefreshToken("");
+        user.updateRefreshToken(null);
         user.updateIsOnline(false);
         userRepository.save(user);
     }
