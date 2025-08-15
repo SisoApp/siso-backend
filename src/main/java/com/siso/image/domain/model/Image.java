@@ -1,0 +1,38 @@
+package com.siso.image.domain.model;
+
+import com.siso.common.domain.BaseTime;
+import jakarta.persistence.*;
+import lombok.*;
+
+/**
+ * 이미지 엔티티
+ * 
+ * 한 유저당 최대 5개까지 이미지 저장 가능
+ * 이미지 업로드, 수정, 삭제 기능 제공
+ */
+@Entity
+@Table(name = "Images")
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Image extends BaseTime {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // @Column(name = "user_id", nullable = false) // 로그인일때 가능 - 원래 설정
+    @Column(name = "user_id", nullable = true, columnDefinition = "BIGINT DEFAULT 1") // 테스트용으로 nullable 허용하고 기본값 설정
+    private Long userId;
+
+    @Column(name = "path", length = 255)
+    private String path; // 이미지 파일 경로
+
+    @Column(name = "server_image_name", length = 255, nullable = false)
+    private String serverImageName; // 서버에 저장된 파일명
+
+    @Column(name = "original_name", length = 255, nullable = false)
+    private String originalName; // 원본 파일명
+}
