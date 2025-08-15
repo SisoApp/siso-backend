@@ -73,7 +73,7 @@ jobs:
         --application-name siso \
         --deployment-group-name siso-group \
         --file-exists-behavior OVERWRITE \
-        --s3-location bucket=siso-deploy,bundleType=zip,key=siso.zip \ 
+        --s3-location bucket=siso-deploy,bundleType=zip,key=siso.zip \
         --region ap-northeast-2
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
