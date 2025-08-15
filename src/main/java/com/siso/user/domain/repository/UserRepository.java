@@ -6,11 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends Repository<User, Long> {
-    @Query("SELECT u FROM User u WHERE u.isBlock = false AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.isBlock = false AND u.isDeleted = false")
     Optional<User> findById(@Param("id") Long id);
 
     User save(User user);
