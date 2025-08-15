@@ -3,6 +3,8 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
 
 # Dependency Graph 제출을 위해 전역 권한 부여
 permissions:
@@ -75,8 +77,8 @@ jobs:
             --region ap-northeast-2
 
   dependency-submission:
-    # push에서만 제출(포크 PR의 read-only 토큰 문제 회피)
-    if: github.event_name == 'push'
+    # main 브랜치 push 때만 실행
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
