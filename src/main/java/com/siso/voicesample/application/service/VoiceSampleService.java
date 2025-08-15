@@ -5,6 +5,7 @@ import com.siso.voicesample.domain.repository.VoiceSampleRepository;
 import com.siso.voicesample.dto.VoiceSampleRequestDto;
 import com.siso.voicesample.dto.VoiceSampleResponseDto;
 import com.siso.voicesample.infrastructure.properties.VoiceSampleProperties;
+import com.siso.common.util.UserValidationUtil;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,9 @@ public class VoiceSampleService {
     /** 음성 샘플 데이터 접근 레이어 */
     private final VoiceSampleRepository voiceSampleRepository;
     
+    /** 사용자 검증 유틸리티 */
+    private final UserValidationUtil userValidationUtil;
+    
     /** 음성 샘플 관련 설정 프로퍼티 */
     private final VoiceSampleProperties voiceSampleProperties;
     
@@ -77,13 +81,17 @@ public class VoiceSampleService {
      */
     @Transactional
     public VoiceSampleResponseDto uploadVoiceSample(MultipartFile file, VoiceSampleRequestDto request) {
+        Long userId = request.getUserId();
+        
+        // 사용자 존재 여부 확인
+        userValidationUtil.validateUserExists(userId);
+        
         // 통합 파일 처리: 검증 → 저장 → duration 추출
         FileProcessResult result = processAudioFile(file);
         
         log.info("음성 파일 길이: {}초", result.duration);
         
         // 엔티티 생성 및 저장
-        Long userId = request.getUserId() != null ? request.getUserId() : 1L; // 테스트용 기본값
         VoiceSample voiceSample = VoiceSample.builder()
                 .userId(userId)
                 .url(result.fileUrl)
@@ -141,9 +149,17 @@ public class VoiceSampleService {
      */
     @Transactional
     public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
+        Long userId = request.getUserId();
+        
+        // 사용자 존재 여부 확인
+        userValidationUtil.validateUserExists(userId);
+        
         // 기존 음성 샘플 조회
         VoiceSample existingVoiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+        
+        // 음성 샘플 소유자 확인
+        userValidationUtil.validateUserOwnership(existingVoiceSample.getUserId(), userId);
         
         // 새 파일이 제공된 경우에만 파일 교체
         String newFileUrl = existingVoiceSample.getUrl();
@@ -164,8 +180,7 @@ public class VoiceSampleService {
             log.info("파일 교체 완료 - 새 파일 길이: {}초", newDuration);
         }
         
-        // userId 처리 (새 값이 있으면 사용, 없으면 기존값 유지)
-        Long userId = request.getUserId() != null ? request.getUserId() : existingVoiceSample.getUserId();
+        // userId는 이미 위에서 request.getUserId()로 가져왔고 유효성 검증도 완료
         
         // 기존 엔티티 업데이트 (BaseTime의 updatedAt 자동 갱신)
         existingVoiceSample.setUserId(userId);
