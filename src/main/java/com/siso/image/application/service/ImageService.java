@@ -83,8 +83,8 @@ public class ImageService {
             throw new ExpectedException(ErrorCode.IMAGE_MAX_COUNT_EXCEEDED);
         }
         
-        // 통합 파일 처리: 검증 → 저장
-        FileProcessResult result = imageFileHandler.processImageFile(file);
+        // 통합 파일 처리: 검증 → 저장 (사용자별 폴더)
+        FileProcessResult result = imageFileHandler.processImageFile(file, userId);
         
         log.info("이미지 업로드 - 사용자: {}, 파일명: {}", userId, result.getServerImageName());
         
@@ -169,11 +169,11 @@ public class ImageService {
         String newOriginalName = existingImage.getOriginalName();
         
         if (file != null && !file.isEmpty()) {
-            // 기존 파일 삭제
-            imageFileHandler.deleteImageFile(existingImage.getPath());
+            // 기존 파일 삭제 (사용자별 폴더)
+            imageFileHandler.deleteImageFile(existingImage.getPath(), userId);
             
-            // 통합 파일 처리: 검증 → 저장
-            FileProcessResult result = imageFileHandler.processImageFile(file);
+            // 통합 파일 처리: 검증 → 저장 (사용자별 폴더)
+            FileProcessResult result = imageFileHandler.processImageFile(file, userId);
             
             // imageId 기반 URL 생성 (기존 이미지 ID 사용)
             newPath = imageProperties.getBaseUrl() + "/api/images/view/" + existingImage.getId();
@@ -213,8 +213,8 @@ public class ImageService {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
         
-        // 파일 삭제 (실패해도 DB 삭제는 진행)
-        imageFileHandler.deleteImageFile(image.getPath());
+        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
+        imageFileHandler.deleteImageFile(image.getPath(), image.getUserId());
         
         // 데이터베이스에서 레코드 삭제
         imageRepository.delete(image);

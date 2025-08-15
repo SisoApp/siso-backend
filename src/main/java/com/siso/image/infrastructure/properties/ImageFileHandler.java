@@ -44,15 +44,17 @@ public class ImageFileHandler {
      * 
      * 처리 과정:
      * 1. 파일 검증 (빈 파일, 파일명, 확장자, 크기)
-     * 2. 고유 파일명 생성 및 파일 저장
-     * 3. 결과 반환 (URL, serverImageName, originalName)
+     * 2. 사용자별 디렉토리 생성
+     * 3. 고유 파일명 생성 및 파일 저장
+     * 4. 결과 반환 (URL, serverImageName, originalName)
      * 
      * @param file 처리할 이미지 파일
+     * @param userId 사용자 ID (폴더 구조에 사용)
      * @return 파일 처리 결과 (URL, serverImageName, originalName)
      * @throws ExpectedException 파일 검증 실패 시
      * @throws ExpectedException 파일 저장 실패 시
      */
-    public FileProcessResult processImageFile(MultipartFile file) {
+    public FileProcessResult processImageFile(MultipartFile file, Long userId) {
         try {
             // === 1. 파일 검증 ===
             validateFile(file);
@@ -64,10 +66,10 @@ public class ImageFileHandler {
             validateFileSize(file.getSize());
             
             // === 2. 파일 저장 ===
-            ensureUploadDirectoryExists();
+            ensureUserUploadDirectoryExists(userId);
             
             String uniqueFileName = generateUniqueFileName(extension);
-            Path savedFilePath = saveFile(file, uniqueFileName);
+            Path savedFilePath = saveFile(file, uniqueFileName, userId);
             
             // === 3. 결과 반환 ===
             String fileUrl = generateFileUrl(uniqueFileName);
@@ -92,8 +94,9 @@ public class ImageFileHandler {
      * 이미지 파일 삭제
      * 
      * @param fileUrl 삭제할 파일의 URL (예: http://localhost:8080/api/images/view/filename.jpg)
+     * @param userId 사용자 ID (폴더 구조에 사용)
      */
-    public void deleteImageFile(String fileUrl) {
+    public void deleteImageFile(String fileUrl, Long userId) {
         if (fileUrl == null || fileUrl.trim().isEmpty()) {
             log.warn("삭제할 파일 URL이 없습니다.");
             return;
@@ -107,8 +110,8 @@ public class ImageFileHandler {
                 return;
             }
             
-            // 파일 경로 생성 및 삭제
-            Path filePath = Paths.get(imageProperties.getUploadDir()).resolve(fileName);
+            // 사용자별 파일 경로 생성 및 삭제
+            Path filePath = Paths.get(imageProperties.getUploadDir()).resolve(userId.toString()).resolve(fileName);
             
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
@@ -166,13 +169,13 @@ public class ImageFileHandler {
     }
     
     /**
-     * 업로드 디렉토리 존재 확인 및 생성
+     * 사용자별 업로드 디렉토리 존재 확인 및 생성
      */
-    private void ensureUploadDirectoryExists() throws IOException {
-        Path uploadPath = Paths.get(imageProperties.getUploadDir());
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-            log.info("업로드 디렉토리 생성: {}", uploadPath);
+    private void ensureUserUploadDirectoryExists(Long userId) throws IOException {
+        Path userUploadPath = Paths.get(imageProperties.getUploadDir()).resolve(userId.toString());
+        if (!Files.exists(userUploadPath)) {
+            Files.createDirectories(userUploadPath);
+            log.info("사용자별 업로드 디렉토리 생성: {}", userUploadPath);
         }
     }
     
@@ -186,11 +189,11 @@ public class ImageFileHandler {
     }
     
     /**
-     * 파일 저장
+     * 파일 저장 (사용자별 폴더)
      */
-    private Path saveFile(MultipartFile file, String uniqueFileName) throws IOException {
-        Path uploadPath = Paths.get(imageProperties.getUploadDir());
-        Path filePath = uploadPath.resolve(uniqueFileName);
+    private Path saveFile(MultipartFile file, String uniqueFileName, Long userId) throws IOException {
+        Path userUploadPath = Paths.get(imageProperties.getUploadDir()).resolve(userId.toString());
+        Path filePath = userUploadPath.resolve(uniqueFileName);
         
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         

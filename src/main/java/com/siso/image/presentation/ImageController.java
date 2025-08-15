@@ -5,6 +5,8 @@ import com.siso.image.dto.ImageResponseDto;
 import com.siso.image.application.service.ImageService;
 import com.siso.image.infrastructure.properties.ImageFileHandler;
 import com.siso.image.infrastructure.properties.MediaTypeProperties;
+import com.siso.image.domain.model.Image;
+import com.siso.image.domain.repository.ImageRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,7 @@ public class ImageController {
     private final ImageService imageService;
     private final ImageFileHandler imageFileHandler;
     private final MediaTypeProperties mediaTypeProperties;
+    private final ImageRepository imageRepository;
     
     // ===================== 이미지 CRUD API =====================
     
@@ -114,8 +117,12 @@ public class ImageController {
     @GetMapping("/view/{serverfilename}")
     public ResponseEntity<Resource> viewImage(@PathVariable String serverfilename) {
         try {
-            // 파일 경로 생성 및 정규화 (보안상 중요)
-            Path filePath = Paths.get("uploads/images").resolve(serverfilename).normalize();
+            // 데이터베이스에서 serverImageName으로 이미지 조회하여 userId 획득
+            Image image = imageRepository.findByServerImageName(serverfilename)
+                    .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND));
+            
+            // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
+            Path filePath = Paths.get("uploads/images").resolve(image.getUserId().toString()).resolve(serverfilename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             
             // 파일 존재 여부 및 읽기 가능 여부 확인

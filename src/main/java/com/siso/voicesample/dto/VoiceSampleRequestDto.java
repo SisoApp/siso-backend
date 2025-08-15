@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 @AllArgsConstructor
 public class VoiceSampleRequestDto {
     
-    // @NotNull(message = "사용자 ID는 필수입니다") // 로그인일때 가능 - 원래 설정
-    private Long userId; // 테스트용으로 NotNull 제거
+    @NotNull(message = "사용자 ID는 필수입니다")
+    private Long userId;
     
 }
