@@ -1,18 +1,26 @@
 package com.siso.matching.dto.response;
 
-import com.siso.matching.doamain.model.Status;
+
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MatchingResponseDto {
-    private boolean isLiked;
-    private Status status;
+    private Long senderId;
+    private Long receiverId;
+    private String status;
+    private LocalDateTime createdAt;
 
-    public MatchingResponseDto(boolean isLiked, Status status) {
-        this.isLiked = isLiked;
+    @Builder
+    public MatchingResponseDto(Long senderId, Long receiverId, String status, LocalDateTime createdAt) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
         this.status = status;
+        this.createdAt = createdAt;
     }
 }

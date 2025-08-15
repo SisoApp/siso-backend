@@ -26,9 +26,6 @@ public class Matching {
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
 
-    @Column(name = "is_liked", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-    private boolean isLiked = false;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private Status status;
@@ -37,21 +34,20 @@ public class Matching {
     private LocalDateTime createdAt;
 
     @Builder
-    public Matching(User receiver, User sender, boolean isLiked, Status status) {
+    public Matching(User receiver, User sender, Status status, LocalDateTime createdAt) {
         this.receiver = receiver;
         this.sender = sender;
-        this.isLiked = isLiked;
         this.status = status;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    public void updateIsLiked(boolean isLiked) {
-        this.isLiked = isLiked;
+        this.createdAt = createdAt;
     }
 
     public void matchSuccess() {
         this.status = Status.MATCHED;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateStatus(Status status) {
+        this.status = status;
     }
 
     public void callCompleted() {

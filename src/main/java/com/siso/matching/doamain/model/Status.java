@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public enum Status {
-    MATCHED("매칭됨"),
-    CALL_COMPLETED("통화 완료"),
-    REPORTED("신고됨"),
-    BLOCKED("차단됨");
+    MATCHED("매칭 성사"),
+    WAITING_CALL("통화 대기 중"),
+    CALL_COMPLETED("통화 완료");
 
     private String status;
 
