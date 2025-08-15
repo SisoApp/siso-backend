@@ -2,9 +2,7 @@ name: Java CI with Gradle
 
 on:
   push:
-    branches: [ "develop" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
 
 # Dependency Graph 제출을 위해 전역 권한 부여
 permissions:
@@ -92,6 +90,5 @@ jobs:
       # Gradle 의존성 그래프 제출
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@v4
-        # 모노레포/서브폴더면 아래 주석 해제 후 경로 지정
-        # with:
-        #   build-root-directory: .
+        with:
+          build-root-directory: ./backend
