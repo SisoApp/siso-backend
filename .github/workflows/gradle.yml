@@ -9,6 +9,7 @@ on:
 # Dependency Graph 제출을 위해 전역 권한 부여
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build:
