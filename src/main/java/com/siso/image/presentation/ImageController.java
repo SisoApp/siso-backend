@@ -111,24 +111,36 @@ public class ImageController {
     /**
      * 이미지 뷰어 API (다운로드 완전 방지)
      * 
-     * MediaTypeProperties를 활용하여 안전한 이미지 뷰어 제공
-     * 다운로드는 절대 불가능하고 브라우저에서 보기만 가능
+     * 이미지 ID를 통해 안전하게 이미지를 볼 수 있습니다.
+     * 사용자는 실제 파일명이나 경로를 알 필요 없이 imageId만으로 이미지를 볼 수 있습니다.
+     * 다운로드는 절대 불가능하고 브라우저에서 보기만 가능합니다.
+     * 
+     * @param imageId 조회할 이미지 ID
+     * @return 이미지 리소스 (뷰어용)
+     * 
+     * GET /api/images/view/{imageId}
      */
-    @GetMapping("/view/{serverfilename}")
-    public ResponseEntity<Resource> viewImage(@PathVariable String serverfilename) {
+    @GetMapping("/view/{imageId}")
+    public ResponseEntity<Resource> viewImage(@PathVariable Long imageId) {
         try {
-            // 데이터베이스에서 serverImageName으로 이미지 조회하여 userId 획득
-            Image image = imageRepository.findByServerImageName(serverfilename)
+            // 이미지 ID로 이미지 조회
+            Image image = imageRepository.findById(imageId)
                     .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND));
             
+            // 실제 파일명 가져오기
+            String serverImageName = image.getServerImageName();
+            if (serverImageName == null) {
+                throw new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND);
+            }
+            
             // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
-            Path filePath = Paths.get("uploads/images").resolve(image.getUserId().toString()).resolve(serverfilename).normalize();
+            Path filePath = Paths.get("uploads/images").resolve(image.getUserId().toString()).resolve(serverImageName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             
             // 파일 존재 여부 및 읽기 가능 여부 확인
             if (resource.exists() && resource.isReadable()) {
                 // Infrastructure Properties를 활용한 MediaType 결정
-                MediaType contentType = mediaTypeProperties.determineContentType(serverfilename);
+                MediaType contentType = mediaTypeProperties.determineContentType(serverImageName);
                 
                 return ResponseEntity.ok()
                         // 다운로드 완전 방지 헤더들

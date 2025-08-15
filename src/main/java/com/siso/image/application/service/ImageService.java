@@ -169,8 +169,8 @@ public class ImageService {
         String newOriginalName = existingImage.getOriginalName();
         
         if (file != null && !file.isEmpty()) {
-            // 기존 파일 삭제 (사용자별 폴더)
-            imageFileHandler.deleteImageFile(existingImage.getPath(), userId);
+            // 기존 파일 삭제 (사용자별 폴더) - serverImageName 사용
+            imageFileHandler.deleteImageFile(existingImage.getServerImageName(), userId);
             
             // 통합 파일 처리: 검증 → 저장 (사용자별 폴더)
             FileProcessResult result = imageFileHandler.processImageFile(file, userId);
@@ -213,8 +213,8 @@ public class ImageService {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
         
-        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
-        imageFileHandler.deleteImageFile(image.getPath(), image.getUserId());
+        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더, serverImageName 사용
+        imageFileHandler.deleteImageFile(image.getServerImageName(), image.getUserId());
         
         // 데이터베이스에서 레코드 삭제
         imageRepository.delete(image);

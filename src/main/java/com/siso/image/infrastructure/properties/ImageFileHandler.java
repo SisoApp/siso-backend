@@ -93,35 +93,28 @@ public class ImageFileHandler {
     /**
      * 이미지 파일 삭제
      * 
-     * @param fileUrl 삭제할 파일의 URL (예: http://localhost:8080/api/images/view/filename.jpg)
+     * @param serverImageName 삭제할 실제 파일명 (예: 20250116_123456_abc12345.jpg)
      * @param userId 사용자 ID (폴더 구조에 사용)
      */
-    public void deleteImageFile(String fileUrl, Long userId) {
-        if (fileUrl == null || fileUrl.trim().isEmpty()) {
-            log.warn("삭제할 파일 URL이 없습니다.");
+    public void deleteImageFile(String serverImageName, Long userId) {
+        if (serverImageName == null || serverImageName.trim().isEmpty()) {
+            log.warn("삭제할 파일명이 없습니다.");
             return;
         }
         
         try {
-            // URL에서 파일명 추출
-            String fileName = extractFileNameFromUrl(fileUrl);
-            if (fileName == null) {
-                log.warn("URL에서 파일명을 추출할 수 없습니다: {}", fileUrl);
-                return;
-            }
-            
             // 사용자별 파일 경로 생성 및 삭제
-            Path filePath = Paths.get(imageProperties.getUploadDir()).resolve(userId.toString()).resolve(fileName);
+            Path filePath = Paths.get(imageProperties.getUploadDir()).resolve(userId.toString()).resolve(serverImageName);
             
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
-                log.info("이미지 파일 삭제 완료: {}", fileName);
+                log.info("이미지 파일 삭제 완료: {}", serverImageName);
             } else {
                 log.warn("삭제할 파일이 존재하지 않습니다: {}", filePath);
             }
             
         } catch (Exception e) {
-            log.warn("이미지 파일 삭제 실패 - URL: {}, 오류: {}", fileUrl, e.getMessage());
+            log.warn("이미지 파일 삭제 실패 - 파일명: {}, 오류: {}", serverImageName, e.getMessage());
         }
     }
     
@@ -210,16 +203,17 @@ public class ImageFileHandler {
         return imageProperties.getBaseUrl() + "/api/images/view/" + fileName;
     }
     
-    /**
-     * URL에서 파일명 추출
-     */
-    private String extractFileNameFromUrl(String fileUrl) {
-        if (fileUrl == null) return null;
-        
-        int lastSlashIndex = fileUrl.lastIndexOf('/');
-        if (lastSlashIndex >= 0 && lastSlashIndex < fileUrl.length() - 1) {
-            return fileUrl.substring(lastSlashIndex + 1);
-        }
-        return null;
-    }
+    // 더 이상 사용하지 않는 메서드 (imageId 기반 URL로 변경됨)
+    // /**
+    //  * URL에서 파일명 추출
+    //  */
+    // private String extractFileNameFromUrl(String fileUrl) {
+    //     if (fileUrl == null) return null;
+    //     
+    //     int lastSlashIndex = fileUrl.lastIndexOf('/');
+    //     if (lastSlashIndex >= 0 && lastSlashIndex < fileUrl.length() - 1) {
+    //         return fileUrl.substring(lastSlashIndex + 1);
+    //     }
+    //     return null;
+    // }
 }

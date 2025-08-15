@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 이미지 데이터 접근 레이어
@@ -23,8 +22,5 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
      */
     long countByUserId(Long userId);
     
-    /**
-     * 서버 이미지 파일명으로 이미지 조회
-     */
-    Optional<Image> findByServerImageName(String serverImageName);
+
 }
