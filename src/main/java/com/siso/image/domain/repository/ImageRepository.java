@@ -21,4 +21,6 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
      * 특정 사용자의 이미지 개수 조회
      */
     long countByUserId(Long userId);
+    
+
 }
