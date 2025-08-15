@@ -15,10 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final JwtTokenUtil jwtTokenUtil;
 
     @GetMapping("/info")
-    public SisoResponse<UserResponseDto> getUserProfile(Authentication authentication) {
+    public SisoResponse<UserResponseDto> getUserInfo(Authentication authentication) {
         String phoneNumber = authentication.getName();
         UserResponseDto userDto = userService.getUserInfo(phoneNumber);
 

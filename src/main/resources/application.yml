@@ -20,11 +20,12 @@ spring:
         registration:
           kakao:
             client-id: bacd247c935658de63e92542078bc4f4
+            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
             #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
             scope: phone_number
             client-name: Kakao
             authorization-grant-type: authorization_code
-            redirect-uri: http://siso.com/kakao
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
             provider: kakao
             #            https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=bacd247c935658de63e92542078bc4f4&redirect_uri=http://siso.com/kakao
         provider:

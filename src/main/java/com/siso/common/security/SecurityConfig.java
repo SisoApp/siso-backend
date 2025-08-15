@@ -4,9 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siso.user.infrastructure.jwt.*;
 import com.siso.user.infrastructure.oauth2.MyOAuth2UserService;
 import com.siso.user.infrastructure.oauth2.OAuth2LoginSuccessHandler;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
+
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -42,7 +46,8 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/oauth2/**",
                         "/login/oauth2/**", // OAuth2 로그인 콜백 경로
-                        "/api/users/logout",
+                        "/api/users/**",
+                        "/",
                         "/api/auth/refresh" // 토큰 재발급 경로
                 ).permitAll()
                 // 특정 권한이 필요한 엔드포인트 (필요시 추가)
@@ -64,8 +69,11 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                     .logoutUrl("/api/users/logout")
-                    .logoutSuccessHandler(logoutSuccessHandler())
-                    .deleteCookies("accessToken", "refreshToken")
+                    .logoutSuccessHandler((request, response, authentication) -> {
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                        objectMapper.writeValue(response.getWriter(), Map.of("message", "로그아웃 성공"));
+                    })
             )
             .sessionManagement(session -> session
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -89,7 +97,7 @@ public class SecurityConfig {
     @Bean
     public LogoutSuccessHandler logoutSuccessHandler() {
         SimpleUrlLogoutSuccessHandler handler = new SimpleUrlLogoutSuccessHandler();
-        handler.setDefaultTargetUrl("/view/users/alert/logout"); // 로그아웃 성공 후 리다이렉트될 페이지
+        handler.setDefaultTargetUrl("/"); // 로그아웃 성공 후 리다이렉트될 페이지
         return handler;
     }
 
