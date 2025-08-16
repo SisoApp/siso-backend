@@ -91,7 +91,7 @@ public class VoiceSampleController {
      * GET /api/voice-samples/user/{userId}
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@PathVariable(name = "userId") Long userId) {
         // log.info("사용자 음성 샘플 목록 조회 요청 - 사용자: {}", userId);
         
         // 사용자별 음성 샘플 목록 조회 (생성일 기준 내림차순)
@@ -131,7 +131,7 @@ public class VoiceSampleController {
      */
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<VoiceSampleResponseDto> updateVoiceSample(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestPart(value = "file", required = false) MultipartFile file, // 새 음성 파일 (선택사항)
             @RequestParam("userId") @Valid Long userId) { // 사용자 ID
         
@@ -155,7 +155,7 @@ public class VoiceSampleController {
      * DELETE /api/voice-samples/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVoiceSample(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "id") Long id) {
         // log.info("음성 샘플 삭제 요청 - ID: {}", id);
         
         // 음성 샘플 및 관련 파일 삭제
@@ -178,7 +178,7 @@ public class VoiceSampleController {
      * GET /api/voice-samples/play/{voiceId}
      */
     @GetMapping("/play/{voiceId}")
-    public ResponseEntity<Resource> playVoice(@PathVariable Long voiceId) {
+    public ResponseEntity<Resource> playVoice(@PathVariable(name = "voiceId") Long voiceId) {
         try {
             // 음성 샘플 ID로 음성 정보 조회
             VoiceSampleResponseDto voiceInfo = voiceSampleService.getVoiceSample(voiceId);

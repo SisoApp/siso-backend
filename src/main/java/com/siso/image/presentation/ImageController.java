@@ -66,7 +66,7 @@ public class ImageController {
      * 사용자별 이미지 목록 조회 API
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@PathVariable Long userId) {
+    public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@PathVariable(name = "userId") Long userId) {
         
         List<ImageResponseDto> response = imageService.getImagesByUserId(userId);
         return ResponseEntity.ok(response);
@@ -76,7 +76,7 @@ public class ImageController {
      * 이미지 단일 조회 API
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ImageResponseDto> getImage(@PathVariable Long id) {
+    public ResponseEntity<ImageResponseDto> getImage(@PathVariable(name = "id") Long id) {
         
         ImageResponseDto response = imageService.getImage(id);
         return ResponseEntity.ok(response);
@@ -87,7 +87,7 @@ public class ImageController {
      */
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImageResponseDto> updateImage(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @RequestParam("userId") @Valid Long userId) {
         
@@ -100,7 +100,7 @@ public class ImageController {
      * 이미지 삭제 API
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteImage(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteImage(@PathVariable(name = "id") Long id) {
         
         imageService.deleteImage(id);
         return ResponseEntity.noContent().build();
@@ -121,7 +121,7 @@ public class ImageController {
      * GET /api/images/view/{imageId}
      */
     @GetMapping("/view/{imageId}")
-    public ResponseEntity<Resource> viewImage(@PathVariable Long imageId) {
+    public ResponseEntity<Resource> viewImage(@PathVariable(name = "imageId") Long imageId) {
         try {
             // 이미지 ID로 이미지 조회
             Image image = imageRepository.findById(imageId)
