@@ -24,6 +24,7 @@ public enum ErrorCode {
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
     IMAGE_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 파일을 찾을 수 없습니다."),
     IMAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "잘못된 파일 경로입니다."),
+    IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 이미지에 접근할 권한이 없습니다."),
     
     // 음성 샘플
     VOICE_SAMPLE_NOT_FOUND(HttpStatus.NOT_FOUND, "음성 샘플을 찾을 수 없습니다."),
@@ -31,9 +32,11 @@ public enum ErrorCode {
     VOICE_SAMPLE_INVALID_FILENAME(HttpStatus.BAD_REQUEST, "음성 파일명이 올바르지 않습니다."),
     VOICE_SAMPLE_UNSUPPORTED_FORMAT(HttpStatus.BAD_REQUEST, "지원하지 않는 음성 파일 형식입니다."),
     VOICE_SAMPLE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "음성 파일 크기가 너무 큽니다."),
+    VOICE_SAMPLE_MAX_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "사용자당 최대 음성 샘플 개수를 초과했습니다."),
     VOICE_SAMPLE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "음성 파일 업로드에 실패했습니다."),
     VOICE_SAMPLE_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "음성 파일을 찾을 수 없습니다."),
-    VOICE_SAMPLE_INVALID_PATH(HttpStatus.BAD_REQUEST, "잘못된 음성 파일 경로입니다.");
+    VOICE_SAMPLE_INVALID_PATH(HttpStatus.BAD_REQUEST, "잘못된 음성 파일 경로입니다."),
+    VOICE_SAMPLE_FILE_TOO_LONG(HttpStatus.BAD_REQUEST, "음성 파일 길이가 너무 깁니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
