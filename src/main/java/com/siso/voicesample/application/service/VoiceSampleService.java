@@ -38,13 +38,8 @@ import ws.schild.jave.info.MultimediaInfo;
  * - 음성 파일 업로드 및 메타데이터 추출 (duration 자동 계산)
  * - 음성 샘플 CRUD 작업 (생성, 조회, 수정, 삭제)
  * - 파일 저장소 관리 (로컬 파일 시스템)
-<<<<<<< HEAD
- * - 재생 시간 제한 (30초) 처리
- *
-=======
  * - 재생 시간 제한 (20초) 처리
- * 
->>>>>>> develop
+ *
  * 지원 파일 형식: MP3, WAV, M4A, AAC, OGG, WEBM, FLAC
  * 파일 크기 제한: 50MB
  *
@@ -61,14 +56,10 @@ public class VoiceSampleService {
     // === 의존성 주입 ===
     /** 음성 샘플 데이터 접근 레이어 */
     private final VoiceSampleRepository voiceSampleRepository;
-<<<<<<< HEAD
 
-=======
-    
     /** 사용자 검증 유틸리티 */
     private final UserValidationUtil userValidationUtil;
-    
->>>>>>> develop
+
     /** 음성 샘플 관련 설정 프로퍼티 */
     private final VoiceSampleProperties voiceSampleProperties;
 
@@ -91,30 +82,22 @@ public class VoiceSampleService {
      */
     @Transactional
     public VoiceSampleResponseDto uploadVoiceSample(MultipartFile file, VoiceSampleRequestDto request) {
-<<<<<<< HEAD
-        // 통합 파일 처리: 검증 → 저장 → duration 추출
-        FileProcessResult result = processAudioFile(file);
-
-        log.info("음성 파일 길이: {}초", result.duration);
-
-=======
         Long userId = request.getUserId();
-        
+
         // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
-        
+
         // 사용자별 음성 샘플 개수 제한 확인 (최대 1개)
         long currentVoiceSampleCount = voiceSampleRepository.countByUserId(userId);
         if (currentVoiceSampleCount >= voiceSampleProperties.getMaxVoiceSamplesPerUser()) {
             throw new ExpectedException(ErrorCode.VOICE_SAMPLE_MAX_COUNT_EXCEEDED);
         }
-        
+
         // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
         VoiceFileProcessResult result = processAudioFile(file, userId);
-        
+
         log.info("음성 파일 길이: {}초", result.getDuration());
-        
->>>>>>> develop
+
         // 엔티티 생성 및 저장
         VoiceSample voiceSample = VoiceSample.builder()
                 .userId(userId)
@@ -174,61 +157,38 @@ public class VoiceSampleService {
     @Transactional
     public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
         Long userId = request.getUserId();
-        
+
         // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
-        
+
         // 기존 음성 샘플 조회
         VoiceSample existingVoiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
-<<<<<<< HEAD
 
-=======
-        
         // 음성 샘플 소유자 확인
         userValidationUtil.validateUserOwnership(existingVoiceSample.getUserId(), userId);
-        
->>>>>>> develop
+
         // 새 파일이 제공된 경우에만 파일 교체
         String newFileUrl = existingVoiceSample.getUrl();
         Integer newFileSize = existingVoiceSample.getFileSize();
         Integer newDuration = existingVoiceSample.getDuration();
 
         if (file != null && !file.isEmpty()) {
-<<<<<<< HEAD
-            // 기존 파일 삭제 (실패해도 계속 진행)
-            deleteAudioFile(existingVoiceSample.getUrl());
-
-            // 통합 파일 처리: 검증 → 저장 → duration 추출
-            FileProcessResult result = processAudioFile(file);
-
-            newFileUrl = result.fileUrl;
-            newFileSize = result.fileSize;
-            newDuration = result.duration;
-
-            log.info("파일 교체 완료 - 새 파일 길이: {}초", newDuration);
-        }
-
-        // userId 처리 (새 값이 있으면 사용, 없으면 기존값 유지)
-        Long userId = request.getUserId() != null ? request.getUserId() : existingVoiceSample.getUserId();
-
-=======
             // 기존 파일 삭제 (실패해도 계속 진행) - 사용자별 폴더
             deleteAudioFile(existingVoiceSample.getUrl(), userId);
-            
+
             // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
             VoiceFileProcessResult result = processAudioFile(file, userId);
-            
+
             newFileUrl = result.getFileUrl();
             newFileSize = result.getFileSize();
             newDuration = result.getDuration();
-            
+
             log.info("파일 교체 완료 - 새 파일 길이: {}초", newDuration);
         }
-        
+
         // userId는 이미 위에서 request.getUserId()로 가져왔고 유효성 검증도 완료
-        
->>>>>>> develop
+
         // 기존 엔티티 업데이트 (BaseTime의 updatedAt 자동 갱신)
         existingVoiceSample.setUserId(userId);
         existingVoiceSample.setUrl(newFileUrl);
@@ -257,17 +217,10 @@ public class VoiceSampleService {
     public void deleteVoiceSample(Long id) {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
-<<<<<<< HEAD
 
-        // 파일 삭제 (실패해도 DB 삭제는 진행)
-        deleteAudioFile(voiceSample.getUrl());
-
-=======
-        
         // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
         deleteAudioFile(voiceSample.getUrl(), voiceSample.getUserId());
-        
->>>>>>> develop
+
         // 데이터베이스에서 레코드 삭제
         voiceSampleRepository.delete(voiceSample);
         log.info("음성 샘플 삭제 완료 - ID: {}", id);
@@ -326,27 +279,14 @@ public class VoiceSampleService {
             // 고유 파일명 생성 (타임스탬프 + UUID + 확장자)
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             String uniqueFileName = timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-<<<<<<< HEAD
 
-            // 파일 저장
-            Path filePath = uploadPath.resolve(uniqueFileName);
-=======
-            
             // 사용자별 폴더에 파일 저장
             Path filePath = userUploadPath.resolve(uniqueFileName);
->>>>>>> develop
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // === 3. Duration 자동 추출 ===
             Integer duration = extractDurationFromFile(filePath);
-<<<<<<< HEAD
 
-            // === 4. 결과 반환 ===
-            String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
-            return new FileProcessResult(fileUrl, duration, (int) file.getSize());
-
-=======
-            
             // === 3.5. Duration 제한 검증 (20초) ===
             if (duration > voiceSampleProperties.getMaxDuration()) {
                 // 파일 삭제 후 예외 발생
@@ -357,12 +297,11 @@ public class VoiceSampleService {
                 }
                 throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_TOO_LONG);
             }
-            
+
             // === 4. 결과 반환 ===
             String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
             return VoiceFileProcessResult.of(fileUrl, duration, (int) file.getSize());
-            
->>>>>>> develop
+
         } catch (IOException e) {
             log.error("파일 처리 중 오류 발생: {}", e.getMessage());
             throw new ExpectedException(ErrorCode.VOICE_SAMPLE_UPLOAD_FAILED);
@@ -447,14 +386,9 @@ public class VoiceSampleService {
             if (fileUrl != null && fileUrl.contains("/files/")) {
                 // URL에서 파일명 추출
                 String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-<<<<<<< HEAD
-                Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(fileName);
-
-=======
                 // 사용자별 폴더 경로 생성
                 Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(userId.toString()).resolve(fileName);
-                
->>>>>>> develop
+
                 // 파일 존재 시 삭제
                 boolean deleted = Files.deleteIfExists(filePath);
                 if (deleted) {
@@ -467,38 +401,4 @@ public class VoiceSampleService {
             log.warn("파일 삭제 실패: {}", e.getMessage());
         }
     }
-<<<<<<< HEAD
-
-    // ===================== 내부 데이터 클래스 =====================
-
-    /**
-     * 파일 처리 결과를 담는 내부 클래스
-     *
-     * processAudioFile() 메서드의 반환값으로 사용
-     * 파일 처리 후 생성된 URL, 추출된 duration, 파일 크기를 포함
-     */
-    private static class FileProcessResult {
-        /** 생성된 파일 접근 URL */
-        final String fileUrl;
-        /** 추출된 음성 길이 (초 단위) */
-        final Integer duration;
-        /** 파일 크기 (바이트) */
-        final Integer fileSize;
-
-        /**
-         * 파일 처리 결과 생성자
-         *
-         * @param fileUrl 파일 접근 URL
-         * @param duration 음성 길이 (초)
-         * @param fileSize 파일 크기 (바이트)
-         */
-        FileProcessResult(String fileUrl, Integer duration, Integer fileSize) {
-            this.fileUrl = fileUrl;
-            this.duration = duration;
-            this.fileSize = fileSize;
-        }
-    }
 }
-=======
-}
->>>>>>> develop
