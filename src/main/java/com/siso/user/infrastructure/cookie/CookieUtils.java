@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.SerializationUtils;
 
 import java.io.Serializable;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
 
@@ -45,12 +48,13 @@ public class CookieUtils {
     }
 
     public static String serialize(Object object) {
-        return Base64.getUrlEncoder()
-                .encodeToString(SerializationUtils.serialize((Serializable) object));
+        return URLEncoder.encode(
+                Base64.getUrlEncoder().encodeToString(SerializationUtils.serialize((Serializable) object)),
+                StandardCharsets.UTF_8);
     }
 
     public static <T> T deserialize(Cookie cookie, Class<T> cls) {
         return cls.cast(SerializationUtils.deserialize(
-                Base64.getUrlDecoder().decode(cookie.getValue())));
+                Base64.getUrlDecoder().decode(URLDecoder.decode(cookie.getValue(), StandardCharsets.UTF_8))));
     }
 }
