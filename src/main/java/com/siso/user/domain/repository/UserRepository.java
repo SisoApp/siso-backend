@@ -14,9 +14,5 @@ public interface UserRepository extends Repository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.isBlock = false AND u.isDeleted = false")
     Optional<User> findById(@Param("id") Long id);
 
-//     //임시로 만듬 이름과 메소드는 유지해야함
-//     boolean existsById(Long userId);
-
-//     //임시로 만듬 이름과 메소드는 유지해야함
-//     Optional<User> findById(Long userId);  
+     boolean existsById(Long userId);
 }
