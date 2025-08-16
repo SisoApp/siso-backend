@@ -14,7 +14,6 @@ import java.util.List;
 @Entity
 @Table(name = "profiles")
 public class UserProfile {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -41,11 +40,6 @@ public class UserProfile {
     @Column(name = "contact")
     private PreferenceContact preferenceContact;
 
-    @Builder.Default
-    @OneToMany(cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_profile_id")
-    private List<Image> profileImages = new ArrayList<>();
-
     @Enumerated(EnumType.STRING)
     private Location location;
 
@@ -56,13 +50,13 @@ public class UserProfile {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public void addImage(Image image) {
-        if (image != null) this.profileImages.add(image);
-    }
-
-    public void replaceImages(List<Image> images) {
-        this.profileImages.clear();
-        if (images != null) this.profileImages.addAll(images);
-
+    public void updateProfile(DrinkingCapacity drinking_capacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location) {
+        this.drinking_capacity = drinking_capacity;
+        this.religion = religion;
+        this.smoke = smoke;
+        this.nickname = nickname;
+        this.introduce = introduce;
+        this.preferenceContact = preferenceContact;
+        this.location = location;
     }
 }

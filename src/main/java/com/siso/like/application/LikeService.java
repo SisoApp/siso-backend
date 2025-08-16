@@ -41,7 +41,7 @@ public class LikeService {
                         .isLiked(matchingRequestDto.isLiked())
                         .build());
 
-        like.updateIsLiked(like.isLiked());
+        like.updateIsLiked(matchingRequestDto.isLiked());
         likeRepository.save(like);
 
         boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(sender, receiver);
