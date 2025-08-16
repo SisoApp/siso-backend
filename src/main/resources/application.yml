@@ -15,7 +15,7 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-# ===== 음성 샘플 관련 설정 =====
+# ===== 음성 샘플 관련 설정 =====$
 app:
   voice-sample:
     upload-dir: uploads/voice-samples        # 파일 저장 디렉토리
