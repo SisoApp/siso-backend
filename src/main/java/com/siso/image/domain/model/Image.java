@@ -23,8 +23,7 @@ public class Image extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // @Column(name = "user_id", nullable = false) // 로그인일때 가능 - 원래 설정
-    @Column(name = "user_id", nullable = true, columnDefinition = "BIGINT DEFAULT 1") // 테스트용으로 nullable 허용하고 기본값 설정
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(name = "path", length = 255)

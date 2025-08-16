@@ -14,6 +14,8 @@ import java.util.List;
  * 
  * application.yml의 app.voice-sample 설정을 타입 안전하게 바인딩
  * 
+ * VoiceSampleProperties = "비즈니스 설정 관리자"
+ * 
  * @author SISO Team
  * @version 1.0
  * @since 2025-01-01
@@ -51,7 +53,13 @@ public class VoiceSampleProperties {
      * 최대 음성 길이 (초 단위) - 녹음 시간 제한
      */
     @Min(value = 1, message = "최대 음성 길이는 1초 이상이어야 합니다")
-    private int maxDuration = 30; // 30초 녹음 제한
+    private int maxDuration = 20; // 20초 녹음 제한
+    
+    /**
+     * 사용자당 최대 음성 샘플 개수
+     */
+    @Min(value = 1, message = "최대 음성 샘플 개수는 1개 이상이어야 합니다")
+    private int maxVoiceSamplesPerUser = 1; // 사용자당 1개 제한
     
     /**
      * 파일 크기를 MB 단위로 반환

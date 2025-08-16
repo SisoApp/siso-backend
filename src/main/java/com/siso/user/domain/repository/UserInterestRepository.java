@@ -1,6 +1,5 @@
 package com.siso.user.domain.repository;
 
-import com.siso.user.domain.model.Interest;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserInterest;
 import org.springframework.data.jpa.repository.JpaRepository;

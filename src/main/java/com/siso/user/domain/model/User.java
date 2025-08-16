@@ -1,6 +1,7 @@
 package com.siso.user.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import com.siso.common.domain.BaseTime;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

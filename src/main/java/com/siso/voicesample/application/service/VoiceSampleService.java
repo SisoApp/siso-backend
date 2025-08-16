@@ -1,10 +1,12 @@
 package com.siso.voicesample.application.service;
 
 import com.siso.voicesample.domain.model.VoiceSample;
+import com.siso.voicesample.domain.model.VoiceFileProcessResult;
 import com.siso.voicesample.domain.repository.VoiceSampleRepository;
 import com.siso.voicesample.dto.VoiceSampleRequestDto;
 import com.siso.voicesample.dto.VoiceSampleResponseDto;
 import com.siso.voicesample.infrastructure.properties.VoiceSampleProperties;
+import com.siso.common.util.UserValidationUtil;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +38,13 @@ import ws.schild.jave.info.MultimediaInfo;
  * - 음성 파일 업로드 및 메타데이터 추출 (duration 자동 계산)
  * - 음성 샘플 CRUD 작업 (생성, 조회, 수정, 삭제)
  * - 파일 저장소 관리 (로컬 파일 시스템)
+<<<<<<< HEAD
  * - 재생 시간 제한 (30초) 처리
  *
+=======
+ * - 재생 시간 제한 (20초) 처리
+ * 
+>>>>>>> develop
  * 지원 파일 형식: MP3, WAV, M4A, AAC, OGG, WEBM, FLAC
  * 파일 크기 제한: 50MB
  *
@@ -54,7 +61,14 @@ public class VoiceSampleService {
     // === 의존성 주입 ===
     /** 음성 샘플 데이터 접근 레이어 */
     private final VoiceSampleRepository voiceSampleRepository;
+<<<<<<< HEAD
 
+=======
+    
+    /** 사용자 검증 유틸리티 */
+    private final UserValidationUtil userValidationUtil;
+    
+>>>>>>> develop
     /** 음성 샘플 관련 설정 프로퍼티 */
     private final VoiceSampleProperties voiceSampleProperties;
 
@@ -71,24 +85,42 @@ public class VoiceSampleService {
      *
      * @param file 업로드할 음성 파일 (MultipartFile)
      * @param request 사용자 ID 등 추가 정보
-     * @return 저장된 음성 샘플 정보 (실제 duration + 재생 제한 30초)
+     * @return 저장된 음성 샘플 정보 (실제 duration + 재생 제한 20초)
      * @throws IllegalArgumentException 파일 검증 실패 시
      * @throws RuntimeException 파일 저장 실패 시
      */
     @Transactional
     public VoiceSampleResponseDto uploadVoiceSample(MultipartFile file, VoiceSampleRequestDto request) {
+<<<<<<< HEAD
         // 통합 파일 처리: 검증 → 저장 → duration 추출
         FileProcessResult result = processAudioFile(file);
 
         log.info("음성 파일 길이: {}초", result.duration);
 
+=======
+        Long userId = request.getUserId();
+        
+        // 사용자 존재 여부 확인
+        userValidationUtil.validateUserExists(userId);
+        
+        // 사용자별 음성 샘플 개수 제한 확인 (최대 1개)
+        long currentVoiceSampleCount = voiceSampleRepository.countByUserId(userId);
+        if (currentVoiceSampleCount >= voiceSampleProperties.getMaxVoiceSamplesPerUser()) {
+            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_MAX_COUNT_EXCEEDED);
+        }
+        
+        // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
+        VoiceFileProcessResult result = processAudioFile(file, userId);
+        
+        log.info("음성 파일 길이: {}초", result.getDuration());
+        
+>>>>>>> develop
         // 엔티티 생성 및 저장
-        Long userId = request.getUserId() != null ? request.getUserId() : 1L; // 테스트용 기본값
         VoiceSample voiceSample = VoiceSample.builder()
                 .userId(userId)
-                .url(result.fileUrl)
-                .duration(result.duration)    // 실제 파일 길이
-                .fileSize(result.fileSize)
+                .url(result.getFileUrl())
+                .duration(result.getDuration())    // 실제 파일 길이
+                .fileSize(result.getFileSize())
                 .build();
 
         VoiceSample savedVoiceSample = voiceSampleRepository.save(voiceSample);
@@ -141,16 +173,29 @@ public class VoiceSampleService {
      */
     @Transactional
     public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
+        Long userId = request.getUserId();
+        
+        // 사용자 존재 여부 확인
+        userValidationUtil.validateUserExists(userId);
+        
         // 기존 음성 샘플 조회
         VoiceSample existingVoiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+<<<<<<< HEAD
 
+=======
+        
+        // 음성 샘플 소유자 확인
+        userValidationUtil.validateUserOwnership(existingVoiceSample.getUserId(), userId);
+        
+>>>>>>> develop
         // 새 파일이 제공된 경우에만 파일 교체
         String newFileUrl = existingVoiceSample.getUrl();
         Integer newFileSize = existingVoiceSample.getFileSize();
         Integer newDuration = existingVoiceSample.getDuration();
 
         if (file != null && !file.isEmpty()) {
+<<<<<<< HEAD
             // 기존 파일 삭제 (실패해도 계속 진행)
             deleteAudioFile(existingVoiceSample.getUrl());
 
@@ -167,6 +212,23 @@ public class VoiceSampleService {
         // userId 처리 (새 값이 있으면 사용, 없으면 기존값 유지)
         Long userId = request.getUserId() != null ? request.getUserId() : existingVoiceSample.getUserId();
 
+=======
+            // 기존 파일 삭제 (실패해도 계속 진행) - 사용자별 폴더
+            deleteAudioFile(existingVoiceSample.getUrl(), userId);
+            
+            // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
+            VoiceFileProcessResult result = processAudioFile(file, userId);
+            
+            newFileUrl = result.getFileUrl();
+            newFileSize = result.getFileSize();
+            newDuration = result.getDuration();
+            
+            log.info("파일 교체 완료 - 새 파일 길이: {}초", newDuration);
+        }
+        
+        // userId는 이미 위에서 request.getUserId()로 가져왔고 유효성 검증도 완료
+        
+>>>>>>> develop
         // 기존 엔티티 업데이트 (BaseTime의 updatedAt 자동 갱신)
         existingVoiceSample.setUserId(userId);
         existingVoiceSample.setUrl(newFileUrl);
@@ -195,10 +257,17 @@ public class VoiceSampleService {
     public void deleteVoiceSample(Long id) {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+<<<<<<< HEAD
 
         // 파일 삭제 (실패해도 DB 삭제는 진행)
         deleteAudioFile(voiceSample.getUrl());
 
+=======
+        
+        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
+        deleteAudioFile(voiceSample.getUrl(), voiceSample.getUserId());
+        
+>>>>>>> develop
         // 데이터베이스에서 레코드 삭제
         voiceSampleRepository.delete(voiceSample);
         log.info("음성 샘플 삭제 완료 - ID: {}", id);
@@ -216,11 +285,12 @@ public class VoiceSampleService {
      * 4. 결과 반환 (URL, duration, fileSize)
      *
      * @param file 처리할 음성 파일
+     * @param userId 사용자 ID (폴더 구조에 사용)
      * @return 파일 처리 결과 (URL, duration, fileSize)
      * @throws IllegalArgumentException 파일 검증 실패 시
      * @throws RuntimeException 파일 저장 실패 시
      */
-    private FileProcessResult processAudioFile(MultipartFile file) {
+    private VoiceFileProcessResult processAudioFile(MultipartFile file, Long userId) {
         try {
             // === 1. 파일 검증 ===
             if (file.isEmpty()) {
@@ -247,27 +317,52 @@ public class VoiceSampleService {
             }
 
             // === 2. 파일 저장 ===
-            // 업로드 디렉토리 생성
-            Path uploadPath = Paths.get(voiceSampleProperties.getUploadDir());
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+            // 사용자별 업로드 디렉토리 생성
+            Path userUploadPath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(userId.toString());
+            if (!Files.exists(userUploadPath)) {
+                Files.createDirectories(userUploadPath);
             }
 
             // 고유 파일명 생성 (타임스탬프 + UUID + 확장자)
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
             String uniqueFileName = timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
+<<<<<<< HEAD
 
             // 파일 저장
             Path filePath = uploadPath.resolve(uniqueFileName);
+=======
+            
+            // 사용자별 폴더에 파일 저장
+            Path filePath = userUploadPath.resolve(uniqueFileName);
+>>>>>>> develop
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // === 3. Duration 자동 추출 ===
             Integer duration = extractDurationFromFile(filePath);
+<<<<<<< HEAD
 
             // === 4. 결과 반환 ===
             String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
             return new FileProcessResult(fileUrl, duration, (int) file.getSize());
 
+=======
+            
+            // === 3.5. Duration 제한 검증 (20초) ===
+            if (duration > voiceSampleProperties.getMaxDuration()) {
+                // 파일 삭제 후 예외 발생
+                try {
+                    Files.deleteIfExists(filePath);
+                } catch (IOException deleteException) {
+                    log.warn("임시 파일 삭제 실패: {}", deleteException.getMessage());
+                }
+                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_TOO_LONG);
+            }
+            
+            // === 4. 결과 반환 ===
+            String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
+            return VoiceFileProcessResult.of(fileUrl, duration, (int) file.getSize());
+            
+>>>>>>> develop
         } catch (IOException e) {
             log.error("파일 처리 중 오류 발생: {}", e.getMessage());
             throw new ExpectedException(ErrorCode.VOICE_SAMPLE_UPLOAD_FAILED);
@@ -345,14 +440,21 @@ public class VoiceSampleService {
      * 실패해도 예외를 던지지 않고 경고 로그만 남김
      *
      * @param fileUrl 삭제할 파일의 URL (예: http://localhost:8080/api/voice-samples/files/20250101_120000_abcd1234.mp3)
+     * @param userId 사용자 ID (폴더 구조에 사용)
      */
-    private void deleteAudioFile(String fileUrl) {
+    private void deleteAudioFile(String fileUrl, Long userId) {
         try {
             if (fileUrl != null && fileUrl.contains("/files/")) {
                 // URL에서 파일명 추출
                 String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+<<<<<<< HEAD
                 Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(fileName);
 
+=======
+                // 사용자별 폴더 경로 생성
+                Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(userId.toString()).resolve(fileName);
+                
+>>>>>>> develop
                 // 파일 존재 시 삭제
                 boolean deleted = Files.deleteIfExists(filePath);
                 if (deleted) {
@@ -365,6 +467,7 @@ public class VoiceSampleService {
             log.warn("파일 삭제 실패: {}", e.getMessage());
         }
     }
+<<<<<<< HEAD
 
     // ===================== 내부 데이터 클래스 =====================
 
@@ -396,3 +499,6 @@ public class VoiceSampleService {
         }
     }
 }
+=======
+}
+>>>>>>> develop

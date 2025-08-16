@@ -11,15 +11,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class UserInterestService {
     private final UserInterestRepository userInterestRepository;
     private final UserRepository userRepository;
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    }
 
     // 사용자의 관심사 목록 조회
     @Transactional(readOnly = true)
@@ -31,15 +36,13 @@ public class UserInterestService {
     @Transactional
     public void selectUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
+        User user = findById(userId);
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-
-        List<UserInterest> newUserInterests = new ArrayList<>();
-        for (Interest interest : interests) {
-            UserInterest userInterest = new UserInterest(user, interest);
-            user.addInterest(interest);
-            newUserInterests.add(userInterest);
-        }
+        // 중복 제거
+        Set<Interest> uniqueInterests = new HashSet<>(interests);
+        List<UserInterest> newUserInterests = uniqueInterests.stream()
+                .map(interest -> new UserInterest(user, interest))
+                .toList();
 
         userInterestRepository.saveAll(newUserInterests);
     }
@@ -49,12 +52,14 @@ public class UserInterestService {
     public void updateUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+        User user = findById(userId);
         userInterestRepository.deleteAllByUser(user);
 
-        List<UserInterest> newUserInterests = interests.stream()
+        // 중복 제거
+        Set<Interest> uniqueInterests = new HashSet<>(interests);
+        List<UserInterest> newUserInterests = uniqueInterests.stream()
                 .map(interest -> new UserInterest(user, interest))
-                .collect(Collectors.toList());
+                .toList();
 
         userInterestRepository.saveAll(newUserInterests);
     }

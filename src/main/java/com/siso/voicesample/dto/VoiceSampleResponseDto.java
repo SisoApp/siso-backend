@@ -17,7 +17,7 @@ public class VoiceSampleResponseDto {
     private Long id;
     private Long userId;
     private String url;
-    private Integer duration; // 음성 길이 (초 단위, 최대 30초)
+    private Integer duration; // 음성 길이 (초 단위, 최대 20초)
     private Integer fileSize; // 파일 크기 (바이트)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -27,7 +27,7 @@ public class VoiceSampleResponseDto {
                 .id(voiceSample.getId())
                 .userId(voiceSample.getUserId())
                 .url(voiceSample.getUrl())
-                .duration(voiceSample.getDuration()) // 음성 길이 (녹음 시 30초 제한)
+                .duration(voiceSample.getDuration()) // 음성 길이 (녹음 시 20초 제한)
                 .fileSize(voiceSample.getFileSize())
                 .createdAt(voiceSample.getCreatedAt())
                 .updatedAt(voiceSample.getUpdatedAt())

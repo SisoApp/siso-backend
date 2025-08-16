@@ -20,7 +20,7 @@ public class UserInterestController {
 
     // 사용자의 관심사 목록 조회
     @GetMapping("/list")
-    public SisoResponse<List<UserInterestResponseDto>> getUserInterests(@PathVariable Long userId) {
+    public SisoResponse<List<UserInterestResponseDto>> getUserInterests(@PathVariable(name = "userId") Long userId) {
         List<UserInterestResponseDto> interests = userInterestService.getUserInterestByUserId(userId)
                 .stream()
                 .map(userInterest -> new UserInterestResponseDto(userInterest.getInterest()))
@@ -31,7 +31,7 @@ public class UserInterestController {
 
     // 사용자의 관심사 선택
     @PostMapping("/select")
-    public SisoResponse<Void> selectUserInterests(@PathVariable Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
+    public SisoResponse<Void> selectUserInterests(@PathVariable(name = "userId") Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
                 .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
                 .collect(Collectors.toList());
@@ -42,7 +42,7 @@ public class UserInterestController {
 
     // 사용자의 관심사 수정
     @PatchMapping("/update")
-    public SisoResponse<Void> updateUserInterests(@PathVariable Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
+    public SisoResponse<Void> updateUserInterests(@PathVariable(name = "userId") Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
                 .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
                 .collect(Collectors.toList());
