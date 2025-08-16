@@ -2,6 +2,7 @@ package com.siso.user.infrastructure.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siso.user.dto.response.TokenResponseDto;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -21,7 +22,7 @@ import java.io.IOException;
  */
 public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private final JwtTokenUtil jwtTokenUtil;
-//    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     /**
      * 필터가 처리할 경로와 HTTP 메서드를 지정하고, 필요한 의존성을 주입합니다.
@@ -41,7 +42,7 @@ public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProc
         });
         this.setAuthenticationManager(authenticationManager);
         this.jwtTokenUtil = jwtTokenUtil;
-//        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -56,20 +57,29 @@ public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProc
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException {
         final String refreshTokenHeader = request.getHeader("Authorization");
-        String refreshToken = null;
 
         if (StringUtils.hasText(refreshTokenHeader) && refreshTokenHeader.startsWith("Bearer ")) {
-            refreshToken = refreshTokenHeader.substring(7);
+            String refreshToken = refreshTokenHeader.substring(7);
+
+            // 리프레시 토큰에서 전화번호 추출 (validateToken 로직에 따라 예외 처리 필요)
+            String phoneNumber;
+            try {
+                phoneNumber = jwtTokenUtil.extractPhoneNumber(refreshToken);
+            } catch (ExpiredJwtException e) {
+                // 만료된 토큰의 경우, 인증 실패 예외를 던져 EntryPoint에서 처리
+                throw new RefreshTokenExpiredException("리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
+            } catch (Exception e) {
+                // 서명 오류 등 기타 예외 발생 시
+                throw new BadCredentialsException("유효하지 않은 리프레시 토큰입니다.");
+            }
+
+            // 올바른 principal과 credentials로 TokenAuthentication 객체 생성
+            TokenAuthentication authRequest = new TokenAuthentication(phoneNumber, refreshToken);
+            return this.getAuthenticationManager().authenticate(authRequest);
         }
 
-        if (refreshToken == null || !jwtTokenUtil.validateToken(refreshToken)) {
-            // 유효하지 않거나 제공되지 않은 토큰에 대해 BadCredentialsException 발생
-            throw new BadCredentialsException("Refresh token is invalid or not provided.");
-        }
-
-        // TokenAuthentication 객체를 생성하여 AuthenticationManager에 전달
-        TokenAuthentication authRequest = new TokenAuthentication(refreshToken, null);
-        return this.getAuthenticationManager().authenticate(authRequest);
+        // 헤더에 토큰이 없는 경우
+        throw new BadCredentialsException("리프레시 토큰이 제공되지 않았습니다.");
     }
 
 //    /**

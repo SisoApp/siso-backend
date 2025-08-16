@@ -1,6 +1,7 @@
 package com.siso.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.siso.user.infrastructure.cookie.HttpCookieOAuth2AuthorizationRequestRepository;
 import com.siso.user.infrastructure.jwt.*;
 import com.siso.user.infrastructure.oauth2.MyOAuth2UserService;
 import com.siso.user.infrastructure.oauth2.OAuth2AuthenticationFailureHandler;
@@ -32,58 +33,52 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final JwtRequestFilter jwtRequestFilter;
     private final RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
+    private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final JwtTokenUtil jwtTokenUtil;
     private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .headers(x -> x.frameOptions(y -> y.disable()))
-            .authorizeHttpRequests(auth -> auth
-                // 공개적으로 접근 가능한 엔드포인트
-                .requestMatchers(
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/oauth2/**",
-                        "/login/oauth2/**", // OAuth2 로그인 콜백 경로
-                        "/api/users/**",
-                        "/",
-                        "/api/auth/refresh" // 토큰 재발급 경로
-                ).permitAll()
-                // 특정 권한이 필요한 엔드포인트 (필요시 추가)
-                .requestMatchers(("/api/users/test")).hasAuthority("ROLE_USER")
-                // 위에서 허용된 경로를 제외한 모든 요청은 인증 필요
-                .anyRequest().authenticated()
-            )
-            .oauth2Login(oauth2 -> oauth2
-                    .authorizationEndpoint(endpoint -> endpoint
-                            .baseUri("/oauth2/authorization") // 소셜 로그인 시작 URL
-                    )
-                    .redirectionEndpoint(endpoint -> endpoint
-                            .baseUri("/login/oauth2/code/*") // 리디렉션 URL
-                    )
-                    .userInfoEndpoint(endpoint -> endpoint
-                            .userService(myOAuth2UserService) // 사용자 정보 처리 서비스
-                    )
-                    .successHandler(oAuth2LoginSuccessHandler) // 로그인 성공 시 핸들러
-                    .failureHandler(oauth2AuthenticationFailureHandler()) // 로그인 실패 시 핸들러
-            )
-            .logout(logout -> logout
-                    .logoutUrl("/api/users/logout")
-                    .logoutSuccessHandler((request, response, authentication) -> {
-                        response.setStatus(HttpServletResponse.SC_OK);
-                        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                        objectMapper.writeValue(response.getWriter(), Map.of("message", "로그아웃 성공"));
-                    })
-            )
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .exceptionHandling(exception -> exception
-                    .authenticationEntryPoint(customAuthenticationEntryPoint) // 인증 실패 시 핸들러
-            );
+                .csrf(csrf -> csrf.disable())
+                .headers(x -> x.frameOptions(y -> y.disable()))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/oauth2/**",
+                                "/login/oauth2/**",
+                                "/api/users/**",
+                                "/",
+                                "/api/auth/refresh"
+                        ).permitAll()
+                        .requestMatchers("/api/users/test").hasAuthority("ROLE_USER")
+                        .anyRequest().authenticated()
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(endpoint -> endpoint
+                                .baseUri("/oauth2/authorization")
+                                .authorizationRequestRepository(httpCookieOAuth2AuthorizationRequestRepository)
+                        )
+                        .redirectionEndpoint(endpoint -> endpoint
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                        .userInfoEndpoint(endpoint -> endpoint
+                                .userService(myOAuth2UserService)
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureHandler(oauth2AuthenticationFailureHandler())
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                );
 
         // JWT 필터 추가: 요청 헤더에서 JWT를 검증
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

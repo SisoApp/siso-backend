@@ -8,6 +8,7 @@ import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,10 +18,10 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/info")
-    public SisoResponse<UserResponseDto> getUserInfo(Authentication authentication) {
+    public SisoResponse<UserResponseDto> getUserInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String phoneNumber = authentication.getName();
         UserResponseDto userDto = userService.getUserInfo(phoneNumber);
-
         return SisoResponse.success(userDto);
     }
 
@@ -37,14 +38,6 @@ public class UserController {
     public SisoResponse<Void> deleteUser(Authentication authentication) {
         String phoneNumber = authentication.getName();
         userService.deleteUser(phoneNumber);
-        return SisoResponse.success(null);
-    }
-
-    // 로그아웃
-    @PostMapping("/logout")
-    public SisoResponse<Void> logout(Authentication authentication, HttpServletResponse httpServletResponse) {
-        String phoneNumber = authentication.getName();
-        userService.logout(phoneNumber);
         return SisoResponse.success(null);
     }
 }

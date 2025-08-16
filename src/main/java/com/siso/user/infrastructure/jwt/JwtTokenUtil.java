@@ -44,13 +44,14 @@ public class JwtTokenUtil {
     }
 
     // 토큰에서 만료 시간 추출
-    public void extractExpiration(String token) {
-        extractClaim(token, Claims::getExpiration);
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     // 토큰 만료 여부 확인
-    public void isTokenExpired(String token) {
-        extractExpiration(token);
+    public Boolean isTokenExpired(String token) {
+        final Date expiration = extractExpiration(token);
+        return expiration.before(new Date());
     }
 
     // 액세스 토큰 생성 (전화번호 포함)
@@ -69,7 +70,7 @@ public class JwtTokenUtil {
     }
 
     // 토큰 생성 공통 로직
-    private String createToken(Map<String, Object> claims, String subject, long ttl) {
+    public String createToken(Map<String, Object> claims, String subject, long ttl) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
