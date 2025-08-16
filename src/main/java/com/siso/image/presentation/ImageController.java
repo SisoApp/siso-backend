@@ -75,34 +75,34 @@ public class ImageController {
     /**
      * 이미지 단일 조회 API
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<ImageResponseDto> getImage(@PathVariable(name = "id") Long id) {
+    @GetMapping("/{imageId}")
+    public ResponseEntity<ImageResponseDto> getImage(@PathVariable(name = "imageId") Long imageId) {
         
-        ImageResponseDto response = imageService.getImage(id);
+        ImageResponseDto response = imageService.getImage(imageId);
         return ResponseEntity.ok(response);
     }
 
     /**
      * 이미지 수정 API
      */
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImageResponseDto> updateImage(
-            @PathVariable(name = "id") Long id,
+            @PathVariable(name = "imageId") Long imageId,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @RequestParam("userId") @Valid Long userId) {
         
         ImageRequestDto request = new ImageRequestDto(userId);
-        ImageResponseDto response = imageService.updateImage(id, file, request);
+        ImageResponseDto response = imageService.updateImage(imageId, file, request);
         return ResponseEntity.ok(response);
     }
     
     /**
      * 이미지 삭제 API
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteImage(@PathVariable(name = "id") Long id) {
+    @DeleteMapping("/{imageId}")
+    public ResponseEntity<Void> deleteImage(@PathVariable(name = "imageId") Long imageId) {
         
-        imageService.deleteImage(id);
+        imageService.deleteImage(imageId);
         return ResponseEntity.noContent().build();
     }
     
