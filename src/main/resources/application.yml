@@ -20,8 +20,8 @@ spring:
       client:
         registration:
           kakao:
-            client-id: 96171e749ecdb7417189ae5b534534d0
-            #client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
+            client-id: bacd247c935658de63e92542078bc4f4
+            client-secret: 5UVKaRfusNYJYu2H6XLT3uKMmY4Vz5Xo
             #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
             scope: phone_number
             client-name: Kakao
@@ -35,6 +35,14 @@ spring:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
+
+#server:
+#  port: 8443
+#  ssl:
+#    key-store: classpath:keystore.p12
+#    key-store-password: 12345678
+#    key-store-type: PKCS12
+#    key-alias: siso-api-key
 
 # ===== 음성 샘플 관련 설정 =====
 app:
