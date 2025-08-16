@@ -16,7 +16,16 @@ public class UserSignUpService {
         return userRepository.findActiveUserByPhoneNumberAndProvider(phoneNumber, provider)
                 // 2. 사용자가 없으면 새로 생성하고 저장합니다.
                 .orElseGet(() -> {
-                    User newUser = new User(provider, phoneNumber);
+                    User newUser = User.builder()
+                            .provider(provider)
+                            .phoneNumber(phoneNumber)
+                            .isOnline(true)
+                            .notificationSubscribed(false)
+                            .isBlock(false)
+                            .isDeleted(false)
+                            .refreshToken(null)
+                            .deletedAt(null)
+                            .build();
                     return userRepository.save(newUser);
                 });
     }

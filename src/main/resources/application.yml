@@ -20,8 +20,8 @@ spring:
       client:
         registration:
           kakao:
-            client-id: bacd247c935658de63e92542078bc4f4
-            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
+            client-id: 96171e749ecdb7417189ae5b534534d0
+            #client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
             #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
             scope: phone_number
             client-name: Kakao

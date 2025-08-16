@@ -29,7 +29,7 @@ public class User extends BaseTime {
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
-    @Column(name = "refresh_token", nullable = false)
+    @Column(name = "refresh_token")
     private String refreshToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -48,7 +48,7 @@ public class User extends BaseTime {
     @Column(name = "is_deleted", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean isDeleted = false;
 
-    @Column(name = "deleted_at", nullable = false)
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     // 양방향 연관 관계 설정
@@ -57,16 +57,17 @@ public class User extends BaseTime {
         this.userInterests.add(userInterest);
     }
 
-//    @Builder
-//    public User(Provider provider, String phoneNumber, String refreshToken, Boolean isOnline, Boolean isBlock, Boolean isDeleted, LocalDateTime deletedAt) {
-//        this.provider = provider;
-//        this.phoneNumber = phoneNumber;
-//        this.refreshToken = refreshToken;
-//        this.isOnline = isOnline;
-//        this.isBlock = isBlock;
-//        this.isDeleted = isDeleted;
-//        this.deletedAt = deletedAt;
-//    }
+    @Builder
+    public User(Provider provider, String phoneNumber, String refreshToken, boolean isOnline, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+        this.provider = provider;
+        this.phoneNumber = phoneNumber;
+        this.refreshToken = refreshToken;
+        this.isOnline = isOnline;
+        this.notificationSubscribed = notificationSubscribed;
+        this.isBlock = isBlock;
+        this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt;
+    }
 
     @Builder
     public User(Provider provider, String phoneNumber) {

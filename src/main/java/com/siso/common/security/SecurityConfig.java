@@ -3,6 +3,7 @@ package com.siso.common.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.siso.user.infrastructure.jwt.*;
 import com.siso.user.infrastructure.oauth2.MyOAuth2UserService;
+import com.siso.user.infrastructure.oauth2.OAuth2AuthenticationFailureHandler;
 import com.siso.user.infrastructure.oauth2.OAuth2LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
@@ -66,6 +68,7 @@ public class SecurityConfig {
                             .userService(myOAuth2UserService) // 사용자 정보 처리 서비스
                     )
                     .successHandler(oAuth2LoginSuccessHandler) // 로그인 성공 시 핸들러
+                    .failureHandler(oauth2AuthenticationFailureHandler()) // 로그인 실패 시 핸들러
             )
             .logout(logout -> logout
                     .logoutUrl("/api/users/logout")
@@ -99,6 +102,12 @@ public class SecurityConfig {
         SimpleUrlLogoutSuccessHandler handler = new SimpleUrlLogoutSuccessHandler();
         handler.setDefaultTargetUrl("/"); // 로그아웃 성공 후 리다이렉트될 페이지
         return handler;
+    }
+
+    // OAuth2 로그인 실패 핸들러 Bean 등록
+    @Bean
+    public AuthenticationFailureHandler oauth2AuthenticationFailureHandler() {
+        return new OAuth2AuthenticationFailureHandler();
     }
 
     @Bean
