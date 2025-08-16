@@ -1,15 +1,20 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/sisodb}
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:13306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000}
     username: ${DB_USERNAME:siso}
-    password: ${DB_PASSWORD:siso}
+    password: ${DB_PASSWORD:1234}
+    # driver-class-name: com.mysql.cj.jdbc.Driver   # (원하면 명시)
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 15000
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    database-platform: org.hibernate.dialect.MySQL8Dialect   # 팀 표준이면 명시 추천
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: update # 테스트용으로 임시 변경 - 로그인일때 가능하면 update로 되돌리기
+      ddl-auto: update     # 개발용
 
   servlet:
     multipart:
@@ -32,7 +37,7 @@ app:
     max-duration: 20                         # 최대 녹음 시간 (초 단위)
     max-voice-samples-per-user: 1            # 사용자당 최대 음성 샘플 개수
 
-# ===== 이미지 관련 설정 =====
+  # ===== 이미지 관련 설정 =====
   image:
     upload-dir: uploads/images               # 파일 저장 디렉토리
     base-url: http://localhost:8080          # 파일 접근 기본 URL
