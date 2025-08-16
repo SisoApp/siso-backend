@@ -29,7 +29,8 @@ app:
       - ogg
       - webm
       - flac
-    max-duration: 30                         # 최대 녹음 시간 (초 단위)
+    max-duration: 20                         # 최대 녹음 시간 (초 단위)
+    max-voice-samples-per-user: 1            # 사용자당 최대 음성 샘플 개수
 
 # ===== 이미지 관련 설정 =====
   image:
@@ -43,3 +44,11 @@ app:
       - gif
       - webp
     max-images-per-user: 5                   # 사용자당 최대 이미지 개수
+
+    springdoc:
+      api-docs:
+        enabled: true
+      swagger-ui:
+        path: /swagger-ui
+        operationsSorter: method   # (선택) 메서드명 정렬
+        tagsSorter: alpha          # (선택) 태그 알파벳 정렬
