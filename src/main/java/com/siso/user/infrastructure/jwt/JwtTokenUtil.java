@@ -1,0 +1,102 @@
+package com.siso.user.infrastructure.jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Component
+@RequiredArgsConstructor
+public class JwtTokenUtil {
+    private static final String SECRET_KEY = "LikeLionRocketCorpsInternship12SeniorBlindDate_siso";
+    private static final SecretKey SECRET_KEY_OBJECT = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+
+    // 토큰 만료 시간
+    public static final long ACCESS_TOKEN_TTL = 1000 * 60 * 60 * 2;       // 액세스 토큰 2시간
+    public static final long REFRESH_TOKEN_TTL = 1000 * 60 * 60 * 24 * 14; // 리프레시 토큰 2주
+
+    // ----------------------
+    // Claims 추출
+    // ----------------------
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY_OBJECT)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    // 이메일 추출
+    public String extractEmail(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    public Boolean isTokenExpired(String token) {
+        final Date expiration = extractExpiration(token);
+        return expiration.before(new Date());
+    }
+
+    // refreshToken에서 email(subject) 추출
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY_OBJECT)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject(); // JWT subject에 email 저장했다고 가정
+    }
+
+    // ----------------------
+    // 토큰 생성
+    // ----------------------
+    public String generateAccessToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email, ACCESS_TOKEN_TTL);
+    }
+
+    public String generateRefreshToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email, REFRESH_TOKEN_TTL);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, long ttl) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(subject)       // 이메일을 subject로 설정
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + ttl))
+                .signWith(SECRET_KEY_OBJECT, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // ----------------------
+    // 유효성 검증
+    // ----------------------
+    public Boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(SECRET_KEY_OBJECT).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+}

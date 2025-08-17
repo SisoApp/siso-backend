@@ -20,7 +20,42 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-# ===== 음성 샘플 관련 설정 =====$
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: 96171e749ecdb7417189ae5b534534d0
+            redirect-uri: https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao/callback
+#            client-secret: 5UVKaRfusNYJYu2H6XLT3uKMmY4Vz5Xo
+            #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
+            scope: phone_number,account_email
+            client-name: Kakao
+            authorization-grant-type: authorization_code
+            provider: kakao
+            #            https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=bacd247c935658de63e92542078bc4f4&redirect_uri=http://siso.com/kakao
+        provider:
+          kakao:
+            user-name-attribute: kakao_account
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+
+kakao:
+  client-id: 96171e749ecdb7417189ae5b534534d0
+#  client-id:bacd247c935658de63e92542078bc4f4
+  redirect-uri: https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao/callback
+  scope: phone_number,account_email
+
+#server:
+#  port: 8443
+#  ssl:
+#    key-store: classpath:keystore.p12
+#    key-store-password: 12345678
+#    key-store-type: PKCS12
+#    key-alias: siso-api-key
+
+# ===== 음성 샘플 관련 설정 =====
 app:
   voice-sample:
     upload-dir: uploads/voice-samples        # 파일 저장 디렉토리
@@ -57,3 +92,4 @@ app:
         path: /swagger-ui
         operationsSorter: method   # (선택) 메서드명 정렬
         tagsSorter: alpha          # (선택) 태그 알파벳 정렬
+

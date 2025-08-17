@@ -23,19 +23,19 @@ import java.util.List;
 
 /**
  * 음성 샘플 관련 API를 제공하는 컨트롤러
- * 
+ *
  * 주요 기능:
  * - 음성 파일 업로드 (사용자당 최대 1개 제한)
  * - 음성 샘플 CRUD 작업 (생성, 조회, 수정, 삭제)
  * - 사용자별 음성 샘플 조회
  * - Duration 자동 추출 (최대 20초 제한)
  * - 음성 재생 뷰어 (voiceId 기반)
- * 
+ *
  * 비즈니스 규칙:
  * - 사용자당 음성 샘플 1개만 허용 (개수 제한 강화)
  * - 기존 음성이 있으면 업로드 차단
  * - 수정 시에는 기존 파일 교체만 가능
- * 
+ *
  * 보안 정책:
  * - 파일 다운로드 완전 방지 (이미지보다 더 강화)
  * - voiceId 기반 안전한 재생만 허용
@@ -47,19 +47,19 @@ import java.util.List;
 @RequestMapping("/api/voice-samples") // 기본 API 경로: /api/voice-samples
 @RequiredArgsConstructor // final 필드에 대한 생성자 자동 생성
 public class VoiceSampleController {
-    
+
     // 음성 샘플 비즈니스 로직을 처리하는 서비스
     private final VoiceSampleService voiceSampleService;
     // 음성 미디어 타입 처리 프로퍼티
     private final VoiceMediaTypeProperties voiceMediaTypeProperties;
-    
+
     /**
      * 음성 파일 업로드 API
-     * 
+     *
      * @param file 업로드할 음성 파일 (MultipartFile)
      * @param userId 사용자 ID (필수)
      * @return 업로드된 음성 샘플 정보
-     * 
+     *
      * POST /api/voice-samples/upload
      * Content-Type: multipart/form-data
      * - file: 음성 파일
@@ -69,53 +69,53 @@ public class VoiceSampleController {
     public ResponseEntity<VoiceSampleResponseDto> uploadVoiceSample(
             @RequestPart("file") MultipartFile file, // 업로드할 음성 파일
             @RequestParam("userId") @Valid Long userId) { // 사용자 ID
-        
-        // log.info("음성 파일 업로드 요청 - 사용자: {}, 파일명: {}, 크기: {} bytes", 
+
+        // log.info("음성 파일 업로드 요청 - 사용자: {}, 파일명: {}, 크기: {} bytes",
         //         userId, file.getOriginalFilename(), file.getSize());
-        
+
         // VoiceSampleRequestDto 생성
         VoiceSampleRequestDto request = new VoiceSampleRequestDto();
         request.setUserId(userId);
-        
+
         // 파일 업로드 및 데이터베이스 저장
         VoiceSampleResponseDto response = voiceSampleService.uploadVoiceSample(file, request);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * 특정 사용자의 음성 샘플 목록 조회 API
-     * 
+     *
      * @param userId 조회할 사용자 ID
      * @return 해당 사용자의 음성 샘플 목록 (최신순 정렬)
-     * 
+     *
      * GET /api/voice-samples/user/{userId}
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@PathVariable(name = "userId") Long userId) {
         // log.info("사용자 음성 샘플 목록 조회 요청 - 사용자: {}", userId);
-        
+
         // 사용자별 음성 샘플 목록 조회 (생성일 기준 내림차순)
         List<VoiceSampleResponseDto> response = voiceSampleService.getVoiceSamplesByUserId(userId);
         return ResponseEntity.ok(response);
     }
-    
+
     // /**
     //  * 음성 샘플 단일 조회 API
-    //  * 
+    //  *
     //  * @param id 조회할 음성 샘플 ID
     //  * @return 음성 샘플 상세 정보
-    //  * 
+    //  *
     //  * GET /api/voice-samples/{id}
     //  */
     // @GetMapping("/{id}")
     // public ResponseEntity<VoiceSampleResponseDto> getVoiceSample(@PathVariable Long id) {
     //     // log.info("음성 샘플 조회 요청 - ID: {}", id);
-        
+
     //     // ID로 음성 샘플 단일 조회
     //     VoiceSampleResponseDto response = voiceSampleService.getVoiceSample(id);
     //     return ResponseEntity.ok(response);
     // }
-    
+
     /**
      * 음성 샘플 수정 API (파일 교체)
      * 
@@ -140,14 +140,12 @@ public class VoiceSampleController {
         // VoiceSampleRequestDto 생성
         VoiceSampleRequestDto request = new VoiceSampleRequestDto();
         request.setUserId(userId);
-        
+
         // 음성 샘플 수정 (파일 교체 포함)
         VoiceSampleResponseDto response = voiceSampleService.updateVoiceSample(voiceId, file, request);
         return ResponseEntity.ok(response);
     }
-    
-    /**
-     * 음성 샘플 삭제 API
+
      * 
      * @param voiceId 삭제할 음성 샘플 ID
      * @return 삭제 완료 응답 (204 No Content)
@@ -162,19 +160,19 @@ public class VoiceSampleController {
         voiceSampleService.deleteVoiceSample(voiceId);
         return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
-    
+
     // ===================== 음성 뷰어 API =====================
-    
+
     /**
      * 음성 뷰어 API (다운로드 완전 방지)
-     * 
+     *
      * 음성 ID를 통해 안전하게 음성을 재생할 수 있습니다.
      * 사용자는 실제 파일명이나 경로를 알 필요 없이 voiceId만으로 음성을 들을 수 있습니다.
      * 다운로드는 절대 불가능하고 브라우저에서 재생만 가능합니다.
-     * 
+     *
      * @param voiceId 재생할 음성 샘플 ID
      * @return 음성 리소스 (재생용)
-     * 
+     *
      * GET /api/voice-samples/play/{voiceId}
      */
     @GetMapping("/play/{voiceId}")
@@ -182,22 +180,22 @@ public class VoiceSampleController {
         try {
             // 음성 샘플 ID로 음성 정보 조회
             VoiceSampleResponseDto voiceInfo = voiceSampleService.getVoiceSample(voiceId);
-            
+
             // 실제 파일명 추출 (URL에서 파일명 부분만)
             String filename = voiceMediaTypeProperties.extractFilenameFromUrl(voiceInfo.getUrl());
             if (filename == null) {
                 throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
             }
-            
+
             // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
             Path filePath = Paths.get("uploads/voice-samples").resolve(voiceInfo.getUserId().toString()).resolve(filename).normalize();
             Resource resource = new UrlResource(filePath.toUri());
-            
+
             // 파일 존재 여부 및 읽기 가능 여부 확인
             if (resource.exists() && resource.isReadable()) {
                 // Infrastructure Properties를 활용한 MediaType 결정
                 MediaType contentType = voiceMediaTypeProperties.determineContentType(filename);
-                
+
                 return ResponseEntity.ok()
                         // 다운로드 완전 방지 헤더들 (이미지보다 더 강화)
                         .header(HttpHeaders.CONTENT_DISPOSITION, "inline") // 파일명 없이 인라인 재생

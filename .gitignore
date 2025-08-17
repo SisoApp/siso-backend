@@ -44,6 +44,9 @@ logs/
 *.log
 # 민감한 설정 파일들
 src/main/resources/application-secret.yml
+
+# SSL certificate
+keystore.p12
 .env
 .env.*
 *.pem

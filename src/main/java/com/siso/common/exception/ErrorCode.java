@@ -10,12 +10,25 @@ public enum ErrorCode {
     // 사용자
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
 
-    // 매칭
-    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND,"매칭 정보가 없습니다."),
-    
+    // Refresh Token
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "DB에 리프레시 토큰이 없거나 유효하지 않습니다."),
+    REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 만료되었습니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 일치하지 않습니다."),
+
+    // OAuth2
+    OAUTH2_EMAIL_NOT_FOUND(HttpStatus.UNAUTHORIZED, "이메일 제공이 되지 않은 상태입니다."),
+    OAUTH2_PHONE_NUMBER_REQUIRED(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공 동의가 필요합니다."),
+    OAUTH2_PHONE_NUMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공이 되지 않은 상태입니다."),
+
+    // 소셜 로그인 관련 에러
+    UNSUPPORTED_SOCIAL_LOGIN(HttpStatus.BAD_REQUEST, "지원하지 않는 소셜 로그인입니다."),
+
     // 관심사
     TOO_MANY_INTERESTS(HttpStatus.NOT_FOUND, "5개를 초과 하여 선택할 수 없습니다."),
     NO_INTERESTS_SELECTED(HttpStatus.NOT_FOUND,"최소 한 개 이상 선택 해야 합니다."),
+
+    // 매칭
+    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND,"매칭 정보가 없습니다."),
   
     // 이미지
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
