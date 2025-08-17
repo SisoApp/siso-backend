@@ -1,6 +1,7 @@
 package com.siso.user.infrastructure.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -19,48 +20,64 @@ public class JwtTokenUtil {
     private static final String SECRET_KEY = "LikeLionRocketCorpsInternship12SeniorBlindDate_siso";
     private static final SecretKey SECRET_KEY_OBJECT = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
-
-    public static final long ACCESS_TOKEN_TTL = 1000 * 60 * 60 * 2; // 액세스 토큰 2시간
+    // 토큰 만료 시간
+    public static final long ACCESS_TOKEN_TTL = 1000 * 60 * 60 * 2;       // 액세스 토큰 2시간
     public static final long REFRESH_TOKEN_TTL = 1000 * 60 * 60 * 24 * 14; // 리프레시 토큰 2주
 
-    // 토큰에서 모든 Claims 추출
+    // ----------------------
+    // Claims 추출
+    // ----------------------
     public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(SECRET_KEY_OBJECT)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
     }
 
-    // 특정 Claim 추출
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // 토큰에서 사용자 식별자(전화번호) 추출
-    public String extractPhoneNumber(String token) {
+    // 이메일 추출
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 토큰에서 만료 시간 추출
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // 토큰 만료 여부 확인
     public Boolean isTokenExpired(String token) {
         final Date expiration = extractExpiration(token);
         return expiration.before(new Date());
     }
 
-    // 액세스 토큰 생성 (전화번호 포함)
-    public String generateAccessToken(String phoneNumber) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, phoneNumber, ACCESS_TOKEN_TTL);
+    // refreshToken에서 email(subject) 추출
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY_OBJECT)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getSubject(); // JWT subject에 email 저장했다고 가정
     }
 
-    // 리프레시 토큰 생성 (고유 식별자만 포함)
+    // ----------------------
+    // 토큰 생성
+    // ----------------------
+    public String generateAccessToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email, ACCESS_TOKEN_TTL);
+    }
+
+    public String generateRefreshToken(String email) {
+        Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, email, REFRESH_TOKEN_TTL);
+    }
+
     public String generateRefreshToken() {
         return Jwts.builder()
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -69,23 +86,24 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    // 토큰 생성 공통 로직
-    public String createToken(Map<String, Object> claims, String subject, long ttl) {
+    private String createToken(Map<String, Object> claims, String subject, long ttl) {
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(subject)
+                .setSubject(subject)       // 이메일을 subject로 설정
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + ttl))
                 .signWith(SECRET_KEY_OBJECT, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 토큰 유효성 검사 (서명 및 만료 여부)
+    // ----------------------
+    // 유효성 검증
+    // ----------------------
     public Boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(SECRET_KEY_OBJECT).build().parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }

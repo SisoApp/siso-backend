@@ -16,6 +16,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 일치하지 않습니다."),
 
     // OAuth2
+    OAUTH2_EMAIL_NOT_FOUND(HttpStatus.UNAUTHORIZED, "이메일 제공이 되지 않은 상태입니다."),
     OAUTH2_PHONE_NUMBER_REQUIRED(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공 동의가 필요합니다."),
     OAUTH2_PHONE_NUMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "핸드폰 번호 제공이 되지 않은 상태입니다."),
 

@@ -14,7 +14,6 @@ import java.util.Map;
 
 @Getter
 public class AccountAdapter implements UserDetails, OAuth2User {
-
     private final User user;
     private final Map<String, Object> attributes;
 
@@ -45,7 +44,7 @@ public class AccountAdapter implements UserDetails, OAuth2User {
     @Override
     public String getUsername() {
         // 사용자 식별자를 반환
-        return user.getPhoneNumber();
+        return user.getEmail();
     }
 
     @Override
@@ -71,8 +70,15 @@ public class AccountAdapter implements UserDetails, OAuth2User {
     // OAuth2User 구현
     @Override
     public String getName() {
-        // OAuth2User의 고유 식별자를 반환 (예: 카카오 ID, 애플 sub)
-        // 이 값은 attributes에서 가져올 수 있습니다.
-        return String.valueOf(attributes.get("id"));
+        return user.getId().toString(); // JWT sub용, DB PK 사용
+    }
+
+    public String getEmail() {
+        return user.getEmail();
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 }

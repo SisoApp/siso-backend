@@ -14,33 +14,40 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User findByPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(phoneNumber)
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
 
     @Transactional
-    public void deleteUser(String phoneNumber) {
-        User user = findByPhoneNumber(phoneNumber);
+    public void deleteUser(String email) {
+        User user = findByEmail(email);
         user.deleteUser();
         userRepository.save(user);
     }
 
-    public UserResponseDto getUserInfo(String phoneNumber) {
-        User user = findByPhoneNumber(phoneNumber);
-        return new UserResponseDto(user.getProvider(), user.getPhoneNumber());
+    public UserResponseDto getUserInfo(String email) {
+        User user = findByEmail(email);
+        return new UserResponseDto(
+                user.getId(),
+                user.getProvider(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.isDeleted(),
+                user.isBlock()
+        );
     }
 
     @Transactional
-    public void updateNotificationSubscribed(String phoneNumber, boolean subscribed) {
-        User user = findByPhoneNumber(phoneNumber);
+    public void updateNotificationSubscribed(String email, boolean subscribed) {
+        User user = findByEmail(email);
         user.updateNotificationSubScribed(subscribed);
         userRepository.save(user);
     }
 
     @Transactional
-    public void logout(String phoneNumber) {
-        User user = findByPhoneNumber(phoneNumber);
+    public void logout(String email) {
+        User user = findByEmail(email);
         // 리프레시 토큰 무효화 및 온라인 상태 변경
         user.updateRefreshToken(null);
         user.updateIsOnline(false);

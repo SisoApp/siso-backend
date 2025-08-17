@@ -19,13 +19,13 @@ public interface UserRepository extends Repository<User, Long> {
 
     User save(User user);
 
-    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.isDeleted = false AND u.isBlock = false")
-    Optional<User> findActiveUserByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.provider = :provider AND u.isDeleted = false AND u.isBlock = false")
+    Optional<User> findActiveUserByEmailAndProvider(@Param("email") String email, @Param("provider") Provider provider);
 
-    @Query("SELECT u FROM User u WHERE u.phoneNumber = :phoneNumber AND u.provider = :provider AND u.isDeleted = false AND u.isBlock = false")
-    Optional<User> findActiveUserByPhoneNumberAndProvider(@Param("phoneNumber") String phoneNumber, @Param("provider") Provider provider);
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isDeleted = false AND u.isBlock = false")
+    Optional<User> findActiveUserByEmail(@Param("email") String email);
 
-    Optional<User> findByPhoneNumber(String phoneNumber);
+    Optional<User> findByEmail(String email);
 
     Optional<User> findByRefreshToken(String refreshToken);
 }

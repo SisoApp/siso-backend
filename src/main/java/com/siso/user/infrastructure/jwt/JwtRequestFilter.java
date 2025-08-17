@@ -24,45 +24,47 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
+
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
+
         final String authorizationHeader = request.getHeader("Authorization");
 
-        String phoneNumber = null;
+        String email = null;
         String jwt = null;
 
-        // 1. Authorization 헤더에서 JWT 추출
+        // 1️⃣ Authorization 헤더에서 JWT 추출
         if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                // 2. JWT에서 사용자 식별자(전화번호) 추출
-                phoneNumber = jwtTokenUtil.extractPhoneNumber(jwt);
+                // 2️⃣ JWT에서 사용자 식별자(이메일) 추출
+                email = jwtTokenUtil.extractEmail(jwt);
             } catch (ExpiredJwtException e) {
-                // 토큰 만료 시, 인증 정보 없이 다음 필터로 진행.
-                // CustomAuthenticationEntryPoint가 401 Unauthorized를 처리할 것입니다.
+                // 토큰 만료 시, 인증 정보 없이 다음 필터로 진행
                 chain.doFilter(request, response);
                 return;
             } catch (Exception e) {
-                // 토큰 파싱 실패 등 다른 예외 발생 시, 401 에러를 발생시켜야 함
+                // 토큰 파싱 실패 시 401
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("잘못된 JWT 토큰.");
+                response.getWriter().write("잘못된 JWT 토큰입니다.");
                 return;
             }
         }
 
-        // 3. 사용자 식별자가 있고, SecurityContext에 인증 정보가 없는 경우
-        if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        // 3️⃣ SecurityContext에 인증 정보가 없는 경우
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // UserDetails 로드
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(phoneNumber);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            // 토큰 유효성 검사 (만료 여부는 이미 위에서 처리)
+            // 4️⃣ 토큰 유효성 검사
             if (jwtTokenUtil.validateToken(jwt)) {
-                // UsernamePasswordAuthenticationToken 생성 및 SecurityContext에 저장
-                UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }

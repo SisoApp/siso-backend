@@ -8,11 +8,14 @@ import java.util.Map;
 
 public class OAuth2UserInfoFactory {
     public static OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
-        if (registrationId.equalsIgnoreCase(Provider.KAKAO.toString())) {
-            return new KakaoOAuth2UserInfo(attributes);
-        } else if (registrationId.equalsIgnoreCase(Provider.APPLE.toString())) {
-            return new AppleOAuth2UserInfo(attributes);
-        } else {
+        try {
+            Provider provider = Provider.valueOf(registrationId.toUpperCase());
+            switch(provider) {
+                case KAKAO: return new KakaoOAuth2UserInfo(attributes);
+                case APPLE: return new AppleOAuth2UserInfo(attributes);
+                default: throw new ExpectedException(ErrorCode.UNSUPPORTED_SOCIAL_LOGIN);
+            }
+        } catch(IllegalArgumentException e) {
             throw new ExpectedException(ErrorCode.UNSUPPORTED_SOCIAL_LOGIN);
         }
     }

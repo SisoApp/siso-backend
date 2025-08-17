@@ -26,7 +26,10 @@ public class User extends BaseTime {
     @Column(name = "provider", nullable = false)
     private Provider provider;
 
-    @Column(name = "phone_number", nullable = false)
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "phone_number")
     private String phoneNumber;
 
     @Column(name = "refresh_token")
@@ -58,8 +61,9 @@ public class User extends BaseTime {
     }
 
     @Builder
-    public User(Provider provider, String phoneNumber, String refreshToken, boolean isOnline, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+    public User(Provider provider, String email, String phoneNumber, String refreshToken, boolean isOnline, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
         this.provider = provider;
+        this.email = email;
         this.phoneNumber = phoneNumber;
         this.refreshToken = refreshToken;
         this.isOnline = isOnline;

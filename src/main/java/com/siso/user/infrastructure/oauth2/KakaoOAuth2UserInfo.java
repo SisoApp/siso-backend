@@ -6,8 +6,8 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public class KakaoOAuth2UserInfo implements OAuth2UserInfo {
-    private Map<String, Object> attributes;
-    private Map<String, Object> kakaoAccount;
+    private final Map<String, Object> attributes;
+    private final Map<String, Object> kakaoAccount;
 
     public KakaoOAuth2UserInfo(Map<String, Object> attributes) {
         this.attributes = attributes;
@@ -25,9 +25,16 @@ public class KakaoOAuth2UserInfo implements OAuth2UserInfo {
     }
 
     @Override
+    public String getEmail() {
+        if (kakaoAccount != null && kakaoAccount.containsKey("email")) {
+            return (String) kakaoAccount.get("email");
+        }
+        return null;
+    }
+
+    @Override
     public String getPhoneNumber() {
-        // 전화번호 파싱 로직 추가 (카카오 API 응답 형태에 따라 수정 필요)
-        if (kakaoAccount.containsKey("phone_number")) {
+        if (kakaoAccount != null && kakaoAccount.containsKey("phone_number")) {
             return (String) kakaoAccount.get("phone_number");
         }
         return null;

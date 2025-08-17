@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 public class UserSignUpService {
     private final UserRepository userRepository;
 
-    public User getOrCreateUser(Provider provider, String phoneNumber) {
-        // 1. 해당 제공자와 전화번호로 사용자가 이미 존재하는지 조회합니다.
-        return userRepository.findActiveUserByPhoneNumberAndProvider(phoneNumber, provider)
-                // 2. 사용자가 없으면 새로 생성하고 저장합니다.
+    public User getOrCreateUser(Provider provider, String email, String phoneNumber) {
+        // 1. 해당 제공자 + 이메일로 활성 유저 조회
+        return userRepository.findActiveUserByEmailAndProvider(email, provider)
                 .orElseGet(() -> {
+                    // 2. 신규 사용자 생성
                     User newUser = User.builder()
                             .provider(provider)
+                            .email(email)
                             .phoneNumber(phoneNumber)
                             .isOnline(true)
                             .notificationSubscribed(false)
@@ -30,3 +31,4 @@ public class UserSignUpService {
                 });
     }
 }
+
