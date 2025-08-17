@@ -24,6 +24,10 @@ repositories {
 }
 
 dependencies {
+
+	// 드라이버는 둘 다 runtimeOnly (스프링이 URL로 자동 선택)
+
+
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'

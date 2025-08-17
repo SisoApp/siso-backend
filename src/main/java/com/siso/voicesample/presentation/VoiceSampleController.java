@@ -118,48 +118,46 @@ public class VoiceSampleController {
 
     /**
      * 음성 샘플 수정 API (파일 교체)
-     *
-     * @param id 수정할 음성 샘플 ID
+     * 
+     * @param voiceId 수정할 음성 샘플 ID
      * @param file 새로운 음성 파일 (선택사항)
      * @param userId 사용자 ID (필수)
      * @return 수정된 음성 샘플 정보
-     *
-     * PUT /api/voice-samples/{id}
+     * 
+     * PUT /api/voice-samples/{voiceId}
      * Content-Type: multipart/form-data
      * - file: 새 음성 파일 (선택사항)
      * - userId: 1 // 사용자 ID (필수), duration은 새 파일에서 자동 추출 (최대 20초)
      */
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{voiceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<VoiceSampleResponseDto> updateVoiceSample(
-            @PathVariable(name = "id") Long id,
+            @PathVariable(name = "voiceId") Long voiceId,
             @RequestPart(value = "file", required = false) MultipartFile file, // 새 음성 파일 (선택사항)
             @RequestParam("userId") @Valid Long userId) { // 사용자 ID
-
-        // log.info("음성 샘플 수정 요청 - ID: {}, 파일교체: {}", id, file != null && !file.isEmpty());
-
+        
+        // log.info("음성 샘플 수정 요청 - ID: {}, 파일교체: {}", voiceId, file != null && !file.isEmpty());
+        
         // VoiceSampleRequestDto 생성
         VoiceSampleRequestDto request = new VoiceSampleRequestDto();
         request.setUserId(userId);
 
         // 음성 샘플 수정 (파일 교체 포함)
-        VoiceSampleResponseDto response = voiceSampleService.updateVoiceSample(id, file, request);
+        VoiceSampleResponseDto response = voiceSampleService.updateVoiceSample(voiceId, file, request);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * 음성 샘플 삭제 API
-     *
-     * @param id 삭제할 음성 샘플 ID
+     * 
+     * @param voiceId 삭제할 음성 샘플 ID
      * @return 삭제 완료 응답 (204 No Content)
-     *
-     * DELETE /api/voice-samples/{id}
+     * 
+     * DELETE /api/voice-samples/{voiceId}
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "id") Long id) {
-        // log.info("음성 샘플 삭제 요청 - ID: {}", id);
-
+    @DeleteMapping("/{voiceId}")
+    public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "voiceId") Long voiceId) {
+        // log.info("음성 샘플 삭제 요청 - ID: {}", voiceId);
+        
         // 음성 샘플 및 관련 파일 삭제
-        voiceSampleService.deleteVoiceSample(id);
+        voiceSampleService.deleteVoiceSample(voiceId);
         return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
 
