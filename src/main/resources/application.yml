@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://127.0.0.1:13306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000}
-    username: ${DB_USERNAME:siso}
-    password: ${DB_PASSWORD:1234}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     # driver-class-name: com.mysql.cj.jdbc.Driver   # (원하면 명시)
     hikari:
       maximum-pool-size: 5
@@ -25,15 +25,12 @@ spring:
       client:
         registration:
           kakao:
-            client-id: 96171e749ecdb7417189ae5b534534d0
-            redirect-uri: https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao/callback
-#            client-secret: 5UVKaRfusNYJYu2H6XLT3uKMmY4Vz5Xo
-            #            client-secret: SxbyHAZwvwWi0pZjpZQmM0O5C5XEXjcB
+            client-id: ${KAKAO_CLIENT_ID}
+            redirect-uri: ${KAKAO_REDIRECT_URI}
             scope: phone_number,account_email
             client-name: Kakao
             authorization-grant-type: authorization_code
             provider: kakao
-            #            https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=bacd247c935658de63e92542078bc4f4&redirect_uri=http://siso.com/kakao
         provider:
           kakao:
             user-name-attribute: kakao_account
@@ -42,18 +39,9 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
 
 kakao:
-  client-id: 96171e749ecdb7417189ae5b534534d0
-#  client-id:bacd247c935658de63e92542078bc4f4
-  redirect-uri: https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao/callback
+  client-id: ${KAKAO_CLIENT_ID}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
   scope: phone_number,account_email
-
-#server:
-#  port: 8443
-#  ssl:
-#    key-store: classpath:keystore.p12
-#    key-store-password: 12345678
-#    key-store-type: PKCS12
-#    key-alias: siso-api-key
 
 # ===== 음성 샘플 관련 설정 =====
 app:
@@ -92,4 +80,3 @@ app:
         path: /swagger-ui
         operationsSorter: method   # (선택) 메서드명 정렬
         tagsSorter: alpha          # (선택) 태그 알파벳 정렬
-
