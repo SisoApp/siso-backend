@@ -146,12 +146,6 @@ public class VoiceSampleController {
         return ResponseEntity.ok(response);
     }
 
-     * 
-     * @param voiceId 삭제할 음성 샘플 ID
-     * @return 삭제 완료 응답 (204 No Content)
-     * 
-     * DELETE /api/voice-samples/{voiceId}
-     */
     @DeleteMapping("/{voiceId}")
     public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "voiceId") Long voiceId) {
         // log.info("음성 샘플 삭제 요청 - ID: {}", voiceId);
