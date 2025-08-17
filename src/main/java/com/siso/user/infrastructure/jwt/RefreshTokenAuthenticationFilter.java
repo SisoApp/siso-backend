@@ -64,9 +64,10 @@ public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProc
 
         // RefreshTokenAuthenticationProvider에서 이미 새 Access Token 생성
         String newAccessToken = jwtTokenUtil.generateAccessToken(userPrincipal.getUser().getEmail());
+        String newRefreshToken = jwtTokenUtil.generateRefreshToken(userPrincipal.getUser().getEmail());
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), new TokenResponseDto(newAccessToken, null));
+        objectMapper.writeValue(response.getWriter(), new TokenResponseDto(newAccessToken, newRefreshToken));
     }
 }

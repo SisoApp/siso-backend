@@ -34,7 +34,7 @@ public class OAuthService {
         System.out.println("User saved: " + user.getEmail() + ", " + user.getPhoneNumber());
 
         String jwtAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        String jwtRefreshToken = jwtTokenUtil.generateRefreshToken();
+        String jwtRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 

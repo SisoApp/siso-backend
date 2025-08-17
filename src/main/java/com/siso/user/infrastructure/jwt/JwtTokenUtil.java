@@ -78,14 +78,6 @@ public class JwtTokenUtil {
         return createToken(claims, email, REFRESH_TOKEN_TTL);
     }
 
-    public String generateRefreshToken() {
-        return Jwts.builder()
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_TTL))
-                .signWith(SECRET_KEY_OBJECT, SignatureAlgorithm.HS256)
-                .compact();
-    }
-
     private String createToken(Map<String, Object> claims, String subject, long ttl) {
         return Jwts.builder()
                 .setClaims(claims)

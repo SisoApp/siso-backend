@@ -25,6 +25,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         // 1. credentials: refresh token
         String refreshToken = (String) authentication.getCredentials();
+        System.out.println("refreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshToken: " + refreshToken);
 
         // 2. refreshToken에서 email(subject) 추출
         String email;
