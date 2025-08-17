@@ -46,8 +46,8 @@ kakao:
 # ===== 음성 샘플 관련 설정 =====
 app:
   voice-sample:
-    upload-dir: uploads/voice-samples        # 파일 저장 디렉토리
-    base-url: http://localhost:8080          # 파일 접근 기본 URL
+    upload-dir: ${VOICE_UPLOAD_DIR}        # 파일 저장 디렉토리
+    base-url: ${VOICE_BASE_URL}          # 파일 접근 기본 URL
     max-file-size: 52428800                  # 50MB in bytes
     supported-formats:                           # 지원 파일 형식
       - mp3
@@ -62,8 +62,8 @@ app:
 
   # ===== 이미지 관련 설정 =====
   image:
-    upload-dir: uploads/images               # 파일 저장 디렉토리
-    base-url: http://localhost:8080          # 파일 접근 기본 URL
+    upload-dir: ${IMAGE_UPLOAD_DIR}               # 파일 저장 디렉토리
+    base-url: ${IMAGE_BASE_URL}          # 파일 접근 기본 URL
     max-file-size: 10485760                  # 10MB in bytes
     supported-formats:                       # 지원 파일 형식
       - jpg
