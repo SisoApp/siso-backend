@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PKCE 카카오 + JWT 테스트</title>
+</head>
+<body>
+<h2>PKCE 카카오 로그인 + JWT 테스트</h2>
+<button id="startBtn">로그인 및 JWT 발급</button>
+<button id="getUserInfoBtn" disabled>사용자 정보 조회</button>
+<button id="refreshTokenBtn" disabled>Refresh Token 재발급</button>
+<button id="logoutBtn" disabled>로그아웃</button>
+<pre id="output"></pre>
+
+<script>
+  let codeVerifier = "";
+  let accessToken = "";
+  let refreshToken = "";
+
+  // 랜덤 문자열 생성
+  function generateRandomString(length) {
+      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+      let result = '';
+      const array = new Uint8Array(length);
+      window.crypto.getRandomValues(array);
+      for (let i = 0; i < length; i++) {
+          result += charset[array[i] % charset.length];
+      }
+      return result;
+  }
+
+  // base64 URL 인코딩
+  function base64UrlEncode(str) {
+      return btoa(str)
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+  }
+
+  // 1️⃣ 로그인 및 JWT 발급
+  document.getElementById('startBtn').addEventListener('click', async () => {
+      codeVerifier = generateRandomString(64);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashStr = String.fromCharCode.apply(null, hashArray);
+      const codeChallenge = base64UrlEncode(hashStr);
+
+      const clientId = "96171e749ecdb7417189ae5b534534d0";
+      const redirectUri = "https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao/callback";
+
+      const params = new URLSearchParams({
+          response_type: "code",
+          client_id: clientId,
+          redirect_uri: redirectUri,
+          code_challenge: codeChallenge,
+          code_challenge_method: "S256"
+      });
+
+      const authUrl = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
+      const authWindow = window.open(authUrl, "_blank", "width=500,height=600");
+
+      const pollTimer = setInterval(async function() {
+          try {
+              if (!authWindow || authWindow.closed) {
+                  clearInterval(pollTimer);
+                  return;
+              }
+              const url = authWindow.location.href;
+              if (url.includes("code=")) {
+                  const urlParams = new URL(url).searchParams;
+                  const authCode = urlParams.get("code");
+                  authWindow.close();
+                  clearInterval(pollTimer);
+
+                  document.getElementById('output').textContent = `Authorization Code: ${authCode}\n\nJWT 발급 중...`;
+
+                  const res = await fetch("https://c0c1b219a4a5.ngrok-free.app/api/auth/kakao", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ accessToken: authCode, codeVerifier: codeVerifier })
+                  });
+
+                  const data = await res.json();
+                  accessToken = data.accessToken;
+                  refreshToken = data.refreshToken;
+
+                  // localStorage에 저장
+                  localStorage.setItem("accessToken", accessToken);
+                  localStorage.setItem("refreshToken", refreshToken);
+
+                  console.log("Access Token:", accessToken);
+                  console.log("Refresh Token:", refreshToken);
+
+                  document.getElementById('output').textContent +=
+                      `\n\nJWT 발급 완료!\nAccess Token: ${accessToken}\nRefresh Token: ${refreshToken}`;
+                  document.getElementById('getUserInfoBtn').disabled = false;
+                  document.getElementById('refreshTokenBtn').disabled = false;
+                  document.getElementById('logoutBtn').disabled = false;
+              }
+          } catch (err) { console.error(err); }
+      }, 500);
+  });
+
+  // 2️⃣ 사용자 정보 조회
+  document.getElementById('getUserInfoBtn').addEventListener('click', async () => {
+      const storedAccessToken = localStorage.getItem("accessToken");
+      if (!storedAccessToken) {
+          alert("먼저 Access Token을 발급받아야 합니다!");
+          return;
+      }
+      try {
+          const res = await fetch("https://c0c1b219a4a5.ngrok-free.app/api/users/info", {
+              method: "GET",
+              headers: { "Authorization": `Bearer ${storedAccessToken}` }
+          });
+          const data = await res.json();
+          document.getElementById('output').textContent += `\n\n사용자 정보:\n${JSON.stringify(data, null, 2)}`;
+      } catch (err) {
+          console.error(err);
+          alert("사용자 정보 조회 실패");
+      }
+  });
+
+  // 3️⃣ Refresh Token 재발급
+  document.getElementById('refreshTokenBtn').addEventListener('click', async () => {
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (!storedRefreshToken) {
+          alert("먼저 Refresh Token이 있어야 합니다!");
+          return;
+      }
+
+      try {
+          const res = await fetch("https://c0c1b219a4a5.ngrok-free.app/api/auth/refresh", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${storedRefreshToken}` }
+          });
+
+          if (!res.ok) {
+              const errData = await res.json();
+              alert(`Refresh Token 재발급 실패: ${errData.message}`);
+              return;
+          }
+
+          const data = await res.json();
+          accessToken = data.accessToken;
+          refreshToken = data.refreshToken;
+
+          // localStorage 업데이트
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("refreshToken", refreshToken);
+
+          console.log("새 Access Token:", accessToken);
+          console.log("새 Refresh Token:", refreshToken);
+
+          document.getElementById('output').textContent +=
+              `\n\n새 토큰 발급 완료!\nAccess Token: ${accessToken}\nRefresh Token: ${refreshToken}`;
+
+      } catch (err) {
+          console.error(err);
+          alert("Refresh Token 재발급 중 에러 발생");
+      }
+  });
+
+  // 4️⃣ 로그아웃
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const storedAccessToken = localStorage.getItem("accessToken");
+      if (!storedAccessToken) {
+          alert("로그인 먼저 해주세요!");
+          return;
+      }
+      try {
+          const res = await fetch("https://c0c1b219a4a5.ngrok-free.app/api/users/logout", {
+              method: "POST",
+              headers: { "Authorization": `Bearer ${storedAccessToken}` }
+          });
+          await res.json();
+          document.getElementById('output').textContent += `\n\n로그아웃 완료`;
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          accessToken = "";
+          refreshToken = "";
+          document.getElementById('getUserInfoBtn').disabled = true;
+          document.getElementById('refreshTokenBtn').disabled = true;
+          document.getElementById('logoutBtn').disabled = true;
+      } catch (err) {
+          console.error(err);
+          alert("로그아웃 실패");
+      }
+  });
+</script>
+</body>
+</html>

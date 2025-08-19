@@ -1,4 +1,102 @@
 package com.siso.user.domain.model;
 
-public class User {
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import com.siso.common.domain.BaseTime;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class User extends BaseTime {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider", nullable = false)
+    private Provider provider;
+
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<UserInterest> userInterests = new ArrayList<>();
+
+    @Column(name = "is_online", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean isOnline = false;
+
+    @Column(name = "notification_subscribed", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean notificationSubscribed = false;
+
+    @Column(name = "is_block", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean isBlock = false;
+
+    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    // 양방향 연관 관계 설정
+    public void addInterest(Interest interest) {
+        UserInterest userInterest = new UserInterest(this, interest);
+        this.userInterests.add(userInterest);
+    }
+
+    @Builder
+    public User(Provider provider, String email, String phoneNumber, String refreshToken, boolean isOnline, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+        this.provider = provider;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.refreshToken = refreshToken;
+        this.isOnline = isOnline;
+        this.notificationSubscribed = notificationSubscribed;
+        this.isBlock = isBlock;
+        this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt;
+    }
+
+    @Builder
+    public User(Provider provider, String phoneNumber) {
+        this.provider = provider;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void deleteUser() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void updateNotificationSubScribed(boolean notificationSubscribed) {
+        this.notificationSubscribed = notificationSubscribed;
+    }
+
+    public void updateIsOnline(boolean isOnline) {
+        this.isOnline = isOnline;
+    }
+
+    public void updateIsBlock(boolean isBlock) {
+        this.isBlock = isBlock;
+    }
 }

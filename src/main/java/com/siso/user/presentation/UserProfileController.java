@@ -1,0 +1,57 @@
+package com.siso.user.presentation;
+
+import com.siso.user.application.UserProfileService;
+import com.siso.user.dto.request.UserProfileRequestDto;
+import com.siso.user.dto.response.UserProfileResponseDto;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/profiles")
+public class UserProfileController {
+    private final UserProfileService userProfileService;
+
+    // 단일 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<UserProfileResponseDto> getProfile(@PathVariable(name = "id") Long id) {
+        return ResponseEntity.ok(userProfileService.findById(id));
+    }
+
+    // 전체 조회
+    @GetMapping
+    public ResponseEntity<List<UserProfileResponseDto>> getAllProfiles() {
+        return ResponseEntity.ok(userProfileService.findAll());
+    }
+
+    // 사용자 기준 프로필 조회
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<UserProfileResponseDto> getProfileByUser(@PathVariable(name = "userId")  Long userId) {
+        UserProfileResponseDto profile = userProfileService.getUserProfileByUserId(userId);
+        return ResponseEntity.ok(profile);
+    }
+
+    // 프로필 생성
+    @PostMapping
+    public ResponseEntity<UserProfileResponseDto> createProfile(@Valid @RequestBody UserProfileRequestDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(dto));
+    }
+
+    // 프로필 수정
+    @PatchMapping
+    public ResponseEntity<UserProfileResponseDto> updateProfile(@Valid @RequestBody UserProfileRequestDto dto) {
+        return ResponseEntity.ok(userProfileService.update(dto));
+    }
+
+    // 프로필 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProfile(@PathVariable(name = "id") Long id) {
+        userProfileService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+}
