@@ -29,13 +29,14 @@ public class VoiceSampleProperties {
      * 음성 파일 저장 디렉토리 경로
      */
     @NotBlank(message = "업로드 디렉토리는 필수입니다")
-    private String uploadDir = "uploads/voice-samples";
+    private String uploadDir = "/voice-samples";
     
     /**
      * 파일 접근을 위한 기본 URL
      */
     @NotBlank(message = "기본 URL은 필수입니다")
-    private String baseUrl = "http://localhost:8080";
+//    private String baseUrl = "https://13.124.11.3"; // 배포시에
+    private String baseUrl = "https://localhost:8080";
     
     /**
      * 파일 크기 제한 (바이트 단위)
