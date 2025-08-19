@@ -1,6 +1,5 @@
 package com.siso.user.dto.request;
 
-import com.siso.image.dto.ImageResponseDto;
 import com.siso.user.domain.model.*;
 import lombok.AccessLevel;
 import lombok.Builder;

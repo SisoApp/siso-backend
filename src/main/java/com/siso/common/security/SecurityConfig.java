@@ -41,8 +41,7 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/api/users/**",
                                 "/",
-                                "/api/auth/**",
-                                "/test.html"
+                                "/api/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -21,8 +21,8 @@ public class OAuthService {
     private final UserRepository userRepository;
     private final OAuthProviderClientFactory clientFactory; // Kakao/Apple REST 호출용
 
-    public TokenResponseDto loginWithProvider(String providerName, String codeOrAccessToken, String codeVerifier) {
-        Map<String, Object> attributes = clientFactory.getClient(providerName).getUserAttributes(codeOrAccessToken, codeVerifier);
+    public TokenResponseDto loginWithProvider(String providerName, String codeOrAccessToken) {
+        Map<String, Object> attributes = clientFactory.getClient(providerName).getUserAttributes(codeOrAccessToken);
 
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerName, attributes);
         String email = oAuth2UserInfo.getEmail();
@@ -35,6 +35,9 @@ public class OAuthService {
 
         String jwtAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
         String jwtRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
+        System.out.println("====================wtAccessToken: " + jwtAccessToken);
+        System.out.println("====================jwtRefreshToken: " + jwtRefreshToken);
+
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 

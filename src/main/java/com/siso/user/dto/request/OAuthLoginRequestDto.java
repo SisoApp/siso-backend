@@ -8,5 +8,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OAuthLoginRequestDto {
     private String accessToken;
-    private String codeVerifier;
 }

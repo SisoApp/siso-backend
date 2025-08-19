@@ -1,28 +1,37 @@
 package com.siso.user.infrastructure.oauth2;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class AppleOAuthProviderClient implements OAuthProviderClient {
-    private final RestTemplate restTemplate = new RestTemplate();
-
     @Override
-    public Map<String, Object> getUserAttributes(String authorizationCode, String codeVerifier) {
-        // Apple은 JWT를 파싱해야 하므로, 임시 Map 반환
-        // 실제 구현 시 JWT를 decode 후 Map<String, Object>로 변환
-        String idToken = authorizationCode; // code 대신 id_token을 받을 수도 있음
-
+    public Map<String, Object> getUserAttributes(String idToken) {
+        // iOS에서 전달받은 id_token(JWT) 파싱
         Map<String, Object> attributes = new HashMap<>();
-        // JWT 디코딩 로직 필요
-        // attributes.put("email", emailFromToken);
-        // attributes.put("sub", subFromToken);
+
+        try {
+            String[] parts = idToken.split("\\.");
+            if (parts.length < 2) {
+                throw new IllegalArgumentException("Invalid Apple ID Token");
+            }
+
+            // JWT payload 부분(base64 decode)
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            attributes = objectMapper.readValue(payloadJson, new TypeReference<>() {});
+
+            System.out.println("Decoded Apple ID Token Payload: " + attributes);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse Apple ID Token", e);
+        }
 
         return attributes;
     }
