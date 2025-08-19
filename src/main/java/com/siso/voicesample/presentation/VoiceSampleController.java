@@ -1,7 +1,7 @@
 package com.siso.voicesample.presentation;
 
-import com.siso.voicesample.dto.VoiceSampleRequestDto;
-import com.siso.voicesample.dto.VoiceSampleResponseDto;
+import com.siso.voicesample.dto.request.VoiceSampleRequestDto;
+import com.siso.voicesample.dto.response.VoiceSampleResponseDto;
 import com.siso.voicesample.application.service.VoiceSampleService;
 import com.siso.voicesample.infrastructure.properties.VoiceMediaTypeProperties;
 import com.siso.common.exception.ErrorCode;
