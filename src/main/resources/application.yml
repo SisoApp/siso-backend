@@ -1,6 +1,6 @@
 spring:
   profiles:
-    include: secret
+    include: local
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -76,10 +76,14 @@ app:
       - webp
     max-images-per-user: 5                   # 사용자당 최대 이미지 개수
 
-    springdoc:
-      api-docs:
-        enabled: true
-      swagger-ui:
-        path: /swagger-ui
-        operationsSorter: method   # (선택) 메서드명 정렬
-        tagsSorter: alpha          # (선택) 태그 알파벳 정렬
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method   # (선택) 메서드명 정렬
+    tagsSorter: alpha          # (선택) 태그 알파벳 정렬
+
+# ===== Firebase 관련 설정 =====
+firebase:
+  service-account: ${FIREBASE_SERVICE_ACCOUNT}

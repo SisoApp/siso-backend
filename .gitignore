@@ -51,3 +51,5 @@ keystore.p12
 .env
 .env.*
 *.pem
+.json
+*.json
