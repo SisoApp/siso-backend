@@ -1,20 +1,16 @@
-package com.siso.matching.dto.request;
+package com.siso.like.dto.request;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchingRequestDto {
-    private Long senderId;
+public class LikeRequestDto {
     private Long receiverId;
-    @NotNull
     private boolean isLiked;
 
-    public MatchingRequestDto(Long senderId, Long receiverId, boolean isLiked) {
-        this.senderId = senderId;
+    public LikeRequestDto(Long receiverId, boolean isLiked) {
         this.receiverId = receiverId;
         this.isLiked = isLiked;
     }

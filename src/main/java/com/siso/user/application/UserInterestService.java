@@ -29,15 +29,14 @@ public class UserInterestService {
 
     // 사용자의 관심사 목록 조회
     @Transactional(readOnly = true)
-    public List<UserInterest> getUserInterestByUserId(Long userId) {
-        return userInterestRepository.findByUserId(userId);
+    public List<UserInterest> getUserInterestByUserId(User user) {
+        return userInterestRepository.findByUserId(user.getId());
     }
 
     // 사용자의 관심사 선택
     @Transactional // @Transactional 덕분에 별도의 save() 없이도 DB에 반영
-    public void selectUserInterest(Long userId, List<Interest> interests) {
+    public void selectUserInterest(User user, List<Interest> interests) {
         validateInterestCount(interests);
-        User user = findById(userId);
 
         // 중복 제거
         Set<Interest> uniqueInterests = new HashSet<>(interests);
@@ -47,10 +46,9 @@ public class UserInterestService {
 
     // 사용자의 관심사 수정
     @Transactional // @Transactional 덕분에 별도의 save() 없이도 DB에 반영
-    public void updateUserInterest(Long userId, List<Interest> interests) {
+    public void updateUserInterest(User user, List<Interest> interests) {
         validateInterestCount(interests);
 
-        User user = findById(userId);
         userInterestRepository.deleteAllByUser(user);
 
         // 중복 제거

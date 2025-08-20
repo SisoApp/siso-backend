@@ -58,9 +58,7 @@ public class UserProfileService {
     }
 
     // 생성
-    public UserProfileResponseDto create(UserProfileRequestDto dto) {
-        User user =  getUserById(dto.getUserId());
-
+    public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
         UserProfile profile = UserProfile.builder()
                 .user(user)
                 .drinkingCapacity(dto.getDrinkingCapacity())
@@ -80,16 +78,14 @@ public class UserProfileService {
     }
 
     // 수정(전체 교체)
-    public UserProfileResponseDto update(UserProfileRequestDto dto) {
-        User currentUser = getUserById(dto.getUserId());
-
+    public UserProfileResponseDto update(User currentUser, UserProfileRequestDto dto) {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
                 .orElse(UserProfile.builder().user(currentUser).build());
 
         profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation());
 
         UserProfile savedProfile = userProfileRepository.save(profile);
-        List<ImageResponseDto> images = imageService.getImagesByUserId(dto.getUserId());
+        List<ImageResponseDto> images = imageService.getImagesByUserId(currentUser.getId());
         return toDto(savedProfile, images);
     }
 
@@ -104,8 +100,6 @@ public class UserProfileService {
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile, List<ImageResponseDto> images) {
         return UserProfileResponseDto.builder()
-                .id(profile.getId())
-                .userId(profile.getUser().getId())
                 .nickname(profile.getNickname())
                 .age(profile.getAge())
                 .introduce(profile.getIntroduce())

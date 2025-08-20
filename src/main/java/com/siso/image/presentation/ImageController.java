@@ -1,5 +1,6 @@
 package com.siso.image.presentation;
 
+import com.siso.common.web.CurrentUser;
 import com.siso.image.dto.ImageRequestDto;
 import com.siso.image.dto.ImageResponseDto;
 import com.siso.image.application.service.ImageService;
@@ -9,6 +10,7 @@ import com.siso.image.domain.model.Image;
 import com.siso.image.domain.repository.ImageRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -40,10 +42,8 @@ import java.util.List;
 @RequestMapping("/api/images")
 @RequiredArgsConstructor
 public class ImageController {
-    
     // === 의존성 주입 ===
     private final ImageService imageService;
-    private final ImageFileHandler imageFileHandler;
     private final MediaTypeProperties mediaTypeProperties;
     private final ImageRepository imageRepository;
     
@@ -53,11 +53,10 @@ public class ImageController {
      * 이미지 업로드 API
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ImageResponseDto> uploadImage(
-            @RequestPart("file") MultipartFile file,
-            @RequestParam("userId") @Valid Long userId) {
-        
-        ImageRequestDto request = new ImageRequestDto(userId);
+    public ResponseEntity<ImageResponseDto> uploadImage(@RequestPart("file") MultipartFile file,
+                                                        @CurrentUser User user) {
+
+        ImageRequestDto request = new ImageRequestDto(user.getId());
         ImageResponseDto response = imageService.uploadImage(file, request);
         return ResponseEntity.ok(response);
     }
@@ -66,9 +65,9 @@ public class ImageController {
      * 사용자별 이미지 목록 조회 API
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@PathVariable(name = "userId") Long userId) {
+    public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@CurrentUser User user) {
         
-        List<ImageResponseDto> response = imageService.getImagesByUserId(userId);
+        List<ImageResponseDto> response = imageService.getImagesByUserId(user.getId());
         return ResponseEntity.ok(response);
     }
     
@@ -86,12 +85,11 @@ public class ImageController {
      * 이미지 수정 API
      */
     @PutMapping(value = "/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ImageResponseDto> updateImage(
-            @PathVariable(name = "imageId") Long imageId,
-            @RequestPart(value = "file", required = false) MultipartFile file,
-            @RequestParam("userId") @Valid Long userId) {
+    public ResponseEntity<ImageResponseDto> updateImage(@PathVariable(name = "imageId") Long imageId,
+                                                        @RequestPart(value = "file", required = false) MultipartFile file,
+                                                        @CurrentUser User user) {
         
-        ImageRequestDto request = new ImageRequestDto(userId);
+        ImageRequestDto request = new ImageRequestDto(user.getId());
         ImageResponseDto response = imageService.updateImage(imageId, file, request);
         return ResponseEntity.ok(response);
     }

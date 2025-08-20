@@ -35,6 +35,7 @@ public enum ErrorCode {
 
     // 매칭
     MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND,"매칭 정보가 없습니다."),
+    CANNOT_CANCEL_MATCHED_LIKE(HttpStatus.BAD_REQUEST, "이미 매칭이 성립된 좋아요는 취소할 수 없습니다."),
   
     // 이미지
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
