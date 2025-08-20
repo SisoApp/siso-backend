@@ -2,6 +2,7 @@ package com.siso.user.application;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.UserResponseDto;
@@ -50,7 +51,7 @@ public class UserService {
         User user = findByEmail(email);
         // 리프레시 토큰 무효화 및 온라인 상태 변경
         user.updateRefreshToken(null);
-        user.updateIsOnline(false);
+        user.updatePresenceStatus(PresenceStatus.OFFLINE);
         userRepository.save(user);
     }
 }

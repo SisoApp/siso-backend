@@ -134,7 +134,7 @@ public class ImageController {
             }
             
             // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
-            Path filePath = Paths.get("uploads/images").resolve(image.getUserId().toString()).resolve(serverImageName).normalize();
+            Path filePath = Paths.get("uploads/images").resolve(image.getUser().toString()).resolve(serverImageName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             
             // 파일 존재 여부 및 읽기 가능 여부 확인

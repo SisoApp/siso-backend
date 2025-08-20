@@ -70,11 +70,13 @@ public class JwtTokenUtil {
     // ----------------------
     public String generateAccessToken(String email) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "access");
         return createToken(claims, email, ACCESS_TOKEN_TTL);
     }
 
     public String generateRefreshToken(String email) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
         return createToken(claims, email, REFRESH_TOKEN_TTL);
     }
 
@@ -94,7 +96,7 @@ public class JwtTokenUtil {
     public Boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(SECRET_KEY_OBJECT).build().parseClaimsJws(token);
-            return true;
+            return !isTokenExpired(token); // 만료 여부까지 체크
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

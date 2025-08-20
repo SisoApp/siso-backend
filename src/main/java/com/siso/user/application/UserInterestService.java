@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,22 +34,19 @@ public class UserInterestService {
     }
 
     // 사용자의 관심사 선택
-    @Transactional
+    @Transactional // @Transactional 덕분에 별도의 save() 없이도 DB에 반영
     public void selectUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
         User user = findById(userId);
 
         // 중복 제거
         Set<Interest> uniqueInterests = new HashSet<>(interests);
-        List<UserInterest> newUserInterests = uniqueInterests.stream()
-                .map(interest -> new UserInterest(user, interest))
-                .toList();
-
-        userInterestRepository.saveAll(newUserInterests);
+        // 엔티티의 헬퍼 메서드를 호출하여 관계 설정
+        uniqueInterests.forEach(user::addInterest);
     }
 
     // 사용자의 관심사 수정
-    @Transactional
+    @Transactional // @Transactional 덕분에 별도의 save() 없이도 DB에 반영
     public void updateUserInterest(Long userId, List<Interest> interests) {
         validateInterestCount(interests);
 
@@ -57,11 +55,9 @@ public class UserInterestService {
 
         // 중복 제거
         Set<Interest> uniqueInterests = new HashSet<>(interests);
-        List<UserInterest> newUserInterests = uniqueInterests.stream()
-                .map(interest -> new UserInterest(user, interest))
-                .toList();
+        List<Interest> uniqueInterestsList = new ArrayList<>(uniqueInterests);
 
-        userInterestRepository.saveAll(newUserInterests);
+        user.updateUserInterests(uniqueInterestsList);
     }
 
     private void validateInterestCount(List<Interest> interests) {

@@ -26,36 +26,19 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         String refreshToken = (String) authentication.getCredentials();
         System.out.println("refreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshToken: " + refreshToken);
 
-        // 2. refreshToken에서 email(subject) 추출
-        String email;
-        try {
-            email = jwtTokenUtil.getEmailFromToken(refreshToken);
-            System.out.println("Refresh Token에서 추출된 email: " + email);
-        } catch (Exception e) {
-            throw new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN); // 토큰이 잘못됐거나 파싱 실패
-        }
+        // 2. DB에서 사용자 조회
+        User user = userRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        // 3. DB에서 사용자 정보 조회
-        User user = userRepository.findActiveUserByEmail(email)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-
-        // 4. 저장된 리프레시 토큰 검증
-        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
-            throw new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        // 5. 토큰 만료 확인
+        // 3. 토큰 만료 확인
         if (jwtTokenUtil.isTokenExpired(refreshToken)) {
             throw new ExpectedException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
 
-        // 6. 새 액세스 토큰 생성
-        String newAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-
-        // 7. Authentication 반환
+        // 4. 새 AccessToken/RefreshToken 생성은 TokenService에서 처리
         return new TokenAuthentication(
                 new AccountAdapter(user),
-                newAccessToken,
+                refreshToken, // credentials 그대로 전달
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
         );
     }

@@ -45,7 +45,6 @@ public class MatchingService {
                         .sender(sender)
                         .receiver(receiver)
                         .status(matchingRequestDto.isLiked() ? Status.MATCHED : Status.CALL_COMPLETED)
-                        .createdAt(LocalDateTime.now())
                         .build());
 
         matching.updateStatus(status);
