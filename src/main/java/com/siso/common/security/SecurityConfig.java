@@ -42,7 +42,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/api/users/**",
                                 "/",
-                                "/api/auth/**"
+                                "/api/auth/**",
+                                "/actuator/health", "/actuator/info",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
