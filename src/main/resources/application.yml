@@ -1,85 +1,37 @@
 spring:
-  profiles:
-    include: dev
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-    hikari:
-      maximum-pool-size: 5
-      connection-timeout: 15000
-      validation-timeout: 5000
-      connection-test-query: SELECT 1
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect   # 팀 표준이면 명시 추천
     open-in-view: false
-    show-sql: true
-    hibernate:
-      ddl-auto: update     # 개발용
-
   servlet:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-      
-  security:
-    oauth2:
-      client:
-        registration:
-          kakao:
-            client-id: ${KAKAO_CLIENT_ID}
-            redirect-uri: ${KAKAO_REDIRECT_URI}
-            scope: phone_number,account_email
-            client-name: Kakao
-            authorization-grant-type: authorization_code
-            provider: kakao
-        provider:
-          kakao:
-            user-name-attribute: kakao_account
-            authorization-uri: https://kauth.kakao.com/oauth/authorize
-            token-uri: https://kauth.kakao.com/oauth/token
-            user-info-uri: https://kapi.kakao.com/v2/user/me
+    security:
+      oauth2:
+        client:
+          provider:
+            kakao:
+              user-name-attribute: kakao_account
+              authorization-uri: https://kauth.kakao.com/oauth/authorize
+              token-uri: https://kauth.kakao.com/oauth/token
+              user-info-uri: https://kapi.kakao.com/v2/user/me
 
-kakao:
-  client-id: ${KAKAO_CLIENT_ID}
-  redirect-uri: ${KAKAO_REDIRECT_URI}
-  scope: phone_number,account_email
-
-# ===== 음성 샘플 관련 설정 =====
-app:
-  voice-sample:
-    upload-dir: ${VOICE_UPLOAD_DIR}        # 파일 저장 디렉토리
-    base-url: ${VOICE_BASE_URL}          # 파일 접근 기본 URL
-    max-file-size: 52428800                  # 50MB in bytes
-    supported-formats:                           # 지원 파일 형식
-      - mp3
-      - wav
-      - m4a
-      - aac
-      - ogg
-      - webm
-      - flac
-    max-duration: 20                         # 최대 녹음 시간 (초 단위)
-    max-voice-samples-per-user: 1            # 사용자당 최대 음성 샘플 개수
-
-  # ===== 이미지 관련 설정 =====
-  image:
-    upload-dir: ${IMAGE_UPLOAD_DIR}               # 파일 저장 디렉토리
-    base-url: ${IMAGE_BASE_URL}          # 파일 접근 기본 URL
-    max-file-size: 10485760                  # 10MB in bytes
-    supported-formats:                       # 지원 파일 형식
-      - jpg
-      - jpeg
-      - png
-      - gif
-      - webp
-    max-images-per-user: 5                   # 사용자당 최대 이미지 개수
-
-    springdoc:
-      api-docs:
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
         enabled: true
-      swagger-ui:
-        path: /swagger-ui
-        operationsSorter: method   # (선택) 메서드명 정렬
-        tagsSorter: alpha          # (선택) 태그 알파벳 정렬
+      show-details: never
+
+# Swagger(SpringDoc) - 꼭 최상단 레벨에 위치해야 함 (기존 dev yml에서 들여쓰기 깨져 있었음)
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method
+    tagsSorter: alpha
