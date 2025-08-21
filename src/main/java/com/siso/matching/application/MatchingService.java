@@ -3,7 +3,7 @@ package com.siso.matching.application;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.matching.doamain.model.Matching;
-import com.siso.matching.doamain.model.Status;
+import com.siso.matching.doamain.model.MatchingStatus;
 import com.siso.matching.doamain.repository.MatchingRepository;
 import com.siso.matching.dto.request.MatchingInfoDto;
 import com.siso.matching.dto.response.MatchingResponseDto;
@@ -49,29 +49,29 @@ public class MatchingService {
         boolean isSenderOnline = userRepository.existsOnlineUserById(senderId);
         boolean isReceiverOnline = userRepository.existsOnlineUserById(receiverId);
 
-        Status status = (isSenderOnline && isReceiverOnline)
-                ? Status.MATCHED
-                : Status.WAITING_CALL;
+        MatchingStatus matchingStatus = (isSenderOnline && isReceiverOnline)
+                ? MatchingStatus.MATCHED
+                : MatchingStatus.WAITING_CALL;
 
         Matching matching = matchingRepository.findBySenderAndReceiver(sender, receiver)
                 .orElse(Matching.builder()
                         .sender(sender)
                         .receiver(receiver)
-                        .status(Status.CALL_COMPLETED) // 초기 상태는 CALL_COMPLETED로 설정
+                        .matchingStatus(MatchingStatus.MATCHED) // 초기 상태는 MATCHED 설정
                         .build());
 
-        matching.updateStatus(status);
+        matching.updateStatus(matchingStatus);
         matchingRepository.save(matching);
     }
 
     @Transactional(readOnly = true)
     public List<MatchingResponseDto> getReceivedMatchings(User receiver) {
-        return matchingRepository.findAllByReceiverAndStatus(receiver, Status.MATCHED)
+        return matchingRepository.findAllByReceiverAndStatus(receiver, MatchingStatus.MATCHED)
                 .stream()
                 .map(m -> MatchingResponseDto.builder()
                         .senderId(m.getSender().getId())
                         .receiverId(m.getReceiver().getId())
-                        .status(m.getStatus().name())
+                        .status(m.getMatchingStatus().name())
                         .createdAt(m.getCreatedAt())
                         .build())
                 .collect(Collectors.toList());
