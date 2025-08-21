@@ -9,15 +9,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final JwtRequestFilter jwtRequestFilter;
     private final RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
@@ -25,53 +27,60 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final TokenService tokenService;
 
+    // 1) 보안체인 자체를 타지 않게 완전 제외할 경로 (정적/문서/헬스체크)
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring().requestMatchers(
+                "/actuator/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**"
+        );
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .headers(x -> x.frameOptions(y -> y.disable()))
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(h -> h.frameOptions(f -> f.disable()))
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
+                                "/",                 // 루트
                                 "/oauth2/**",
                                 "/login/oauth2/**",
-                                "/api/users/**",
-                                "/",
-                                "/api/auth/**"
+                                "/api/auth/**",      // 로그인/리프레시 등
+                                "/api/users/**"      // 회원가입 등 퍼블릭이면 여기 포함
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(customAuthenticationEntryPoint)
-                );
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint));
 
-        // JWT 필터 추가: 요청 헤더에서 JWT를 검증
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
-        // RefreshToken 필터
+        // 2) RefreshToken 필터 (Bean 재사용) → Username/Password 이전에
         http.addFilterBefore(
-                new RefreshTokenAuthenticationFilter(authenticationManager(http), jwtTokenUtil, objectMapper, tokenService),
+                refreshTokenAuthenticationFilter(authenticationManager(http), jwtTokenUtil, objectMapper),
                 UsernamePasswordAuthenticationFilter.class
         );
+
+        // 3) JWT 필터
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        // Refresh Token 인증을 위한 provider 등록
-        authenticationManagerBuilder.authenticationProvider(refreshTokenAuthenticationProvider);
-        return authenticationManagerBuilder.build();
+        AuthenticationManagerBuilder builder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        builder.authenticationProvider(refreshTokenAuthenticationProvider);
+        return builder.build();
     }
 
     @Bean
-    public RefreshTokenAuthenticationFilter refreshTokenAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, ObjectMapper objectMapper) {
+    public RefreshTokenAuthenticationFilter refreshTokenAuthenticationFilter(
+            AuthenticationManager authenticationManager,
+            JwtTokenUtil jwtTokenUtil,
+            ObjectMapper objectMapper
+    ) {
+        // 토큰서비스는 생성자에 이미 포함되어 있음
         return new RefreshTokenAuthenticationFilter(authenticationManager, jwtTokenUtil, objectMapper, tokenService);
     }
 }
