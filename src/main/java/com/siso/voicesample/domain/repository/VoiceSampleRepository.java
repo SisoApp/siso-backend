@@ -24,7 +24,7 @@ public interface VoiceSampleRepository extends JpaRepository<VoiceSample, Long> 
     /**
      * 특정 기간 동안의 음성 샘플 조회
      */
-    @Query("SELECT v FROM VoiceSample v WHERE v.userId = :userId AND v.createdAt >= :startDate")
+    @Query("SELECT v FROM VoiceSample v WHERE v.user.id = :userId AND v.createdAt >= :startDate")
     List<VoiceSample> findByUserIdAndCreatedAtAfter(@Param("userId") Long userId, 
-                                                   @Param("startDate") java.time.LocalDateTime startDate);
+                                                    @Param("startDate") java.time.LocalDateTime startDate);
 }
