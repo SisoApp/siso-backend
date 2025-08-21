@@ -1,4 +1,8 @@
 spring:
+  profiles:
+    active: local
+# dev에서는 'profiles: active: local' 지우기
+
   jpa:
     open-in-view: false
   servlet:
