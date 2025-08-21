@@ -4,6 +4,7 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.application.UserSignUpService;
 import com.siso.user.domain.model.Provider;
+import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
@@ -23,8 +24,8 @@ public class OAuthService {
 
     public TokenResponseDto loginWithProvider(String providerName, String codeOrAccessToken) {
         Map<String, Object> attributes = clientFactory.getClient(providerName).getUserAttributes(codeOrAccessToken);
-
         OAuth2UserInfo oAuth2UserInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerName, attributes);
+
         String email = oAuth2UserInfo.getEmail();
         String phoneNumber = oAuth2UserInfo.getPhoneNumber();
         if (email == null) throw new ExpectedException(ErrorCode.OAUTH2_EMAIL_NOT_FOUND);
@@ -41,6 +42,6 @@ public class OAuthService {
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 
-        return new TokenResponseDto(jwtAccessToken, jwtRefreshToken);
+        return new TokenResponseDto(jwtRefreshToken, user.getRegistrationStatus());
     }
 }

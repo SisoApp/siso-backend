@@ -1,7 +1,9 @@
 package com.siso.user.presentation;
 
 import com.siso.common.response.SisoResponse;
+import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserService;
+import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.NotificationRequestDto;
 import com.siso.user.dto.response.UserResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -18,33 +20,29 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/info")
-    public SisoResponse<UserResponseDto> getUserInfo(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        UserResponseDto userDto = userService.getUserInfo(email);
+    public SisoResponse<UserResponseDto> getUserInfo(@CurrentUser User user) {
+        UserResponseDto userDto = userService.getUserInfo(user);
         return SisoResponse.success(userDto);
     }
 
     // 알림 동의 수정
     @PatchMapping("/notification")
-    public SisoResponse<Void> updateNotificationSubscribed(@AuthenticationPrincipal UserDetails userDetails,
+    public SisoResponse<Void> updateNotificationSubscribed(@CurrentUser User user,
                                                            @RequestBody NotificationRequestDto notificationRequestDto) {
-        String email = userDetails.getUsername();
-        userService.updateNotificationSubscribed(email, notificationRequestDto.isSubscribed());
+        userService.updateNotificationSubscribed(user, notificationRequestDto.isSubscribed());
         return SisoResponse.success(null);
     }
 
     // 회원 탈퇴(소프트 삭제)
     @DeleteMapping("/delete")
-    public SisoResponse<Void> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        userService.deleteUser(email);
+    public SisoResponse<Void> deleteUser(@CurrentUser User user) {
+        userService.deleteUser(user);
         return SisoResponse.success(null);
     }
 
     @PostMapping("/logout")
-    public SisoResponse<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        userService.logout(email);
+    public SisoResponse<Void> logout(@CurrentUser User user) {
+        userService.logout(user);
         return SisoResponse.success(null);
     }
 }

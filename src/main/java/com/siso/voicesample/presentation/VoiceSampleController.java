@@ -1,5 +1,7 @@
 package com.siso.voicesample.presentation;
 
+import com.siso.common.web.CurrentUser;
+import com.siso.user.domain.model.User;
 import com.siso.voicesample.dto.request.VoiceSampleRequestDto;
 import com.siso.voicesample.dto.response.VoiceSampleResponseDto;
 import com.siso.voicesample.application.service.VoiceSampleService;
@@ -66,16 +68,15 @@ public class VoiceSampleController {
      * - userId: 1 // 사용자 ID (필수), duration은 파일에서 자동 추출 (최대 20초)
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<VoiceSampleResponseDto> uploadVoiceSample(
-            @RequestPart("file") MultipartFile file, // 업로드할 음성 파일
-            @RequestParam("userId") @Valid Long userId) { // 사용자 ID
+    public ResponseEntity<VoiceSampleResponseDto> uploadVoiceSample(@RequestPart("file") MultipartFile file, // 업로드할 음성 파일
+                                                                    @CurrentUser User user) { // 사용자 ID
 
         // log.info("음성 파일 업로드 요청 - 사용자: {}, 파일명: {}, 크기: {} bytes",
         //         userId, file.getOriginalFilename(), file.getSize());
 
         // VoiceSampleRequestDto 생성
         VoiceSampleRequestDto request = new VoiceSampleRequestDto();
-        request.setUserId(userId);
+        request.setUserId(user.getId());
 
         // 파일 업로드 및 데이터베이스 저장
         VoiceSampleResponseDto response = voiceSampleService.uploadVoiceSample(file, request);
@@ -91,11 +92,11 @@ public class VoiceSampleController {
      * GET /api/voice-samples/user/{userId}
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@PathVariable(name = "userId") Long userId) {
+    public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@CurrentUser User user) {
         // log.info("사용자 음성 샘플 목록 조회 요청 - 사용자: {}", userId);
 
         // 사용자별 음성 샘플 목록 조회 (생성일 기준 내림차순)
-        List<VoiceSampleResponseDto> response = voiceSampleService.getVoiceSamplesByUserId(userId);
+        List<VoiceSampleResponseDto> response = voiceSampleService.getVoiceSamplesByUserId(user.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -130,16 +131,15 @@ public class VoiceSampleController {
      * - userId: 1 // 사용자 ID (필수), duration은 새 파일에서 자동 추출 (최대 20초)
      */
     @PutMapping(value = "/{voiceId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<VoiceSampleResponseDto> updateVoiceSample(
-            @PathVariable(name = "voiceId") Long voiceId,
-            @RequestPart(value = "file", required = false) MultipartFile file, // 새 음성 파일 (선택사항)
-            @RequestParam("userId") @Valid Long userId) { // 사용자 ID
+    public ResponseEntity<VoiceSampleResponseDto> updateVoiceSample(@PathVariable(name = "voiceId") Long voiceId,
+                                                                    @RequestPart(value = "file", required = false) MultipartFile file, // 새 음성 파일 (선택사항)
+                                                                    @CurrentUser User user) { // 사용자 ID
         
         // log.info("음성 샘플 수정 요청 - ID: {}, 파일교체: {}", voiceId, file != null && !file.isEmpty());
         
         // VoiceSampleRequestDto 생성
         VoiceSampleRequestDto request = new VoiceSampleRequestDto();
-        request.setUserId(userId);
+        request.setUserId(user.getId());
 
         // 음성 샘플 수정 (파일 교체 포함)
         VoiceSampleResponseDto response = voiceSampleService.updateVoiceSample(voiceId, file, request);

@@ -20,11 +20,13 @@ import java.io.IOException;
 public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private final JwtTokenUtil jwtTokenUtil;
     private final ObjectMapper objectMapper;
+    private final TokenService tokenService; // 새 토큰 발급
 
     public RefreshTokenAuthenticationFilter(AuthenticationManager authenticationManager,
                                             JwtTokenUtil jwtTokenUtil,
-                                            ObjectMapper objectMapper) {
+                                            ObjectMapper objectMapper, TokenService tokenService) {
         super(request -> "POST".equals(request.getMethod()) && "/api/auth/refresh".equals(request.getRequestURI()));
+        this.tokenService = tokenService;
         this.setAuthenticationManager(authenticationManager);
         this.jwtTokenUtil = jwtTokenUtil;
         this.objectMapper = objectMapper;
@@ -60,14 +62,13 @@ public class RefreshTokenAuthenticationFilter extends AbstractAuthenticationProc
                                             HttpServletResponse response,
                                             FilterChain chain,
                                             Authentication authResult) throws IOException {
-        AccountAdapter userPrincipal = (AccountAdapter) authResult.getPrincipal();
+        TokenAuthentication tokenAuth = (TokenAuthentication) authResult;
 
-        // RefreshTokenAuthenticationProvider에서 이미 새 Access Token 생성
-        String newAccessToken = jwtTokenUtil.generateAccessToken(userPrincipal.getUser().getEmail());
-        String newRefreshToken = jwtTokenUtil.generateRefreshToken(userPrincipal.getUser().getEmail());
+        // TokenService에서 새 AccessToken + RefreshToken 발급
+        TokenResponseDto tokenResponse = tokenService.refreshAccessToken((String) tokenAuth.getCredentials());
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), new TokenResponseDto(newAccessToken, newRefreshToken));
+        objectMapper.writeValue(response.getWriter(), tokenResponse);
     }
 }

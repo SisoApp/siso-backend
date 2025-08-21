@@ -1,5 +1,7 @@
 package com.siso.voicesample.application.service;
 
+import com.siso.user.domain.model.User;
+import com.siso.user.domain.repository.UserRepository;
 import com.siso.voicesample.domain.model.VoiceSample;
 import com.siso.voicesample.domain.model.VoiceFileProcessResult;
 import com.siso.voicesample.domain.repository.VoiceSampleRepository;
@@ -62,8 +64,14 @@ public class VoiceSampleService {
 
     /** 음성 샘플 관련 설정 프로퍼티 */
     private final VoiceSampleProperties voiceSampleProperties;
+    private final UserRepository userRepository;
 
     // ===================== 공개 API 메서드들 =====================
+
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    }
 
     /**
      * 음성 파일 업로드 및 저장
@@ -83,6 +91,7 @@ public class VoiceSampleService {
     @Transactional
     public VoiceSampleResponseDto uploadVoiceSample(MultipartFile file, VoiceSampleRequestDto request) {
         Long userId = request.getUserId();
+        User user = findById(userId);
 
         // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
@@ -100,7 +109,7 @@ public class VoiceSampleService {
 
         // 엔티티 생성 및 저장
         VoiceSample voiceSample = VoiceSample.builder()
-                .userId(userId)
+                .user(user)
                 .url(result.getFileUrl())
                 .duration(result.getDuration())    // 실제 파일 길이
                 .fileSize(result.getFileSize())
@@ -157,6 +166,7 @@ public class VoiceSampleService {
     @Transactional
     public VoiceSampleResponseDto updateVoiceSample(Long id, MultipartFile file, VoiceSampleRequestDto request) {
         Long userId = request.getUserId();
+        User user = findById(userId);
 
         // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
@@ -166,7 +176,7 @@ public class VoiceSampleService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
 
         // 음성 샘플 소유자 확인
-        userValidationUtil.validateUserOwnership(existingVoiceSample.getUserId(), userId);
+        userValidationUtil.validateUserOwnership(existingVoiceSample.getUser().getId(), userId);
 
         // 새 파일이 제공된 경우에만 파일 교체
         String newFileUrl = existingVoiceSample.getUrl();
@@ -190,7 +200,7 @@ public class VoiceSampleService {
         // userId는 이미 위에서 request.getUserId()로 가져왔고 유효성 검증도 완료
 
         // 기존 엔티티 업데이트 (BaseTime의 updatedAt 자동 갱신)
-        existingVoiceSample.setUserId(userId);
+        existingVoiceSample.setUser(user);
         existingVoiceSample.setUrl(newFileUrl);
         existingVoiceSample.setDuration(newDuration);
         existingVoiceSample.setFileSize(newFileSize);
@@ -219,7 +229,7 @@ public class VoiceSampleService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
 
         // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
-        deleteAudioFile(voiceSample.getUrl(), voiceSample.getUserId());
+        deleteAudioFile(voiceSample.getUrl(), voiceSample.getUser().getId());
 
         // 데이터베이스에서 레코드 삭제
         voiceSampleRepository.delete(voiceSample);

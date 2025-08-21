@@ -1,8 +1,10 @@
 package com.siso.user.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
 import com.siso.common.domain.BaseTime;
+import com.siso.image.domain.model.Image;
+import com.siso.like.doamain.model.Like;
+import com.siso.matching.doamain.model.Matching;
+import com.siso.voicesample.domain.model.VoiceSample;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -26,21 +28,22 @@ public class User extends BaseTime {
     @Column(name = "provider", nullable = false)
     private Provider provider;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "phone_number")
+    @Column(name = "phone_number" , nullable = false)
     private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "presence_status", nullable = false)
+    private PresenceStatus presenceStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "registration_status", nullable = false)
+    private RegistrationStatus registrationStatus;
 
     @Column(name = "refresh_token")
     private String refreshToken;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<UserInterest> userInterests = new ArrayList<>();
-
-    @Column(name = "is_online", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-    private boolean isOnline = false;
 
     @Column(name = "notification_subscribed", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean notificationSubscribed = false;
@@ -54,19 +57,81 @@ public class User extends BaseTime {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserProfile userProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private VoiceSample voiceSample;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserInterest> userInterests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Image> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> givenLikes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> receivedLikes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Matching> matchAsUser1 = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Matching> matchAsUser2 = new ArrayList<>();
+
     // 양방향 연관 관계 설정
+    public void linkProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
+    }
+
+    public void linkVoiceSample(VoiceSample voiceSample) {
+        this.voiceSample = voiceSample;
+    }
+
     public void addInterest(Interest interest) {
-        UserInterest userInterest = new UserInterest(this, interest);
+        UserInterest userInterest = UserInterest.builder()
+                .user(this)
+                .interest(interest)
+                .build();
         this.userInterests.add(userInterest);
     }
 
+    public void addImage(String path, String serverImageName, String originalName) {
+        Image image = Image.builder()
+                .user(this)
+                .path(path)
+                .serverImageName(serverImageName)
+                .originalName(originalName)
+                .build();
+        this.images.add(image);
+    }
+
+    public void addMatchAsUser1(Matching matching) {
+        this.matchAsUser1.add(matching);
+    }
+
+    public void addMatchAsUser2(Matching matching) {
+        this.matchAsUser2.add(matching);
+    }
+
+    public void addGivenLike(Like like) {
+        this.givenLikes.add(like);
+    }
+
+    public void addReceivedLike(Like like) {
+        this.receivedLikes.add(like);
+    }
+
     @Builder
-    public User(Provider provider, String email, String phoneNumber, String refreshToken, boolean isOnline, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+    public User(Provider provider, String email, String phoneNumber, PresenceStatus presenceStatus, RegistrationStatus registrationStatus, String refreshToken, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
         this.provider = provider;
         this.email = email;
         this.phoneNumber = phoneNumber;
+        this.presenceStatus = presenceStatus;
+        this.registrationStatus = registrationStatus;
         this.refreshToken = refreshToken;
-        this.isOnline = isOnline;
         this.notificationSubscribed = notificationSubscribed;
         this.isBlock = isBlock;
         this.isDeleted = isDeleted;
@@ -77,6 +142,14 @@ public class User extends BaseTime {
     public User(Provider provider, String phoneNumber) {
         this.provider = provider;
         this.phoneNumber = phoneNumber;
+    }
+
+    // 기존 관심사를 모두 삭제하고 새로운 관심사로 갱신
+    public void updateUserInterests(List<Interest> interests) {
+        this.userInterests.clear();
+        for (Interest interest : interests) {
+            this.addInterest(interest);
+        }
     }
 
     public void deleteUser() {
@@ -92,8 +165,12 @@ public class User extends BaseTime {
         this.notificationSubscribed = notificationSubscribed;
     }
 
-    public void updateIsOnline(boolean isOnline) {
-        this.isOnline = isOnline;
+    public void updatePresenceStatus(PresenceStatus presenceStatus) {
+        this.presenceStatus = presenceStatus;
+    }
+
+    public void updateRegistrationStatus(RegistrationStatus registrationStatus) {
+        this.registrationStatus = registrationStatus;
     }
 
     public void updateIsBlock(boolean isBlock) {

@@ -2,6 +2,7 @@ package com.siso.user.infrastructure.jwt;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
@@ -16,25 +17,19 @@ public class TokenService {
     private final JwtTokenUtil jwtTokenUtil;
 
     public TokenResponseDto refreshAccessToken(String refreshToken) {
-        try {
-            jwtTokenUtil.validateToken(refreshToken); // 서명 위조, 형식 에러 체크
-            if (jwtTokenUtil.isTokenExpired(refreshToken)) {
-                throw new ExpectedException(ErrorCode.REFRESH_TOKEN_EXPIRED);
-            }
-        } catch (JwtException e) {
-            throw new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        // 1. DB에서 refreshToken으로 사용자 조회
+        // 1. DB에서 사용자 조회
         User user = userRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN));
-        // 2. 새 Access Token 발급
+
+        // 2. 새 AccessToken 발급
         String newAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
-        // 3. 새 Refresh Token 발급 (이메일 포함)
+
+        // 3. 새 RefreshToken 발급 및 DB 저장
         String newRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
         user.updateRefreshToken(newRefreshToken);
         userRepository.save(user);
 
-        return new TokenResponseDto(newAccessToken, newRefreshToken);
+        // 4. DTO 반환 (registrationStatus: 로그인)
+        return new TokenResponseDto(newRefreshToken, RegistrationStatus.LOGIN);
     }
 }

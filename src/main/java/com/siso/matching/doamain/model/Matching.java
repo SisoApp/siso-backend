@@ -19,12 +19,12 @@ public class Matching {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id", nullable = false)
-    private User receiver;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false)
+    private User receiver;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -34,11 +34,13 @@ public class Matching {
     private LocalDateTime createdAt;
 
     @Builder
-    public Matching(User receiver, User sender, Status status, LocalDateTime createdAt) {
-        this.receiver = receiver;
+    public Matching(User sender, User receiver, Status status) {
         this.sender = sender;
+        this.receiver = receiver;
+        sender.addMatchAsUser1(this);
+        receiver.addMatchAsUser2(this);
         this.status = status;
-        this.createdAt = createdAt;
+        this.createdAt = LocalDateTime.now();
     }
 
     public void matchSuccess() {

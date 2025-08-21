@@ -1,6 +1,5 @@
 package com.siso.like.doamain.model;
 
-import com.siso.matching.doamain.model.Status;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -34,9 +33,11 @@ public class Like {
     private LocalDateTime createdAt;
 
     @Builder
-    public Like( User sender, User receiver, boolean isLiked) {
+    public Like(User sender, User receiver, boolean isLiked) {
         this.sender = sender;
         this.receiver = receiver;
+        sender.addGivenLike(this);
+        receiver.addReceivedLike(this);
         this.isLiked = isLiked;
         this.createdAt = LocalDateTime.now();
     }
