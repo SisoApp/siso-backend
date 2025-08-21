@@ -20,8 +20,8 @@ public class UserProfileResponseDto {
     private PreferenceContact preferenceContact;
     private Location location;
     private Sex sex;
-    private List<ImageResponseDto> profileImages;
     private PreferenceSex preferenceSex;
+    private List<ImageResponseDto> profileImages;
 
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
