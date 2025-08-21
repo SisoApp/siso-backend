@@ -48,6 +48,9 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     @Column(name = "sex")
     private Sex sex;
+  
+    @Enumerated(EnumType.STRING)
+    private PreferenceSex preferenceSex;
 
     @Builder
     public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex) {

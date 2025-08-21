@@ -108,6 +108,7 @@ public class UserProfileService {
                 .location(profile.getLocation())
                 .sex(profile.getSex())
                 .preferenceContact(profile.getPreferenceContact())
+                .preferenceSex(profile.getPreferenceSex())
                 .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImages(images)
                 .build();

@@ -36,7 +36,7 @@ public class UserInterestController {
     public SisoResponse<Void> selectUserInterests(@CurrentUser User user,
                                                   @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
-                .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
+                .map(UserInterestRequestDto::getInterest)
                 .collect(Collectors.toList());
 
         userInterestService.selectUserInterest(user, interests);
@@ -48,7 +48,7 @@ public class UserInterestController {
     public SisoResponse<Void> updateUserInterests(@CurrentUser User user,
                                                   @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
-                .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
+                .map(UserInterestRequestDto::getInterest) // enum 그대로 꺼내옴
                 .collect(Collectors.toList());
 
         userInterestService.updateUserInterest(user, interests);

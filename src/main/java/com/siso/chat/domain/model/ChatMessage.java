@@ -18,11 +18,4 @@ public class ChatMessage extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    private ChatRoom chatRoomId;
-//
-//    private User senderId;
-//
-//    private String content;
-//
-//    private boolean is_deleted;
 }

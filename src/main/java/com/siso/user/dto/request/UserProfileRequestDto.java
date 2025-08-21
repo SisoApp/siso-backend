@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserProfileRequestDto {
@@ -20,9 +18,14 @@ public class UserProfileRequestDto {
     private PreferenceContact preferenceContact;
     private Location location;
     private Sex sex;
+    private PreferenceSex preferenceSex;
 
     @Builder
-    public UserProfileRequestDto(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, int age, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Sex sex) {
+    public UserProfileRequestDto( DrinkingCapacity drinkingCapacity,
+                                 Religion religion, boolean smoke, int age,
+                                 String nickname, String introduce,
+                                 PreferenceContact preferenceContact, Location location,
+                                 Sex sex, PreferenceSex preferenceSex) {
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -32,5 +35,6 @@ public class UserProfileRequestDto {
         this.preferenceContact = preferenceContact;
         this.location = location;
         this.sex = sex;
+        this.preferenceSex = preferenceSex;
     }
 }

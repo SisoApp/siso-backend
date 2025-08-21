@@ -23,8 +23,14 @@ public class UserProfileResponseDto {
     private Location location;
     private Sex sex;
     private List<ImageResponseDto> profileImages;
+    private PreferenceSex preferenceSex;
 
-    public UserProfileResponseDto( DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, int age, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, List<ImageResponseDto> profileImages) {
+    public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
+                                  Religion religion, boolean smoke, int age,
+                                  String nickname, String introduce,
+                                  PreferenceContact preferenceContact, Location location,
+                                  Sex sex, PreferenceSex preferenceSex,
+                                  List<ImageResponseDto> profileImages) {
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -34,6 +40,7 @@ public class UserProfileResponseDto {
         this.preferenceContact = preferenceContact;
         this.location = location;
         this.sex = sex;
+        this.preferenceSex = preferenceSex;
         this.profileImages = profileImages;
     }
 }
