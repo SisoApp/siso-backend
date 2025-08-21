@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://13.124.11.3:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000}
+    username: ${DB_USERNAME:siso}
+    password: ${DB_PASSWORD:1234}
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:96171e749ecdb7417189ae5b534534d0}
+            redirect-uri: ${KAKAO_REDIRECT_URI:https://13.124.11.3/api/auth/kakao/callback}

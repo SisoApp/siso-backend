@@ -1,6 +1,6 @@
 spring:
   profiles:
-    include: local
+    include: dev
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}

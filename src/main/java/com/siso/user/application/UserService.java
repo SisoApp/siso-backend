@@ -1,7 +1,6 @@
 package com.siso.user.application;
 
-import com.siso.common.exception.ErrorCode;
-import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.UserResponseDto;
@@ -14,20 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
 
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    @Transactional
-    public void deleteUser(String email) {
-        User user = findByEmail(email);
-        user.deleteUser();
-        userRepository.save(user);
-    }
-
-    public UserResponseDto getUserInfo(String email) {
-        User user = findByEmail(email);
+    public UserResponseDto getUserInfo(User user) {
         return new UserResponseDto(
                 user.getId(),
                 user.getProvider(),
@@ -39,18 +25,22 @@ public class UserService {
     }
 
     @Transactional
-    public void updateNotificationSubscribed(String email, boolean subscribed) {
-        User user = findByEmail(email);
+    public void deleteUser(User user) {
+        user.deleteUser();
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateNotificationSubscribed(User user, boolean subscribed) {
         user.updateNotificationSubScribed(subscribed);
         userRepository.save(user);
     }
 
     @Transactional
-    public void logout(String email) {
-        User user = findByEmail(email);
-        // 리프레시 토큰 무효화 및 온라인 상태 변경
+    public void logout(User user) {
         user.updateRefreshToken(null);
-        user.updateIsOnline(false);
+        user.updatePresenceStatus(PresenceStatus.OFFLINE);
         userRepository.save(user);
     }
 }
+

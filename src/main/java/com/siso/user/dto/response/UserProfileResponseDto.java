@@ -13,7 +13,6 @@ import java.util.List;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserProfileResponseDto {
-    private Long id;
     private DrinkingCapacity drinkingCapacity;
     private Religion religion;
     private boolean smoke;
@@ -23,17 +22,15 @@ public class UserProfileResponseDto {
     private PreferenceContact preferenceContact;
     private Location location;
     private Sex sex;
-    private PreferenceSex preferenceSex;
-    private Long userId;
     private List<ImageResponseDto> profileImages;
+    private PreferenceSex preferenceSex;
 
-    public UserProfileResponseDto(Long id, DrinkingCapacity drinkingCapacity,
+    public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
                                   String nickname, String introduce,
                                   PreferenceContact preferenceContact, Location location,
                                   Sex sex, PreferenceSex preferenceSex,
-                                  Long userId, List<ImageResponseDto> profileImages) {
-        this.id = id;
+                                  List<ImageResponseDto> profileImages) {
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -44,7 +41,6 @@ public class UserProfileResponseDto {
         this.location = location;
         this.sex = sex;
         this.preferenceSex = preferenceSex;
-        this.userId = userId;
         this.profileImages = profileImages;
     }
 }

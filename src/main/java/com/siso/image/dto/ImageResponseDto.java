@@ -31,7 +31,7 @@ public class ImageResponseDto {
     public static ImageResponseDto fromEntity(Image image) {
         return ImageResponseDto.builder()
                 .id(image.getId())
-                .userId(image.getUserId())
+                .userId(image.getUser().getId())
                 .path(image.getPath())
                 .serverImageName(image.getServerImageName())
                 .originalName(image.getOriginalName())

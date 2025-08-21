@@ -23,6 +23,7 @@ public class SecurityConfig {
     private final RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
     private final JwtTokenUtil jwtTokenUtil;
     private final ObjectMapper objectMapper;
+    private final TokenService tokenService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -52,9 +53,9 @@ public class SecurityConfig {
         // JWT 필터 추가: 요청 헤더에서 JWT를 검증
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Refresh Token 필터 추가: Refresh Token으로 Access Token 재발급
+        // RefreshToken 필터
         http.addFilterBefore(
-                new RefreshTokenAuthenticationFilter(authenticationManager(http), jwtTokenUtil, objectMapper),
+                new RefreshTokenAuthenticationFilter(authenticationManager(http), jwtTokenUtil, objectMapper, tokenService),
                 UsernamePasswordAuthenticationFilter.class
         );
 
@@ -71,6 +72,6 @@ public class SecurityConfig {
 
     @Bean
     public RefreshTokenAuthenticationFilter refreshTokenAuthenticationFilter(AuthenticationManager authenticationManager, JwtTokenUtil jwtTokenUtil, ObjectMapper objectMapper) {
-        return new RefreshTokenAuthenticationFilter(authenticationManager, jwtTokenUtil, objectMapper);
+        return new RefreshTokenAuthenticationFilter(authenticationManager, jwtTokenUtil, objectMapper, tokenService);
     }
 }
