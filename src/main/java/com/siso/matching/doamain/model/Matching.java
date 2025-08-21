@@ -1,6 +1,8 @@
 package com.siso.matching.doamain.model;
 
+import com.siso.call.domain.model.Call;
 import com.siso.user.domain.model.User;
+import com.siso.user.domain.model.UserProfile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,34 +29,42 @@ public class Matching {
     private User receiver;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private Status status;
+    @Column(name = "matchingStatus", nullable = false)
+    private MatchingStatus matchingStatus;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @OneToOne(mappedBy = "matching", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Call call;
+
+    // 양방향 연관 관계 설정
+    public void linkCall(Call call) {
+        this.call = call;
+    }
+
     @Builder
-    public Matching(User sender, User receiver, Status status) {
+    public Matching(User sender, User receiver, MatchingStatus matchingStatus) {
         this.sender = sender;
         this.receiver = receiver;
         sender.addMatchAsUser1(this);
         receiver.addMatchAsUser2(this);
-        this.status = status;
+        this.matchingStatus = matchingStatus;
         this.createdAt = LocalDateTime.now();
     }
 
     public void matchSuccess() {
-        this.status = Status.MATCHED;
+        this.matchingStatus = MatchingStatus.MATCHED;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateStatus(Status status) {
-        this.status = status;
+    public void updateStatus(MatchingStatus matchingStatus) {
+        this.matchingStatus = matchingStatus;
     }
 
     public void callCompleted() {
-        if (this.status != Status.MATCHED) { // 이미 매칭된 경우는 그대로
-            this.status = Status.CALL_COMPLETED;
+        if (this.matchingStatus != MatchingStatus.MATCHED) { // 이미 매칭된 경우는 그대로
+            this.matchingStatus = MatchingStatus.CALL_COMPLETED;
             this.createdAt = LocalDateTime.now();
         }
     }
