@@ -9,6 +9,7 @@ import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;
 import com.siso.matching.application.MatchingService;
 import com.siso.matching.dto.request.MatchingInfoDto;
+import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class LikeService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final MatchingService matchingService;
+    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -57,11 +59,17 @@ public class LikeService {
         like.updateIsLiked(true);
         likeRepository.save(like);
 
-        // 상호 좋아요 확인
+        // 좋아요 알림 전송
+        String senderNickname = sender.getUserProfile() != null ? 
+            sender.getUserProfile().getNickname() : "익명";
+        notificationService.sendLikeNotification(receiver.getId(), sender.getId(), senderNickname);
+
+        // 상호 좋아요 확인 (매칭 생성은 MatchingService에서 처리)
         boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(receiver, sender);
         if (isMutualLike) {
+            // 상호 좋아요로 인한 매칭 생성 (매칭 알림도 함께 전송)
             MatchingInfoDto matchingInfoDto = new MatchingInfoDto(sender, receiver);
-            matchingService.createOrUpdateMatching(matchingInfoDto);
+            matchingService.createOrUpdateMatching(matchingInfoDto, true); // 알림 전송 O
         }
 
         return new LikeResponseDto(true, isMutualLike);

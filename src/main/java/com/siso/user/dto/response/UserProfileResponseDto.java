@@ -3,6 +3,7 @@ package com.siso.user.dto.response;
 import com.siso.image.dto.ImageResponseDto;
 import com.siso.user.domain.model.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Getter
 @Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserProfileResponseDto {
     private DrinkingCapacity drinkingCapacity;

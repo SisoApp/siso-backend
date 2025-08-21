@@ -17,6 +17,7 @@ import com.siso.user.domain.repository.UserInterestRepository;
 import com.siso.user.dto.response.UserInterestResponseDto;
 import com.siso.image.domain.repository.ImageRepository;
 import com.siso.image.dto.ImageResponseDto;
+import com.siso.notification.application.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class MatchingService {
     private final UserProfileRepository userProfileRepository;
     private final UserInterestRepository userInterestRepository;
     private final ImageRepository imageRepository;
+    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -40,6 +42,11 @@ public class MatchingService {
 
     @Transactional
     public void createOrUpdateMatching(MatchingInfoDto matchingInfoDto) {
+        createOrUpdateMatching(matchingInfoDto, false); // 기본값: 알림 전송 안함
+    }
+    
+    @Transactional
+    public void createOrUpdateMatching(MatchingInfoDto matchingInfoDto, boolean sendNotification) {
         Long senderId = matchingInfoDto.getSender().getId();
         Long receiverId = matchingInfoDto.getReceiver().getId();
 
@@ -62,6 +69,18 @@ public class MatchingService {
 
         matching.updateStatus(status);
         matchingRepository.save(matching);
+        
+        // 매칭이 성사된 경우 알림 전송 (상호 좋아요로 인한 매칭일 때만)
+        if (status == Status.MATCHED && sendNotification) {
+            // 양방향 매칭 알림 전송 (서로에게 알림)
+            String senderNickname = sender.getUserProfile() != null ? 
+                sender.getUserProfile().getNickname() : "익명";
+            String receiverNickname = receiver.getUserProfile() != null ? 
+                receiver.getUserProfile().getNickname() : "익명";
+            
+            notificationService.sendMatchingNotification(receiverId, senderId, senderNickname);
+            notificationService.sendMatchingNotification(senderId, receiverId, receiverNickname);
+        }
     }
 
     @Transactional(readOnly = true)
