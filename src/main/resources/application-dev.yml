@@ -9,4 +9,4 @@ spring:
         registration:
           kakao:
             client-id: ${KAKAO_CLIENT_ID:96171e749ecdb7417189ae5b534534d0}
-            redirect-uri: ${KAKAO_REDIRECT_URI:https://13.124.11.3/api/auth/kakao/callback}
+            redirect-uri: ${KAKAO_REDIRECT_URI:https://13.124.11.3:8080/api/auth/kakao/callback}
