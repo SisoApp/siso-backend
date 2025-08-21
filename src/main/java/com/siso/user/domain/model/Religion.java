@@ -5,7 +5,6 @@ public enum Religion {
     CHRISTIANITY("기독교"),
     CATHOLIC("천주교"),
     BUDDHISM("불교"),
-    ISLAM("이슬람"),
     OTHER("기타");
 
     private final String description;
