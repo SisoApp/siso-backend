@@ -1,7 +1,8 @@
 spring:
-  config:
-    activate:
-      on-profile: dev
+#  config:
+#    activate:
+#      on-profile: dev
+# dev에서는 'config: activate: on-profile: dev' 살리기
 
   datasource:
     # 로컬 MySQL 쓰면 127.0.0.1, EC2 DB를 개발중에 공유로 쓰고 싶으면 13.124.11.3로.
