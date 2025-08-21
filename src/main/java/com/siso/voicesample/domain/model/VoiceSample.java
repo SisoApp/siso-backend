@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "VoiceSamples")
+@Table(name = "voice_samples")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor

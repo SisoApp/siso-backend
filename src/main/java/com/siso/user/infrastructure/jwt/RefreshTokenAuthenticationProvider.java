@@ -17,7 +17,6 @@ import java.util.Collections;
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenAuthenticationProvider implements AuthenticationProvider {
-
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
 

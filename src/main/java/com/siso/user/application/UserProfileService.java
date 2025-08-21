@@ -63,7 +63,7 @@ public class UserProfileService {
 
         UserProfile profile = UserProfile.builder()
                 .user(user)
-                .drinking_capacity(dto.getDrinkingCapacity())
+                .drinkingCapacity(dto.getDrinkingCapacity())
                 .religion(dto.getReligion())
                 .smoke(dto.isSmoke())
                 .age(dto.getAge())
@@ -114,7 +114,8 @@ public class UserProfileService {
                 .location(profile.getLocation())
                 .sex(profile.getSex())
                 .preferenceContact(profile.getPreferenceContact())
-                .drinkingCapacity(profile.getDrinking_capacity())
+                .preferenceSex(profile.getPreferenceSex())
+                .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImages(images)
                 .build();
     }

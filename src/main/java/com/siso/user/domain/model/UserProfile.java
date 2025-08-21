@@ -1,11 +1,7 @@
 package com.siso.user.domain.model;
 
-import com.siso.image.domain.model.Image;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -19,7 +15,8 @@ public class UserProfile {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private DrinkingCapacity drinking_capacity;
+    @Column(name = "drinking_capacity")
+    private DrinkingCapacity drinkingCapacity;
 
     @Enumerated(EnumType.STRING)
     private Religion religion;
@@ -46,12 +43,16 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     private Sex sex;
 
+    @Enumerated(EnumType.STRING)
+    private PreferenceSex preferenceSex;
+
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public void updateProfile(DrinkingCapacity drinking_capacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location) {
-        this.drinking_capacity = drinking_capacity;
+    public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location) {
+        this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
         this.nickname = nickname;

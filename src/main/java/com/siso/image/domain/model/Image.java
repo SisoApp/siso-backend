@@ -11,7 +11,7 @@ import lombok.*;
  * 이미지 업로드, 수정, 삭제 기능 제공
  */
 @Entity
-@Table(name = "Images")
+@Table(name = "images")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor

@@ -33,7 +33,7 @@ public class UserInterestController {
     @PostMapping("/select")
     public SisoResponse<Void> selectUserInterests(@PathVariable(name = "userId") Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
-                .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
+                .map(UserInterestRequestDto::getInterest)
                 .collect(Collectors.toList());
 
         userInterestService.selectUserInterest(userId, interests);
@@ -44,7 +44,7 @@ public class UserInterestController {
     @PatchMapping("/update")
     public SisoResponse<Void> updateUserInterests(@PathVariable(name = "userId") Long userId, @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
-                .map(dto -> Interest.valueOf(dto.getName().toUpperCase()))
+                .map(UserInterestRequestDto::getInterest) // enum 그대로 꺼내옴
                 .collect(Collectors.toList());
 
         userInterestService.updateUserInterest(userId, interests);

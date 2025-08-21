@@ -1,6 +1,6 @@
 spring:
   profiles:
-    include: secret
+    include: local
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -22,6 +22,7 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+      
   security:
     oauth2:
       client:
