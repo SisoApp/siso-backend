@@ -59,7 +59,6 @@ public class VoiceSampleController {
      * 음성 파일 업로드 API
      *
      * @param file 업로드할 음성 파일 (MultipartFile)
-     * @param userId 사용자 ID (필수)
      * @return 업로드된 음성 샘플 정보
      *
      * POST /api/voice-samples/upload
@@ -86,7 +85,6 @@ public class VoiceSampleController {
     /**
      * 특정 사용자의 음성 샘플 목록 조회 API
      *
-     * @param userId 조회할 사용자 ID
      * @return 해당 사용자의 음성 샘플 목록 (최신순 정렬)
      *
      * GET /api/voice-samples/user/{userId}
@@ -100,29 +98,11 @@ public class VoiceSampleController {
         return ResponseEntity.ok(response);
     }
 
-    // /**
-    //  * 음성 샘플 단일 조회 API
-    //  *
-    //  * @param id 조회할 음성 샘플 ID
-    //  * @return 음성 샘플 상세 정보
-    //  *
-    //  * GET /api/voice-samples/{id}
-    //  */
-    // @GetMapping("/{id}")
-    // public ResponseEntity<VoiceSampleResponseDto> getVoiceSample(@PathVariable Long id) {
-    //     // log.info("음성 샘플 조회 요청 - ID: {}", id);
-
-    //     // ID로 음성 샘플 단일 조회
-    //     VoiceSampleResponseDto response = voiceSampleService.getVoiceSample(id);
-    //     return ResponseEntity.ok(response);
-    // }
-
     /**
      * 음성 샘플 수정 API (파일 교체)
      * 
      * @param voiceId 수정할 음성 샘플 ID
      * @param file 새로운 음성 파일 (선택사항)
-     * @param userId 사용자 ID (필수)
      * @return 수정된 음성 샘플 정보
      * 
      * PUT /api/voice-samples/{voiceId}
