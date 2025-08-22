@@ -2,7 +2,7 @@ package com.siso.user.domain.model;
 
 import com.siso.common.domain.BaseTime;
 import com.siso.image.domain.model.Image;
-import com.siso.like.doamain.model.Like;
+import com.siso.like.domain.model.Like;
 import com.siso.matching.doamain.model.Matching;
 import com.siso.voicesample.domain.model.VoiceSample;
 import jakarta.persistence.*;

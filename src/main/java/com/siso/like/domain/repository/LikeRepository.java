@@ -1,6 +1,6 @@
-package com.siso.like.doamain.repository;
+package com.siso.like.domain.repository;
 
-import com.siso.like.doamain.model.Like;
+import com.siso.like.domain.model.Like;
 import com.siso.user.domain.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

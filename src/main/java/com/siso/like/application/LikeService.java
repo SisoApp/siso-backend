@@ -2,8 +2,8 @@ package com.siso.like.application;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.like.doamain.model.Like;
-import com.siso.like.doamain.repository.LikeRepository;
+import com.siso.like.domain.model.Like;
+import com.siso.like.domain.repository.LikeRepository;
 import com.siso.like.dto.request.LikeRequestDto;
 import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;

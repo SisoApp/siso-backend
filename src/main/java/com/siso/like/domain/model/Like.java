@@ -1,4 +1,4 @@
-package com.siso.like.doamain.model;
+package com.siso.like.domain.model;
 
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;

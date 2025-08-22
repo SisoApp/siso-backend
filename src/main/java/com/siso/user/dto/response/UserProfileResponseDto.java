@@ -2,16 +2,14 @@ package com.siso.user.dto.response;
 
 import com.siso.image.dto.ImageResponseDto;
 import com.siso.user.domain.model.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class UserProfileResponseDto {
     private DrinkingCapacity drinkingCapacity;
     private Religion religion;

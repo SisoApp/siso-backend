@@ -18,4 +18,16 @@ public class ChatMessage extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "content", nullable = false)
+    private String content;
+
+    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
+    private boolean is_deleted;
+
+
+
 }
