@@ -9,14 +9,18 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface CallRepository extends JpaRepository<Call, Long> {
-    // 발신자(User) 기준 통화 조회
+    // matchingId 기준 조회
+    @Query("SELECT c FROM Call c WHERE c.matching.id = :matchingId")
+    List<Call> findByMatchingId(@Param("matchingId") Long matchingId);
+
+    // 통화 상태 기준 조회
+    List<Call> findByCallStatus(CallStatus callStatus);
+
+    // 발신자(sender) 기준 조회
     @Query("SELECT c FROM Call c WHERE c.matching.sender.id = :senderId")
     List<Call> findBySenderId(@Param("senderId") Long senderId);
 
-    // 수신자(User) 기준 통화 조회
+    // 수신자(receiver) 기준 조회
     @Query("SELECT c FROM Call c WHERE c.matching.receiver.id = :receiverId")
     List<Call> findByReceiverId(@Param("receiverId") Long receiverId);
-
-    // callStatus 기준 조회
-    List<Call> findByCallStatus(CallStatus callStatus);
 }
