@@ -66,7 +66,7 @@ public class MatchingService {
 
     @Transactional(readOnly = true)
     public List<MatchingResponseDto> getReceivedMatchings(User receiver) {
-        return matchingRepository.findAllByReceiverAndStatus(receiver, MatchingStatus.MATCHED)
+        return matchingRepository.findAllByReceiverAndMatchingStatus(receiver, MatchingStatus.MATCHED)
                 .stream()
                 .map(m -> MatchingResponseDto.builder()
                         .senderId(m.getSender().getId())

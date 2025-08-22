@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
     Optional<Matching> findBySenderAndReceiver(User sender, User receiver);
 
-    List<Matching> findAllByReceiverAndStatus(User receiver, MatchingStatus matchingStatus);
+    List<Matching> findAllByReceiverAndMatchingStatus(User receiver, MatchingStatus matchingStatus);
 }
