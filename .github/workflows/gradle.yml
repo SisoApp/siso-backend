@@ -17,7 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # (선택) 컨테이너 밖에서 미리 빌드할 필요 없으면 이 단계 생략 가능
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -31,25 +30,36 @@ jobs:
         run: chmod +x gradlew
 
       # 테스트는 필요 시 활성화
-      - name: Gradle build (optional)
+      - name: Gradle build
         run: ./gradlew clean build -x test
 
       # ── 배포 번들 구성 ───────────────────────────────
-      # CodeDeploy는 zip 최상단에 appspec.yml 이 있어야 함
-      # EC2에서 Docker로 배포할 스크립트/파일 포함
       - name: Make deploy bundle
+        shell: bash
         run: |
+          set -euo pipefail
           rm -rf deploy && mkdir -p deploy/scripts
-          # Docker 관련 파일 포함(있는 것만 복사)
+
+          # ── JAR 1개만 선택 (없으면 건너뜀)
+          if compgen -G "build/libs/*.jar" > /dev/null; then
+            JAR="$(ls -1 build/libs/*.jar | grep -v -- '-plain' | head -n 1 || true)"
+            if [ -n "${JAR:-}" ]; then
+              cp "$JAR" deploy/app.jar
+            fi
+          fi
+
+          # Docker 관련 파일 포함(있는 경우만)
           [ -f Dockerfile ] && cp Dockerfile deploy/
           [ -f docker-compose.yml ] && cp docker-compose.yml deploy/
-          # 앱 산출물(컨테이너에서 빌드한다면 생략 가능)
-          if ls build/libs/*.jar >/dev/null 2>&1; then cp build/libs/*.jar deploy/app.jar; fi
+
           # CodeDeploy 필수 파일
           cp appspec.yml deploy/
-          # 배포 스크립트(예: scripts/before_install.sh, after_install.sh, start_server.sh 등)
+
+          # 배포 스크립트
           if [ -d scripts ]; then cp -r scripts/* deploy/scripts/; fi
-          cd deploy && zip -r ../bundle.zip . && cd -
+
+          # zip 생성 (zip 루트에 appspec.yml 있어야 함)
+          (cd deploy && zip -r ../bundle.zip .)
 
       # ── AWS 자격 증명 ────────────────────────────────
       - name: Configure AWS credentials
