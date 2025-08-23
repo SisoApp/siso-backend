@@ -1,5 +1,6 @@
 package com.siso.like.dto.response;
 
+import com.siso.like.domain.model.LikeStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,12 +10,11 @@ import lombok.NoArgsConstructor;
 public class ReceivedLikeResponseDto {
     private Long senderId;
     private Long receiverId;
-    private Boolean isLiked;
+    private LikeStatus likeStatus;
 
-    public ReceivedLikeResponseDto(Long senderId, Long receiverId, Boolean isLiked) {
+    public ReceivedLikeResponseDto(Long senderId, Long receiverId, LikeStatus likeStatus) {
         this.senderId = senderId;
         this.receiverId = receiverId;
-        this.isLiked = isLiked;
+        this.likeStatus = likeStatus;
     }
-
 }

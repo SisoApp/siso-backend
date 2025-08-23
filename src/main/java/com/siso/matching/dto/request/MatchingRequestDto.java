@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchingInfoDto {
-    private User sender;
-    private User receiver;
+public class MatchingRequestDto {
+    private User user1;
+    private User user2;
 
-    public MatchingInfoDto(User sender, User receiver) {
-        this.sender = sender;
-        this.receiver = receiver;
+    public MatchingRequestDto(User user1, User user2) {
+        this.user1 = user1;
+        this.user2 = user2;
     }
 }

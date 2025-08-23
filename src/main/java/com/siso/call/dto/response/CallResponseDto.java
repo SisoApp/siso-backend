@@ -9,15 +9,20 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CallResponseDto {
-    private Long id;
-    private String channelName;
+    private boolean accepted;
+    private String token;
+    private String channelName;;
+    private Long callerId;
+    private Long receiverId;
     private CallStatus callStatus;
     private Long duration; // 초 단위
 
-    @Builder
-    public CallResponseDto(Long id, String channelName, CallStatus callStatus, Long duration) {
-        this.id = id;
+    public CallResponseDto(boolean accepted, String token, String channelName, Long callerId, Long receiverId, CallStatus callStatus, Long duration) {
+        this.accepted = accepted;
+        this.token = token;
         this.channelName = channelName;
+        this.callerId = callerId;
+        this.receiverId = receiverId;
         this.callStatus = callStatus;
         this.duration = duration;
     }

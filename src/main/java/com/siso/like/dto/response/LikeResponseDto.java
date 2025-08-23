@@ -1,5 +1,6 @@
 package com.siso.like.dto.response;
 
+import com.siso.like.domain.model.LikeStatus;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,11 +8,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class LikeResponseDto {
-    private Boolean isLiked;
+    private LikeStatus likeStatus;
     private Boolean mutualLike;
 
-    public LikeResponseDto(Boolean isLiked, Boolean mutualLike) {
-        this.isLiked = isLiked;
+    public LikeResponseDto(LikeStatus likeStatus, Boolean mutualLike) {
+        this.likeStatus = likeStatus;
         this.mutualLike = mutualLike;
     }
 }

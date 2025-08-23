@@ -1,6 +1,6 @@
 package com.siso.user.dto.response;
 
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
 import lombok.*;
 
