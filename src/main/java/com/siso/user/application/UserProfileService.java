@@ -34,7 +34,7 @@ public class UserProfileService {
     // 단일 조회
     public UserProfileResponseDto findById(Long id) {
         UserProfile userProfile = userProfileRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("프로필을 찾을 수 없습니다."));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.PROFILE_NOT_FOUND));
         List<ImageResponseDto> images = imageService.getImagesByUserId(userProfile.getUser().getId());
         return toDto(userProfile, images);
     }
@@ -51,19 +51,17 @@ public class UserProfileService {
 
     // 사용자 기준 프로필 조회
     public UserProfileResponseDto getUserProfileByUserId(Long userId) {
-        UserProfile profile = userProfileRepository.findByUserId(userId).orElseThrow(() -> new EntityNotFoundException("해당 사용자의 프로필을 찾을 수 없습니다."));
+        UserProfile profile = userProfileRepository.findByUserId(userId).orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
 
         List<ImageResponseDto> images = imageService.getImagesByUserId(userId);
         return toDto(profile, images);
     }
 
     // 생성
-    public UserProfileResponseDto create(UserProfileRequestDto dto) {
-        User user =  getUserById(dto.getUserId());
-
+    public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
         UserProfile profile = UserProfile.builder()
                 .user(user)
-                .drinking_capacity(dto.getDrinkingCapacity())
+                .drinkingCapacity(dto.getDrinkingCapacity())
                 .religion(dto.getReligion())
                 .smoke(dto.isSmoke())
                 .age(dto.getAge())
@@ -80,23 +78,21 @@ public class UserProfileService {
     }
 
     // 수정(전체 교체)
-    public UserProfileResponseDto update(UserProfileRequestDto dto) {
-        User currentUser = getUserById(dto.getUserId());
-
+    public UserProfileResponseDto update(User currentUser, UserProfileRequestDto dto) {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
                 .orElse(UserProfile.builder().user(currentUser).build());
 
         profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation());
 
         UserProfile savedProfile = userProfileRepository.save(profile);
-        List<ImageResponseDto> images = imageService.getImagesByUserId(dto.getUserId());
+        List<ImageResponseDto> images = imageService.getImagesByUserId(currentUser.getId());
         return toDto(savedProfile, images);
     }
 
     // 삭제
     public void delete(Long id) {
         if (!userProfileRepository.existsById(id)) {
-            throw new EntityNotFoundException("프로필을 찾을 수 없습니다.");
+            throw new ExpectedException(ErrorCode.PROFILE_NOT_FOUND);
         }
         userProfileRepository.deleteById(id);
     }
@@ -104,8 +100,6 @@ public class UserProfileService {
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile, List<ImageResponseDto> images) {
         return UserProfileResponseDto.builder()
-                .id(profile.getId())
-                .userId(profile.getUser().getId())
                 .nickname(profile.getNickname())
                 .age(profile.getAge())
                 .introduce(profile.getIntroduce())
@@ -114,14 +108,9 @@ public class UserProfileService {
                 .location(profile.getLocation())
                 .sex(profile.getSex())
                 .preferenceContact(profile.getPreferenceContact())
-                .drinkingCapacity(profile.getDrinking_capacity())
+                .preferenceSex(profile.getPreferenceSex())
+                .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImages(images)
                 .build();
-    }
-
-    // 경로에서 파일명 추출
-    private String fileName(String path) {
-        int i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        return (i >= 0) ? path.substring(i + 1) : path;
     }
 }

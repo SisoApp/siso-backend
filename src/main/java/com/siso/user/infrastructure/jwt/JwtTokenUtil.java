@@ -54,6 +54,14 @@ public class JwtTokenUtil {
         return expiration.before(new Date());
     }
 
+    // ----------------------
+    // RefreshToken 타입 확인
+    // ----------------------
+    public boolean isRefreshToken(String token) {
+        String type = extractClaim(token, claims -> claims.get("type", String.class));
+        return "refresh".equals(type);
+    }
+
     // refreshToken에서 email(subject) 추출
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
@@ -70,11 +78,13 @@ public class JwtTokenUtil {
     // ----------------------
     public String generateAccessToken(String email) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "access");
         return createToken(claims, email, ACCESS_TOKEN_TTL);
     }
 
     public String generateRefreshToken(String email) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
         return createToken(claims, email, REFRESH_TOKEN_TTL);
     }
 
@@ -94,7 +104,7 @@ public class JwtTokenUtil {
     public Boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(SECRET_KEY_OBJECT).build().parseClaimsJws(token);
-            return true;
+            return !isTokenExpired(token); // 만료 여부까지 체크
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

@@ -1,12 +1,16 @@
 package com.siso.user.presentation;
 
 import com.siso.common.response.SisoResponse;
+import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserService;
+import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.NotificationRequestDto;
 import com.siso.user.dto.response.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,34 +20,29 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/info")
-    public SisoResponse<UserResponseDto> getUserInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        UserResponseDto userDto = userService.getUserInfo(email);
+    public SisoResponse<UserResponseDto> getUserInfo(@CurrentUser User user) {
+        UserResponseDto userDto = userService.getUserInfo(user);
         return SisoResponse.success(userDto);
     }
 
     // 알림 동의 수정
     @PatchMapping("/notification")
-    public SisoResponse<Void> updateNotificationSubscribed(@RequestBody NotificationRequestDto notificationRequestDto, Authentication authentication) {
-        String email = authentication.getName();
-        userService.updateNotificationSubscribed(email, notificationRequestDto.isSubscribed());
+    public SisoResponse<Void> updateNotificationSubscribed(@CurrentUser User user,
+                                                           @RequestBody NotificationRequestDto notificationRequestDto) {
+        userService.updateNotificationSubscribed(user, notificationRequestDto.isSubscribed());
         return SisoResponse.success(null);
     }
 
     // 회원 탈퇴(소프트 삭제)
     @DeleteMapping("/delete")
-    public SisoResponse<Void> deleteUser(Authentication authentication) {
-        String email = authentication.getName();
-        userService.deleteUser(email);
+    public SisoResponse<Void> deleteUser(@CurrentUser User user) {
+        userService.deleteUser(user);
         return SisoResponse.success(null);
     }
 
     @PostMapping("/logout")
-    public SisoResponse<Void> logout() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        userService.logout(email);
+    public SisoResponse<Void> logout(@CurrentUser User user) {
+        userService.logout(user);
         return SisoResponse.success(null);
     }
 }

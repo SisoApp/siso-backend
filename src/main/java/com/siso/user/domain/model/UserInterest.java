@@ -1,6 +1,5 @@
 package com.siso.user.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,7 +21,6 @@ public class UserInterest {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "interest", nullable = false)
-    @JsonBackReference
     private Interest interest;
 
     @Builder

@@ -1,6 +1,8 @@
 package com.siso.user.presentation;
 
+import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserProfileService;
+import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
 import jakarta.validation.Valid;
@@ -31,21 +33,23 @@ public class UserProfileController {
 
     // 사용자 기준 프로필 조회
     @GetMapping("/user/{userId}")
-    public ResponseEntity<UserProfileResponseDto> getProfileByUser(@PathVariable(name = "userId")  Long userId) {
-        UserProfileResponseDto profile = userProfileService.getUserProfileByUserId(userId);
+    public ResponseEntity<UserProfileResponseDto> getProfileByUser(@CurrentUser User user) {
+        UserProfileResponseDto profile = userProfileService.getUserProfileByUserId(user.getId());
         return ResponseEntity.ok(profile);
     }
 
     // 프로필 생성
     @PostMapping
-    public ResponseEntity<UserProfileResponseDto> createProfile(@Valid @RequestBody UserProfileRequestDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(dto));
+    public ResponseEntity<UserProfileResponseDto> createProfile(@CurrentUser User user,
+                                                                @Valid @RequestBody UserProfileRequestDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(user, dto));
     }
 
     // 프로필 수정
     @PatchMapping
-    public ResponseEntity<UserProfileResponseDto> updateProfile(@Valid @RequestBody UserProfileRequestDto dto) {
-        return ResponseEntity.ok(userProfileService.update(dto));
+    public ResponseEntity<UserProfileResponseDto> updateProfile(@CurrentUser User user,
+                                                                @Valid @RequestBody UserProfileRequestDto dto) {
+        return ResponseEntity.ok(userProfileService.update(user, dto));
     }
 
     // 프로필 삭제

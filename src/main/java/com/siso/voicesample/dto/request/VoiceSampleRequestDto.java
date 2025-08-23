@@ -1,4 +1,4 @@
-package com.siso.voicesample.dto;
+package com.siso.voicesample.dto.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/siso?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    # driver-class-name 생략 가능 (URL로 자동 탐지)
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  security:
+    oauth2:
+      client:
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+        registration:
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID:dummy}
+            client-secret: ${KAKAO_CLIENT_SECRET:dummy}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            scope:
+              - profile_nickname
+              - account_email
+            client-name: Kakao
+            provider: kakao
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID:96171e749ecdb7417189ae5b534534d0}
+  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/api/auth/kakao/callback}
+
+app:
+  voice-sample:
+    upload-dir: ${VOICE_UPLOAD_DIR:./uploads/voice-samples}
+    base-url: ${VOICE_BASE_URL:http://localhost:8080/static/voice-samples}
+  image:
+    upload-dir: ${IMAGE_UPLOAD_DIR:./uploads/images}
+    base-url: ${IMAGE_BASE_URL:http://localhost:8080/static/images}

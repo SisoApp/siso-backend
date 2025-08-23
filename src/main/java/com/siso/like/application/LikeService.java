@@ -4,10 +4,11 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.like.doamain.model.Like;
 import com.siso.like.doamain.repository.LikeRepository;
+import com.siso.like.dto.request.LikeRequestDto;
 import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;
 import com.siso.matching.application.MatchingService;
-import com.siso.matching.dto.request.MatchingRequestDto;
+import com.siso.matching.dto.request.MatchingInfoDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,32 +31,44 @@ public class LikeService {
     }
 
     @Transactional
-    public LikeResponseDto likeUser(MatchingRequestDto matchingRequestDto) {
-        User sender = findById(matchingRequestDto.getSenderId());
-        User receiver = findById(matchingRequestDto.getReceiverId());
+    public LikeResponseDto likeUser(User sender, LikeRequestDto likeRequestDto) {
+        User receiver = findById(likeRequestDto.getReceiverId());
 
         Like like = likeRepository.findBySenderAndReceiver(sender, receiver)
                 .orElse(Like.builder()
                         .sender(sender)
                         .receiver(receiver)
-                        .isLiked(matchingRequestDto.isLiked())
+                        .isLiked(likeRequestDto.isLiked())
                         .build());
 
-        like.updateIsLiked(matchingRequestDto.isLiked());
-        likeRepository.save(like);
-
-        boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(sender, receiver);
-
-        if (isMutualLike) {
-            matchingService.createOrUpdateMatching(matchingRequestDto);
+        if (!likeRequestDto.isLiked()) { // 좋아요 취소
+            // 상대방이 나를 좋아하지 않았다면 취소 가능
+            boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(receiver, sender);
+            if (isMutualLike) {
+                // 이미 매칭이 생성된 상태 → 취소 불가
+                throw new ExpectedException(ErrorCode.CANNOT_CANCEL_MATCHED_LIKE);
+            }
+            like.updateIsLiked(false);
+            likeRepository.save(like);
+            return new LikeResponseDto(false, false);
         }
 
-        return new LikeResponseDto(like.isLiked(), isMutualLike);
+        // 좋아요 누르기
+        like.updateIsLiked(true);
+        likeRepository.save(like);
+
+        // 상호 좋아요 확인
+        boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(receiver, sender);
+        if (isMutualLike) {
+            MatchingInfoDto matchingInfoDto = new MatchingInfoDto(sender, receiver);
+            matchingService.createOrUpdateMatching(matchingInfoDto);
+        }
+
+        return new LikeResponseDto(true, isMutualLike);
     }
 
     @Transactional(readOnly = true)
-    public List<ReceivedLikeResponseDto> getReceivedLikes(Long receiverId) {
-        User receiver = findById(receiverId);
+    public List<ReceivedLikeResponseDto> getReceivedLikes(User receiver) {
         return likeRepository.findAllByReceiverAndIsLikedTrue(receiver)
                 .stream()
                 .map(like -> new ReceivedLikeResponseDto(

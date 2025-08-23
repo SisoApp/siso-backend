@@ -1,4 +1,4 @@
-package com.siso.voicesample.dto;
+package com.siso.voicesample.dto.response;
 
 import com.siso.voicesample.domain.model.VoiceSample;
 import lombok.Data;
@@ -25,7 +25,7 @@ public class VoiceSampleResponseDto {
     public static VoiceSampleResponseDto fromEntity(VoiceSample voiceSample) {
         return VoiceSampleResponseDto.builder()
                 .id(voiceSample.getId())
-                .userId(voiceSample.getUserId())
+                .userId(voiceSample.getUser().getId())
                 .url(voiceSample.getUrl())
                 .duration(voiceSample.getDuration()) // 음성 길이 (녹음 시 20초 제한)
                 .fileSize(voiceSample.getFileSize())

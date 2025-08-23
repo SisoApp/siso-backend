@@ -1,30 +1,24 @@
 package com.siso.voicesample.domain.model;
 
 import com.siso.common.domain.BaseTime;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
+import com.siso.user.domain.model.User;
+import lombok.*;
 
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "VoiceSamples")
+@Table(name = "voice_samples")
 @Data
 @EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class VoiceSample extends BaseTime {
-    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    // @Column(name = "user_id", nullable = false) // 로그인일때 가능 - 원래 설정
-    @Column(name = "user_id", nullable = true, columnDefinition = "BIGINT DEFAULT 1") // 테스트용으로 nullable 허용하고 기본값 설정
-    private Long userId;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     
     @Column(name = "url", length = 255) // 주소
     private String url;
@@ -34,4 +28,13 @@ public class VoiceSample extends BaseTime {
     
     @Column(name = "file_size", columnDefinition = "INT COMMENT '바이트로 받기'")
     private Integer fileSize;
+
+    @Builder
+    public VoiceSample(User user, String url, Integer duration, Integer fileSize) {
+        this.user = user;
+        user.linkVoiceSample(this);
+        this.url = url;
+        this.duration = duration;
+        this.fileSize = fileSize;
+    }
 }

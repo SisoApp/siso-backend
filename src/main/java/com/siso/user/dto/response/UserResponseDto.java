@@ -1,6 +1,7 @@
 package com.siso.user.dto.response;
 
 import com.siso.user.domain.model.Provider;
+import com.siso.user.domain.model.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,5 +23,16 @@ public class UserResponseDto {
         this.phoneNumber = phoneNumber;
         this.isDeleted = isDeleted;
         this.isBlock = isBlock;
+    }
+
+    public static Object from(User user) {
+        return new UserResponseDto(
+                user.getId(),
+                user.getProvider(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.isDeleted(),
+                user.isBlock()
+        );
     }
 }
