@@ -16,11 +16,11 @@ public interface CallRepository extends JpaRepository<Call, Long> {
     // 통화 상태 기준 조회
     List<Call> findByCallStatus(CallStatus callStatus);
 
-    // 발신자(sender) 기준 조회
-    @Query("SELECT c FROM Call c WHERE c.matching.sender.id = :senderId")
-    List<Call> findBySenderId(@Param("senderId") Long senderId);
+    // 발신자(user1 기준) 조회
+    @Query("SELECT c FROM Call c WHERE c.matching.user1.id = :userId")
+    List<Call> findByCallerId(@Param("userId") Long userId);
 
-    // 수신자(receiver) 기준 조회
-    @Query("SELECT c FROM Call c WHERE c.matching.receiver.id = :receiverId")
-    List<Call> findByReceiverId(@Param("receiverId") Long receiverId);
+    // 수신자(user2 기준) 조회
+    @Query("SELECT c FROM Call c WHERE c.matching.user2.id = :userId")
+    List<Call> findByReceiverId(@Param("userId") Long userId);
 }

@@ -1,10 +1,8 @@
 package com.siso.call.application;
 
-import io.agora.media.RtcTokenBuilder;
+import io.agora.media.RtcTokenBuilder2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 
 @Service
 public class AgoraTokenService {
@@ -14,13 +12,19 @@ public class AgoraTokenService {
     @Value("${agora.appCertificate}")
     private String appCertificate;
 
-    // Token 발급
-    public String generateToken(String channelName, int uid, int expireSeconds) throws Exception {
-        RtcTokenBuilder tokenBuilder = new RtcTokenBuilder();
-        RtcTokenBuilder.Role role = RtcTokenBuilder.Role.Role_Publisher;
-        int currentTimestamp = (int) Instant.now().getEpochSecond();
-        int privilegeExpireTs = currentTimestamp + expireSeconds;
+    private static final int TOKEN_EXPIRATION = 3600;
 
-        return tokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpireTs);
+    // Token 발급
+    public String generateToken(String channelName, Long userId) {
+        RtcTokenBuilder2 tokenBuilder = new RtcTokenBuilder2();
+        return tokenBuilder.buildTokenWithUid(
+                appId,
+                appCertificate,
+                channelName,
+                userId.intValue(),
+                RtcTokenBuilder2.Role.ROLE_PUBLISHER,
+                TOKEN_EXPIRATION,       // 토큰 자체 만료 시간 (1시간)
+                TOKEN_EXPIRATION        // 권한 만료 시간 (1시간)
+        );
     }
 }

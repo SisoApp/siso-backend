@@ -33,10 +33,9 @@ public class MatchingController {
 
     // 매칭 필터링된 사용자 목록 조회
     @GetMapping("/filter")
-    public SisoResponse<List<MatchingCandidateResponseDto>> getFilteredMatches(
-            @RequestParam(name = "userId") Long userId,
-            @RequestParam(name = "limit", defaultValue = "20") int limit) {
-        List<MatchingCandidateResponseDto> filteredMatches = matchingService.getFilteredMatches(userId, limit);
+    public SisoResponse<List<MatchingCandidateResponseDto>> getFilteredMatches(@CurrentUser User user,
+                                                                               @RequestParam(name = "limit", defaultValue = "20") int limit) {
+        List<MatchingCandidateResponseDto> filteredMatches = matchingService.getFilteredMatches(user, limit);
         return SisoResponse.success(filteredMatches);
     }
 }

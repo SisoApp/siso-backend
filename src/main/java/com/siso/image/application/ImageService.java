@@ -1,12 +1,12 @@
-package com.siso.image.application.service;
+package com.siso.image.application;
 
 import com.siso.image.domain.model.Image;
 import com.siso.image.domain.model.FileProcessResult;
 import com.siso.image.domain.repository.ImageRepository;
-import com.siso.image.dto.ImageRequestDto;
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.dto.request.ImageRequestDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.infrastructure.properties.ImageProperties;
-import com.siso.image.infrastructure.properties.ImageFileHandler;
+import com.siso.image.infrastructure.handler.ImageFileHandler;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.common.util.UserValidationUtil;

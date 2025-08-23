@@ -2,15 +2,14 @@ package com.siso.user.application;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.image.application.service.ImageService;
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.application.ImageService;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
 import com.siso.user.domain.repository.UserProfileRepository;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

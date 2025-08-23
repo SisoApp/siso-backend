@@ -7,13 +7,15 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public enum MatchingStatus {
-    MATCHED("매칭 성사"),
-    WAITING_CALL("통화 대기 중"),
-    CALL_COMPLETED("통화 완료");
+    PENDING("매칭 성립"),
+    CALL_AVAILABLE("통화 가능"),
+    CALLED("서로 통화 중"),
+    AFTER("채팅으로 이동"),
+    ENDED("통화 종료");
 
-    private String status;
+    private String MatchingStatus;
 
-    MatchingStatus(String status) {
-        this.status = status;
+    MatchingStatus(String MatchingStatus) {
+        this.MatchingStatus = MatchingStatus;
     }
 }

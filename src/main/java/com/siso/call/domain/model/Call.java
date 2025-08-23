@@ -11,7 +11,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Calls")
+@Table(name = "calls")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Call {
@@ -42,6 +42,13 @@ public class Call {
     @Column(name = "agora_token", nullable = false)
     private String agoraToken;
 
+    // 양방향 연관 관계 설정
+    public void linkMatching(Matching matching) {
+        this.matching = matching;
+        matching.linkCall(this);
+    }
+
+
     @Builder
     public Call(Matching matching, CallStatus callStatus, LocalDateTime startTime, LocalDateTime endTime, Long duration, String agoraChannelName, String agoraToken) {
         this.matching = matching;
@@ -56,17 +63,14 @@ public class Call {
 
     public void updateCallStatus(CallStatus callStatus) {
         this.callStatus = callStatus;
-        if (callStatus == CallStatus.Deny) {
+        if (callStatus == CallStatus.DENY) {
             this.endTime = LocalDateTime.now();
             this.duration = 0L;
         }
     }
 
-    public void startCall(String channelName, String token) {
-        this.agoraChannelName = channelName;
-        this.agoraToken = token;
+    public void startCall() {
         this.startTime = LocalDateTime.now();
-        this.callStatus = null; // 수신 전 상태
     }
 
     public void endCall() {
@@ -74,6 +78,6 @@ public class Call {
         if (this.startTime != null) {
             this.duration = Duration.between(this.startTime, this.endTime).getSeconds();
         }
-        this.callStatus = CallStatus.Accept;
+        this.callStatus = CallStatus.ENDED;
     }
 }
