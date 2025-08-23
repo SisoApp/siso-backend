@@ -9,7 +9,6 @@ import java.util.List;
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class UserProfileResponseDto {
     private DrinkingCapacity drinkingCapacity;
     private Religion religion;

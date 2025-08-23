@@ -1,4 +1,4 @@
-package com.siso.like.doamain.model;
+package com.siso.like.domain.model;
 
 import lombok.AccessLevel;
 import lombok.Getter;

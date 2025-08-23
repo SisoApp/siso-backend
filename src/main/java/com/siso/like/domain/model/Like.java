@@ -2,6 +2,7 @@ package com.siso.like.domain.model;
 
 import com.siso.common.domain.BaseTime;
 import com.siso.user.domain.model.User;
+import com.siso.like.domain.model.LikeStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

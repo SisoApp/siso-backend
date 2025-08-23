@@ -12,8 +12,8 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    @MessageMapping("/chat.send") // 클라: /app/chat.send
-    public void send(ChatMessageRequestDto msg) {
-        chatService.convertAndSend("/topic/chat/" + msg.getRoomId(), msg);
-    }
+//    @MessageMapping("/chat.send") // 클라: /app/chat.send
+//    public void send(ChatMessageRequestDto msg) {
+//        chatService.convertAndSend("/topic/chat/" + msg.getRoomId(), msg);
+//    }
 }
