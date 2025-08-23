@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 "/api/matching/**",
                                 "/api/reposts/**",
                                 "/api/profiles/**",
-                                "/api/voice-samples/**"
+                                "/api/voice-samples/**",
+                                "/api/call-reviews/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

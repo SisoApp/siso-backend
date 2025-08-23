@@ -23,11 +23,11 @@ public class Like extends BaseTime {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
+    @JoinColumn(name = "sender_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_sender"))
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id", nullable = false)
+    @JoinColumn(name = "receiver_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_receiver"))
     private User receiver;
 
     @Enumerated(EnumType.STRING)
