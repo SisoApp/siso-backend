@@ -1,4 +1,4 @@
-package com.siso.report.domain;
+package com.siso.report.domain.model;
 
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;

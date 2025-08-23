@@ -1,6 +1,9 @@
 package com.siso.call.domain.model;
 
+import com.siso.callreview.domain.model.CallReview;
+import com.siso.image.domain.model.Image;
 import com.siso.matching.doamain.model.Matching;
+import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,6 +12,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "calls")
@@ -42,12 +47,27 @@ public class Call {
     @Column(name = "agora_token", nullable = false)
     private String agoraToken;
 
+    @OneToMany(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CallReview> callReviews = new ArrayList<>();
+
     // 양방향 연관 관계 설정
     public void linkMatching(Matching matching) {
         this.matching = matching;
         matching.linkCall(this);
     }
 
+    public void addCallReview(User evaluator, User target, String comment, int rating, boolean wantsToContinueChat) {
+        CallReview callReview = CallReview.builder()
+                .call(this) // 현재 Call과 연결
+                .evaluator(evaluator)
+                .target(target)
+                .comment(comment)
+                .rating(rating)
+                .wantsToContinueChat(wantsToContinueChat)
+                .build();
+
+        this.callReviews.add(callReview);
+    }
 
     @Builder
     public Call(Matching matching, CallStatus callStatus, LocalDateTime startTime, LocalDateTime endTime, Long duration, String agoraChannelName, String agoraToken) {

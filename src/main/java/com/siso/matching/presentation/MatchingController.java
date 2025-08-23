@@ -24,6 +24,7 @@ public class MatchingController {
         return SisoResponse.success(receivedMatchings);
     }
 
+    // 매칭 취소
     @DeleteMapping("/{receiverId}")
     public SisoResponse<Void> deleteMatching(@CurrentUser User sender,
                                              @PathVariable Long receiverId) {

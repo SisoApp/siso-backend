@@ -5,6 +5,7 @@ import com.siso.call.domain.model.CallStatus;
 import com.siso.call.domain.repository.CallRepository;
 
 import com.siso.call.dto.response.CallResponseDto;
+import com.siso.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,15 +26,15 @@ public class CallService {
     }
 
     // 발신자 기준 조회
-    public List<CallResponseDto> getCallsBySender(Long senderId) {
-        return callRepository.findByCallerId(senderId).stream()
+    public List<CallResponseDto> getCallsBySender(User sender) {
+        return callRepository.findByCallerId(sender.getId()).stream()
                 .map(this::toResponseDto)
                 .toList();
     }
 
     // 수신자 기준 조회
-    public List<CallResponseDto> getCallsByReceiver(Long receiverId) {
-        return callRepository.findByReceiverId(receiverId).stream()
+    public List<CallResponseDto> getCallsByReceiver(User receiver) {
+        return callRepository.findByReceiverId(receiver.getId()).stream()
                 .map(this::toResponseDto)
                 .toList();
     }

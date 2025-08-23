@@ -5,6 +5,8 @@ import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.response.CallResponseDto;
 import com.siso.common.response.SisoResponse;
+import com.siso.common.web.CurrentUser;
+import com.siso.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +21,9 @@ public class AgoraCallController {
 
     // 1. 통화 요청
     @PostMapping("/request")
-    public SisoResponse<CallInfoDto> requestCall(@RequestBody CallRequestDto requestDto) throws Exception {
-        CallInfoDto callInfo = agoraCallService.requestCall(requestDto);
+    public SisoResponse<CallInfoDto> requestCall(@CurrentUser User caller,
+                                                 @RequestBody CallRequestDto requestDto) throws Exception {
+        CallInfoDto callInfo = agoraCallService.requestCall(caller, requestDto);
         return SisoResponse.success(callInfo);
     }
 

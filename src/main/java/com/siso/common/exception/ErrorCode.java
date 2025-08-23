@@ -36,6 +36,13 @@ public enum ErrorCode {
     // 통화
     CALL_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 정보가 없습니다."),
 
+    // 통화 리뷰
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 리뷰가 없습니다."),
+
+    // 신고
+    REPORTER_NOT_FOUND(HttpStatus.NOT_FOUND, "신고자를 찾을 수 없습니다."),
+    REPORTED_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "피신고자를 찾을 수 없습니다."),
+
     // 이미지
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
     IMAGE_FILE_EMPTY(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다."),
