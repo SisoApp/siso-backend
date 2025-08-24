@@ -30,12 +30,3 @@ management:
       probes:
         enabled: true
       show-details: never
-
-# Swagger(SpringDoc) - 꼭 최상단 레벨에 위치해야 함 (기존 dev yml에서 들여쓰기 깨져 있었음)
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui
-    operationsSorter: method
-    tagsSorter: alpha
