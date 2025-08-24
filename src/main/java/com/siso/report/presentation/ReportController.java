@@ -1,8 +1,10 @@
 package com.siso.report.presentation;
 
+import com.siso.common.web.CurrentUser;
 import com.siso.report.application.ReportService;
-import com.siso.report.dto.ReportResponseDto;
-import com.siso.report.requestDto.ReportRequestDto;
+import com.siso.report.dto.response.ReportResponseDto;
+import com.siso.report.dto.request.ReportRequestDto;
+import com.siso.user.domain.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/reports")
+@RequestMapping("/api/reports")
 public class ReportController {
     private final ReportService reportService;
 
@@ -35,8 +37,9 @@ public class ReportController {
     // 신고 하기
     @Operation(summary = "신고 등록",description = "신고 등록")
     @PostMapping
-    public ResponseEntity<ReportResponseDto> addReport(@Valid @RequestBody ReportRequestDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.addReport(dto));
+    public ResponseEntity<ReportResponseDto> addReport(@CurrentUser User reporter,
+                                                       @Valid @RequestBody ReportRequestDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reportService.addReport(reporter, dto));
     }
 
     // 신고 삭제

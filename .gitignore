@@ -45,6 +45,7 @@ logs/
 # 민감한 설정 파일들
 src/main/resources/application-secret.yml
 src/main/resources/application-local.yml
+src/main/resources/docker-compose.yml
 
 # SSL certificate
 keystore.p12

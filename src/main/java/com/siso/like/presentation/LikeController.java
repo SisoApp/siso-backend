@@ -6,7 +6,6 @@ import com.siso.like.application.LikeService;
 import com.siso.like.dto.request.LikeRequestDto;
 import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;
-import com.siso.matching.dto.request.MatchingInfoDto;
 import com.siso.user.domain.model.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

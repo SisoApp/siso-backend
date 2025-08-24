@@ -52,6 +52,12 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     private PreferenceSex preferenceSex;
 
+    // 양방향 연관 관계 설정
+    public void linkUser(User user) {
+        this.user = user;
+        user.linkProfile(this);
+    }
+
     @Builder
     public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex) {
         this.user = user;

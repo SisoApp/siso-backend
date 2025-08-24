@@ -1,4 +1,4 @@
-package com.siso.report.domain;
+package com.siso.report.domain.model;
 
 public enum ReportType {
     SPAM("스팸성/글/메시지"),

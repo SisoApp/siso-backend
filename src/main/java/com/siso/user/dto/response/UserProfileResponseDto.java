@@ -1,6 +1,6 @@
 package com.siso.user.dto.response;
 
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,8 +24,8 @@ public class UserProfileResponseDto {
     private PreferenceContact preferenceContact;
     private Location location;
     private Sex sex;
-    private List<ImageResponseDto> profileImages;
     private PreferenceSex preferenceSex;
+    private List<ImageResponseDto> profileImages;
 
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,

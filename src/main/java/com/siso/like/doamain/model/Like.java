@@ -1,5 +1,6 @@
 package com.siso.like.doamain.model;
 
+import com.siso.common.domain.BaseTime;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,39 +11,54 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "likes")
+@Table(
+        name = "likes",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"sender_id", "receiver_id"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Like {
+public class Like extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "sender_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_sender"))
     private User sender;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "receiver_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_receiver"))
     private User receiver;
 
-    @Column(name = "is_liked", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-    private boolean isLiked = false;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "like_status", nullable = false)
+    private LikeStatus likeStatus = LikeStatus.ACTIVE;
 
     @Builder
-    public Like(User sender, User receiver, boolean isLiked) {
+    public Like(User sender, User receiver, LikeStatus likeStatus) {
         this.sender = sender;
         this.receiver = receiver;
         sender.addGivenLike(this);
         receiver.addReceivedLike(this);
-        this.isLiked = isLiked;
-        this.createdAt = LocalDateTime.now();
+        this.likeStatus = likeStatus;
     }
 
-    public void updateIsLiked(boolean isLiked) {
-        this.isLiked = isLiked;
+    // 양방향 연관 관계 설정
+    public void linkGivenLike(User user) {
+        this.sender = user;
+        user.addGivenLike(this);
+    }
+
+    public void linkReceivedLike(User user) {
+        this.receiver = user;
+        user.addReceivedLike(this);
+    }
+
+    public void updateLikeStatus(LikeStatus likeStatus) {
+        this.likeStatus = likeStatus;
+    }
+
+    public void cancel() {
+        this.likeStatus = LikeStatus.CANCELED;
     }
 }

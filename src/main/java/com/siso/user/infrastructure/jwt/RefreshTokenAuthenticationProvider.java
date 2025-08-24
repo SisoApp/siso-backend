@@ -22,25 +22,21 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        // 1. credentials: refresh token
         String refreshToken = (String) authentication.getCredentials();
-        System.out.println("refreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshTokenrefreshToken: " + refreshToken);
 
-        // 2. DB에서 사용자 조회
         User user = userRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN));
 
-        // 3. 토큰 만료 확인
+        // 토큰 만료 및 타입 체크
         if (jwtTokenUtil.isTokenExpired(refreshToken)) {
             throw new ExpectedException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
+        if (!jwtTokenUtil.isRefreshToken(refreshToken)) {
+            throw new ExpectedException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
 
-        // 4. 새 AccessToken/RefreshToken 생성은 TokenService에서 처리
-        return new TokenAuthentication(
-                new AccountAdapter(user),
-                refreshToken, // credentials 그대로 전달
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-        );
+        return new TokenAuthentication(new AccountAdapter(user), refreshToken,
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
     }
 
     @Override

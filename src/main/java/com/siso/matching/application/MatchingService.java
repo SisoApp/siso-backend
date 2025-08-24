@@ -3,9 +3,9 @@ package com.siso.matching.application;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.matching.doamain.model.Matching;
-import com.siso.matching.doamain.model.Status;
+import com.siso.matching.doamain.model.MatchingStatus;
 import com.siso.matching.doamain.repository.MatchingRepository;
-import com.siso.matching.dto.request.MatchingInfoDto;
+import com.siso.matching.dto.request.MatchingRequestDto;
 import com.siso.matching.dto.response.MatchingResponseDto;
 import com.siso.matching.dto.response.MatchingCandidateResponseDto;
 import com.siso.user.domain.model.User;
@@ -16,8 +16,7 @@ import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.domain.repository.UserInterestRepository;
 import com.siso.user.dto.response.UserInterestResponseDto;
 import com.siso.image.domain.repository.ImageRepository;
-import com.siso.image.dto.ImageResponseDto;
-import com.siso.notification.application.NotificationService;
+import com.siso.image.dto.response.ImageResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,6 @@ public class MatchingService {
     private final UserProfileRepository userProfileRepository;
     private final UserInterestRepository userInterestRepository;
     private final ImageRepository imageRepository;
-    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -41,74 +39,56 @@ public class MatchingService {
     }
 
     @Transactional
-    public void createOrUpdateMatching(MatchingInfoDto matchingInfoDto) {
-        createOrUpdateMatching(matchingInfoDto, false); // 기본값: 알림 전송 안함
-    }
-    
-    @Transactional
-    public void createOrUpdateMatching(MatchingInfoDto matchingInfoDto, boolean sendNotification) {
-        Long senderId = matchingInfoDto.getSender().getId();
-        Long receiverId = matchingInfoDto.getReceiver().getId();
+    public void createMatching(MatchingRequestDto matchingRequestDto) {
+        Long user1Id = matchingRequestDto.getUser1().getId();
+        Long user2Id = matchingRequestDto.getUser2().getId();
 
-        User sender = findById(senderId);
-        User receiver = findById(receiverId);
+        User user1 = findById(user1Id);
+        User user2 = findById(user2Id);
 
-        boolean isSenderOnline = userRepository.existsOnlineUserById(senderId);
-        boolean isReceiverOnline = userRepository.existsOnlineUserById(receiverId);
+        boolean isSenderOnline = userRepository.existsOnlineUserById(user1Id);
+        boolean isReceiverOnline = userRepository.existsOnlineUserById(user2Id);
 
-        Status status = (isSenderOnline && isReceiverOnline)
-                ? Status.MATCHED
-                : Status.WAITING_CALL;
+        MatchingStatus matchingStatus = (isSenderOnline && isReceiverOnline)
+                ? MatchingStatus.CALL_AVAILABLE
+                : MatchingStatus.PENDING;
 
-        Matching matching = matchingRepository.findBySenderAndReceiver(sender, receiver)
+        Matching matching = matchingRepository.findByUsers(user1Id, user2Id)
                 .orElse(Matching.builder()
-                        .sender(sender)
-                        .receiver(receiver)
-                        .status(Status.CALL_COMPLETED) // 초기 상태는 CALL_COMPLETED로 설정
+                        .user1(user1)
+                        .user2(user2)
+                        .matchingStatus(matchingStatus) // 초기 상태는 MATCHED 설정
                         .build());
 
-        matching.updateStatus(status);
+        matching.updateStatus(matchingStatus);
         matchingRepository.save(matching);
-        
-        // 매칭이 성사된 경우 알림 전송 (상호 좋아요로 인한 매칭일 때만)
-        if (status == Status.MATCHED && sendNotification) {
-            // 양방향 매칭 알림 전송 (서로에게 알림)
-            String senderNickname = sender.getUserProfile() != null ? 
-                sender.getUserProfile().getNickname() : "익명";
-            String receiverNickname = receiver.getUserProfile() != null ? 
-                receiver.getUserProfile().getNickname() : "익명";
-            
-            notificationService.sendMatchingNotification(receiverId, senderId, senderNickname);
-            notificationService.sendMatchingNotification(senderId, receiverId, receiverNickname);
-        }
     }
 
     @Transactional(readOnly = true)
     public List<MatchingResponseDto> getReceivedMatchings(User receiver) {
-        return matchingRepository.findAllByReceiverAndStatus(receiver, Status.MATCHED)
+        return matchingRepository.findAllByUserAndStatus(receiver, MatchingStatus.PENDING)
                 .stream()
-                .map(m -> MatchingResponseDto.builder()
-                        .senderId(m.getSender().getId())
-                        .receiverId(m.getReceiver().getId())
-                        .status(m.getStatus().name())
-                        .createdAt(m.getCreatedAt())
-                        .build())
+                .map(m -> new MatchingResponseDto(
+                        m.getUser1().getId(),
+                        m.getUser2().getId(),
+                        m.getMatchingStatus().name(),
+                        m.getCreatedAt()
+                ))
                 .collect(Collectors.toList());
     }
 
 
     public void deleteMatching(User sender, Long receiverId) {
-        User receiver = findById(receiverId);
-        Matching matching = matchingRepository.findBySenderAndReceiver(sender, receiver)
+        Matching matching = matchingRepository.findByUsers(sender.getId(), receiverId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.MATCHING_NOT_FOUND));
 
         matchingRepository.delete(matching);
     }
 
     @Transactional(readOnly = true)
-    public List<MatchingCandidateResponseDto> getFilteredMatches(Long userId, int limit) {
+    public List<MatchingCandidateResponseDto> getFilteredMatches(User user, int limit) {
         // 사용자와 사용자 프로필 조회
-        User user = findById(userId);
+        Long userId = user.getId();
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
 

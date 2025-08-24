@@ -12,15 +12,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// 로그인할 때 제외하고 security context에 사용자 정보 넣는 로직
-// 없으면 null, 있으면 정보 넣기
-// * 액세스 토큰 만료 시 익명 사용자로 설정
-//  -> AuthenticationEntryPoint에서 (Get /api/auth/refresh) 리다이렉트 구현
 @Component
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -28,64 +26,84 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
 
+    private static final PathMatcher MATCHER = new AntPathMatcher();
+    // 인증 예외(화이트리스트): 보안체인까지 제외(WebSecurityCustomizer)했더라도
+    // 필터 단에서 한 번 더 안전하게 제외
+    private static final String[] WHITELIST = {
+            "/",
+            "/error",
+            "/actuator/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/api/auth/**",       // 로그인/회원가입/토큰 갱신 등
+            "/oauth2/**",
+            "/login/oauth2/**"
+    };
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // /auth/refresh 요청은 JWT 필터 체크 안 함
-        return "/api/auth/refresh".equals(request.getRequestURI());
+        // 1) CORS preflight는 필터 스킵
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) return true;
+
+        // 2) 화이트리스트는 필터 스킵
+        String uri = request.getRequestURI();
+        for (String pattern : WHITELIST) {
+            if (MATCHER.match(pattern, uri)) return true;
+        }
+        return false;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain chain
+    ) throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
+        String header = request.getHeader("Authorization");
 
-        String email = null;
-        String jwt = null;
-
-        if (StringUtils.hasText(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            try {
-                // JWT에서 이메일 추출
-                email = jwtTokenUtil.extractEmail(jwt);
-
-                // 토큰 타입 확인 (AccessToken만 허용)
-                String tokenType = jwtTokenUtil.extractClaim(jwt, claims -> claims.get("type", String.class));
-                if (!"access".equals(tokenType)) {
-                    writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "AccessToken이 필요합니다.");
-                    return;
-                }
-
-            } catch (ExpiredJwtException e) {
-                // AccessToken 만료 시 보호된 API에서는 401
-                writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "토큰이 만료되었습니다.");
-                return;
-            } catch (Exception e) {
-                writeErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "잘못된 JWT 토큰입니다.");
-                return;
-            }
+        // Authorization 없거나 Bearer 아님 → 인증 시도 없이 다음 필터
+        if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
         }
 
-        // 인증 정보가 없으면 SecurityContext에 세팅
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-            if (jwtTokenUtil.validateToken(jwt)) {
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        String jwt = header.substring(7);
+        try {
+            // 1) 서명/만료 등 1차 검증 (구현에 따라 true/false만 주는 메소드라면 바로 사용)
+            if (!jwtTokenUtil.validateToken(jwt)) {
+                SecurityContextHolder.clearContext();
+                chain.doFilter(request, response);
+                return;
             }
+
+            // 2) 토큰 타입 확인: access 만 허용
+            String tokenType = jwtTokenUtil.extractClaim(jwt, claims -> claims.get("type", String.class));
+            if (!"access".equalsIgnoreCase(tokenType)) {
+                SecurityContextHolder.clearContext();
+                chain.doFilter(request, response);
+                return;
+            }
+
+            // 3) 이메일 추출 후 인증 세팅
+            String email = jwtTokenUtil.extractEmail(jwt);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+
+        } catch (ExpiredJwtException ex) {
+            // 만료: 인증 세팅 없이 통과 → 보호 리소스면 EntryPoint가 401 처리
+            SecurityContextHolder.clearContext();
+        } catch (Exception ex) {
+            // 파싱/검증 실패 등: 조용히 패스
+            SecurityContextHolder.clearContext();
         }
 
         chain.doFilter(request, response);
-    }
-
-    // JSON 에러 응답 통일
-    private void writeErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"error\": \"" + message + "\"}");
     }
 }

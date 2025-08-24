@@ -54,6 +54,14 @@ public class JwtTokenUtil {
         return expiration.before(new Date());
     }
 
+    // ----------------------
+    // RefreshToken 타입 확인
+    // ----------------------
+    public boolean isRefreshToken(String token) {
+        String type = extractClaim(token, claims -> claims.get("type", String.class));
+        return "refresh".equals(type);
+    }
+
     // refreshToken에서 email(subject) 추출
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()

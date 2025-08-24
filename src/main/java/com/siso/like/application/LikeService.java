@@ -3,13 +3,13 @@ package com.siso.like.application;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.like.doamain.model.Like;
+import com.siso.like.doamain.model.LikeStatus;
 import com.siso.like.doamain.repository.LikeRepository;
 import com.siso.like.dto.request.LikeRequestDto;
 import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;
 import com.siso.matching.application.MatchingService;
-import com.siso.matching.dto.request.MatchingInfoDto;
-import com.siso.notification.application.NotificationService;
+import com.siso.matching.dto.request.MatchingRequestDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,6 @@ public class LikeService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final MatchingService matchingService;
-    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -40,49 +39,44 @@ public class LikeService {
                 .orElse(Like.builder()
                         .sender(sender)
                         .receiver(receiver)
-                        .isLiked(likeRequestDto.isLiked())
+                        .likeStatus(likeRequestDto.getLikeStatus())
                         .build());
 
-        if (!likeRequestDto.isLiked()) { // 좋아요 취소
+        // 좋아요 취소
+        if (likeRequestDto.getLikeStatus() == LikeStatus.CANCELED) {
             // 상대방이 나를 좋아하지 않았다면 취소 가능
-            boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(receiver, sender);
+            boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndLikeStatus(receiver, sender, LikeStatus.ACTIVE);
             if (isMutualLike) {
                 // 이미 매칭이 생성된 상태 → 취소 불가
                 throw new ExpectedException(ErrorCode.CANNOT_CANCEL_MATCHED_LIKE);
             }
-            like.updateIsLiked(false);
+            like.cancel(); // status를 CANCELED로 변경
             likeRepository.save(like);
-            return new LikeResponseDto(false, false);
+            return new LikeResponseDto(like.getLikeStatus(), false);
         }
 
         // 좋아요 누르기
-        like.updateIsLiked(true);
+        like.updateLikeStatus(LikeStatus.ACTIVE);
         likeRepository.save(like);
 
-        // 좋아요 알림 전송
-        String senderNickname = sender.getUserProfile() != null ? 
-            sender.getUserProfile().getNickname() : "익명";
-        notificationService.sendLikeNotification(receiver.getId(), sender.getId(), senderNickname);
-
-        // 상호 좋아요 확인 (매칭 생성은 MatchingService에서 처리)
-        boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndIsLikedTrue(receiver, sender);
+        // 상호 좋아요 확인
+        boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndLikeStatus(receiver, sender, LikeStatus.ACTIVE);
         if (isMutualLike) {
-            // 상호 좋아요로 인한 매칭 생성 (매칭 알림도 함께 전송)
-            MatchingInfoDto matchingInfoDto = new MatchingInfoDto(sender, receiver);
-            matchingService.createOrUpdateMatching(matchingInfoDto, true); // 알림 전송 O
+            MatchingRequestDto matchingRequestDto = new MatchingRequestDto(sender, receiver);
+            matchingService.createMatching(matchingRequestDto);
         }
 
-        return new LikeResponseDto(true, isMutualLike);
+        return new LikeResponseDto(like.getLikeStatus(), isMutualLike);
     }
 
     @Transactional(readOnly = true)
     public List<ReceivedLikeResponseDto> getReceivedLikes(User receiver) {
-        return likeRepository.findAllByReceiverAndIsLikedTrue(receiver)
+        return likeRepository.findAllByReceiverAndLikeStatus(receiver, LikeStatus.ACTIVE)
                 .stream()
                 .map(like -> new ReceivedLikeResponseDto(
                         like.getSender().getId(),
                         like.getReceiver().getId(),
-                        like.isLiked()
+                        like.getLikeStatus()
                 ))
                 .collect(Collectors.toList());
     }
