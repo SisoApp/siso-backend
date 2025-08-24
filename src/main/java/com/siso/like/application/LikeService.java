@@ -10,6 +10,7 @@ import com.siso.like.dto.response.LikeResponseDto;
 import com.siso.like.dto.response.ReceivedLikeResponseDto;
 import com.siso.matching.application.MatchingService;
 import com.siso.matching.dto.request.MatchingRequestDto;
+import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class LikeService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final MatchingService matchingService;
+    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -59,9 +61,15 @@ public class LikeService {
         like.updateLikeStatus(LikeStatus.ACTIVE);
         likeRepository.save(like);
 
+        // 좋아요 알림 전송
+        String senderNickname = sender.getUserProfile() != null ? 
+            sender.getUserProfile().getNickname() : "익명";
+        notificationService.sendLikeNotification(receiver.getId(), sender.getId(), senderNickname);
+
         // 상호 좋아요 확인
         boolean isMutualLike = likeRepository.existsBySenderAndReceiverAndLikeStatus(receiver, sender, LikeStatus.ACTIVE);
         if (isMutualLike) {
+            // 매칭 생성
             MatchingRequestDto matchingRequestDto = new MatchingRequestDto(sender, receiver);
             matchingService.createMatching(matchingRequestDto);
         }

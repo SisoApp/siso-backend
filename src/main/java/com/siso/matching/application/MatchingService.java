@@ -17,6 +17,7 @@ import com.siso.user.domain.repository.UserInterestRepository;
 import com.siso.user.dto.response.UserInterestResponseDto;
 import com.siso.image.domain.repository.ImageRepository;
 import com.siso.image.dto.response.ImageResponseDto;
+import com.siso.notification.application.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class MatchingService {
     private final UserProfileRepository userProfileRepository;
     private final UserInterestRepository userInterestRepository;
     private final ImageRepository imageRepository;
+    private final NotificationService notificationService;
 
     public User findById(Long userId) {
         return userRepository.findById(userId)
@@ -62,6 +64,15 @@ public class MatchingService {
 
         matching.updateStatus(matchingStatus);
         matchingRepository.save(matching);
+
+        // 매칭 생성 시 양방향 매칭 알림 전송
+        String user1Nickname = user1.getUserProfile() != null ? 
+            user1.getUserProfile().getNickname() : "익명";
+        String user2Nickname = user2.getUserProfile() != null ? 
+            user2.getUserProfile().getNickname() : "익명";
+        
+        notificationService.sendMatchingNotification(user2Id, user1Id, user1Nickname);
+        notificationService.sendMatchingNotification(user1Id, user2Id, user2Nickname);
     }
 
     @Transactional(readOnly = true)

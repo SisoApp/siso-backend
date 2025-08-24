@@ -11,6 +11,7 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.matching.doamain.model.Matching;
 import com.siso.matching.doamain.model.MatchingStatus;
 import com.siso.matching.doamain.repository.MatchingRepository;
+import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
 import jakarta.transaction.Transactional;
@@ -25,6 +26,7 @@ public class AgoraCallService {
     private final MatchingRepository matchingRepository;
     private final AgoraTokenService agoraTokenService;
     private final AgoraChannelNameService agoraChannelNameService;
+    private final NotificationService notificationService;
 
     // 통화 요청(시작)
     public CallInfoDto requestCall(User caller, CallRequestDto request) throws Exception {
@@ -48,6 +50,11 @@ public class AgoraCallService {
                 .build();
 
         callRepository.save(call);
+
+        // 통화 요청 알림 전송
+        String callerNickname = caller.getUserProfile() != null ? 
+            caller.getUserProfile().getNickname() : "익명";
+        notificationService.sendCallNotification(receiverId, callerId, callerNickname);
 
         return new CallInfoDto(call.getId(), channelName, token, callerId, receiverId);
     }
