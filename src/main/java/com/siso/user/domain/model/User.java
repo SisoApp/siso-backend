@@ -57,6 +57,9 @@ public class User extends BaseTime {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile userProfile;
 
@@ -75,19 +78,21 @@ public class User extends BaseTime {
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> receivedLikes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user1", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Matching> matchAsUser1 = new ArrayList<>();
 
-    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user2", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Matching> matchAsUser2 = new ArrayList<>();
 
     // 양방향 연관 관계 설정
     public void linkProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
+        userProfile.linkUser(this);
     }
 
     public void linkVoiceSample(VoiceSample voiceSample) {
         this.voiceSample = voiceSample;
+        voiceSample.linkUser(this);
     }
 
     public void addInterest(Interest interest) {
@@ -108,24 +113,28 @@ public class User extends BaseTime {
         this.images.add(image);
     }
 
-    public void addMatchAsUser1(Matching matching) {
-        this.matchAsUser1.add(matching);
-    }
-
-    public void addMatchAsUser2(Matching matching) {
-        this.matchAsUser2.add(matching);
-    }
-
     public void addGivenLike(Like like) {
         this.givenLikes.add(like);
+        like.linkGivenLike(this);
     }
 
     public void addReceivedLike(Like like) {
         this.receivedLikes.add(like);
+        like.linkReceivedLike(this);
+    }
+
+    public void addMatchAsUser1(Matching matching) {
+        this.matchAsUser1.add(matching);
+        matching.linkMatchAsUser1(this);
+    }
+
+    public void addMatchAsUser2(Matching matching) {
+        this.matchAsUser2.add(matching);
+        matching.linkMatchAsUser2(this);
     }
 
     @Builder
-    public User(Provider provider, String email, String phoneNumber, PresenceStatus presenceStatus, RegistrationStatus registrationStatus, String refreshToken, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+    public User(Provider provider, String email, String phoneNumber, PresenceStatus presenceStatus, RegistrationStatus registrationStatus, String refreshToken, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt, LocalDateTime lastActiveAt) {
         this.provider = provider;
         this.email = email;
         this.phoneNumber = phoneNumber;
@@ -136,6 +145,7 @@ public class User extends BaseTime {
         this.isBlock = isBlock;
         this.isDeleted = isDeleted;
         this.deletedAt = deletedAt;
+        this.lastActiveAt = lastActiveAt;
     }
 
     @Builder

@@ -1,6 +1,5 @@
 package com.siso.report.domain;
 
-import com.siso.call.domain.Call;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

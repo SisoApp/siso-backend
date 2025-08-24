@@ -49,7 +49,14 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/api/auth/**",      // 로그인/리프레시 등
-                                "/api/users/**"      // 회원가입 등 퍼블릭이면 여기 포함
+                                "/api/users/**",      // 회원가입 등 퍼블릭이면 여기 포함
+                                "/api/calls/**",
+                                "/api/images/**",
+                                "/api/likes/**",
+                                "/api/matching/**",
+                                "/api/reposts/**",
+                                "/api/profiles/**",
+                                "/api/voice-samples/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

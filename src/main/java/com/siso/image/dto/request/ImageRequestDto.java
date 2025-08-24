@@ -1,4 +1,4 @@
-package com.siso.image.dto;
+package com.siso.image.dto.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

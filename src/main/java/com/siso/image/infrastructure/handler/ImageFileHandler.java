@@ -1,8 +1,9 @@
-package com.siso.image.infrastructure.properties;
+package com.siso.image.infrastructure.handler;
 
 import com.siso.image.domain.model.FileProcessResult;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.image.infrastructure.properties.ImageProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

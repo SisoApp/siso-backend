@@ -1,6 +1,6 @@
 package com.siso.matching.dto.response;
 
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
 import com.siso.user.dto.response.UserInterestResponseDto;
 import lombok.AccessLevel;

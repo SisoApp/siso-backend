@@ -1,10 +1,9 @@
 package com.siso.image.presentation;
 
 import com.siso.common.web.CurrentUser;
-import com.siso.image.dto.ImageRequestDto;
-import com.siso.image.dto.ImageResponseDto;
-import com.siso.image.application.service.ImageService;
-import com.siso.image.infrastructure.properties.ImageFileHandler;
+import com.siso.image.dto.request.ImageRequestDto;
+import com.siso.image.dto.response.ImageResponseDto;
+import com.siso.image.application.ImageService;
 import com.siso.image.infrastructure.properties.MediaTypeProperties;
 import com.siso.image.domain.model.Image;
 import com.siso.image.domain.repository.ImageRepository;
@@ -20,7 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;

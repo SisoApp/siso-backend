@@ -1,4 +1,4 @@
-package com.siso.image.dto;
+package com.siso.image.dto.response;
 
 import com.siso.image.domain.model.Image;
 import lombok.Data;
