@@ -1,7 +1,7 @@
-package com.siso.report.dto;
+package com.siso.report.dto.response;
 
-import com.siso.report.domain.Report;
-import com.siso.report.domain.ReportType;
+import com.siso.report.domain.model.Report;
+import com.siso.report.domain.model.ReportType;
 
 import java.time.LocalDateTime;
 

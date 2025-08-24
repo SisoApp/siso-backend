@@ -12,6 +12,7 @@ import com.siso.matching.doamain.model.Matching;
 import com.siso.matching.doamain.model.MatchingStatus;
 import com.siso.matching.doamain.repository.MatchingRepository;
 import com.siso.user.domain.model.PresenceStatus;
+import com.siso.user.domain.model.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,8 @@ public class AgoraCallService {
     private final AgoraChannelNameService agoraChannelNameService;
 
     // 통화 요청(시작)
-    public CallInfoDto requestCall(CallRequestDto request) throws Exception {
-        Long callerId = request.getCallerId();
+    public CallInfoDto requestCall(User caller, CallRequestDto request) throws Exception {
+        Long callerId = caller.getId();
         Long receiverId = request.getReceiverId();
 
         // 매칭 조회

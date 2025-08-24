@@ -1,5 +1,6 @@
 package com.siso.user.domain.model;
 
+import com.siso.callreview.domain.model.CallReview;
 import com.siso.common.domain.BaseTime;
 import com.siso.image.domain.model.Image;
 import com.siso.like.doamain.model.Like;
@@ -84,6 +85,12 @@ public class User extends BaseTime {
     @OneToMany(mappedBy = "user2", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Matching> matchAsUser2 = new ArrayList<>();
 
+    @OneToMany(mappedBy = "evaluator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CallReview> evaluators = new ArrayList<>();
+
+    @OneToMany(mappedBy = "target", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CallReview> targets = new ArrayList<>();
+
     // 양방향 연관 관계 설정
     public void linkProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
@@ -131,6 +138,16 @@ public class User extends BaseTime {
     public void addMatchAsUser2(Matching matching) {
         this.matchAsUser2.add(matching);
         matching.linkMatchAsUser2(this);
+    }
+
+    public void addEvaluator(CallReview callReview) {
+        this.evaluators.add(callReview);
+        callReview.linkEvaluator(this);
+    }
+
+    public void addTarget(CallReview callReview) {
+        this.targets.add(callReview);
+        callReview.linkTarget(this);
     }
 
     @Builder

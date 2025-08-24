@@ -1,13 +1,13 @@
 package com.siso.report.application;
 
-import com.siso.report.domain.Report;
-import com.siso.report.domain.ReportType;
-import com.siso.report.dto.ReportResponseDto;
-import com.siso.report.repository.ReportRepository;
-import com.siso.report.requestDto.ReportRequestDto;
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
+import com.siso.report.domain.model.Report;
+import com.siso.report.dto.response.ReportResponseDto;
+import com.siso.report.domain.repository.ReportRepository;
+import com.siso.report.dto.request.ReportRequestDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ public class ReportService {
     @Transactional(readOnly = true)
     public ReportResponseDto findById(Long id) {
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("신고를 찾을 수 없습니다. id"));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.REPORTER_NOT_FOUND));
         return ReportResponseDto.fromEntity(report);
     }
 
@@ -38,11 +38,9 @@ public class ReportService {
     }
 
     // 신고하기
-    public ReportResponseDto addReport(ReportRequestDto reportRequestDto) {
-        User reporter = userRepository.findById(reportRequestDto.getReporterId())
-                .orElseThrow(() -> new EntityNotFoundException("신고자를 찾을 수 없습니다."));
+    public ReportResponseDto addReport(User reporter, ReportRequestDto reportRequestDto) {
         User reported = userRepository.findById(reportRequestDto.getReportedId())
-                .orElseThrow(() -> new EntityNotFoundException("피신고자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ExpectedException(ErrorCode.REPORTED_USER_NOT_FOUND));
 
         Report report = Report.builder()
                 .reporter(reporter)
@@ -60,7 +58,7 @@ public class ReportService {
     // 삭제
     public void delete(Long id) {
         if (!reportRepository.existsById(id)) {
-            throw new EntityNotFoundException("신고를 찾을 수 없습니다. id");
+            throw new ExpectedException(ErrorCode.REPORTER_NOT_FOUND);
         }
         reportRepository.deleteById(id);
     }
