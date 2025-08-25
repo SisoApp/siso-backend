@@ -20,7 +20,7 @@ spring:
             user-name-attribute: id
 
 server:
-  address: 0.0.0.0
+  address: 13.124.11.3
   port: 8080
 
 management:
