@@ -1,22 +1,20 @@
 spring:
-  profiles:
-    active: local
+  config:
+    import: application-local.yml
 
-  jpa:
-    open-in-view: false
-  servlet:
-    multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
-    security:
-      oauth2:
-        client:
-          provider:
-            kakao:
-              user-name-attribute: kakao_account
-              authorization-uri: https://kauth.kakao.com/oauth/authorize
-              token-uri: https://kauth.kakao.com/oauth/token
-              user-info-uri: https://kapi.kakao.com/v2/user/me
+  security:
+    oauth2:
+      client:
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+server:
+  address: 0.0.0.0
+  port: 8080
 
 management:
   endpoints:
@@ -29,12 +27,3 @@ management:
       probes:
         enabled: true
       show-details: never
-
-# Swagger(SpringDoc) - 꼭 최상단 레벨에 위치해야 함 (기존 dev yml에서 들여쓰기 깨져 있었음)
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui
-    operationsSorter: method
-    tagsSorter: alpha

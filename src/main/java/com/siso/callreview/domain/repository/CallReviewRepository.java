@@ -22,4 +22,3 @@ public interface CallReviewRepository extends JpaRepository<CallReview, Long> {
     @Query("SELECT cr FROM CallReview cr WHERE cr.call.caller = :user")
     List<CallReview> findAllReviewsWrittenByUser(@Param("user") User user);
 }
-

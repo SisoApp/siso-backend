@@ -58,4 +58,12 @@ public class UserProfileController {
         userProfileService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    // 프로필 이미지 설정 (PATCH)
+    @PatchMapping("/profile-image/{imageId}")
+    public ResponseEntity<UserProfileResponseDto> setProfileImage(@CurrentUser User user,
+                                                                  @PathVariable(name = "imageId") Long imageId) {
+        UserProfileResponseDto response = userProfileService.setProfileImage(user, imageId);
+        return ResponseEntity.ok(response);
+    }
 }
