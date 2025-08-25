@@ -1,8 +1,7 @@
-package com.siso.matching.dto.response;
+package com.siso.user.dto.response;
 
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
-import com.siso.user.dto.response.UserInterestResponseDto;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,7 +12,7 @@ import java.util.List;
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MatchingCandidateResponseDto {
+public class FilteredUserResponseDto {
     private Long userId;
     private Long profileId;
     private String nickname;
@@ -29,7 +28,7 @@ public class MatchingCandidateResponseDto {
     private List<ImageResponseDto> profileImages;
     private int commonInterestsCount; // 공통 관심사 개수
 
-    public MatchingCandidateResponseDto(Long userId, Long profileId, String nickname, String introduce,
+    public FilteredUserResponseDto(Long userId, Long profileId, String nickname, String introduce,
                                    int age, Sex sex, Location location, Religion religion,
                                    boolean smoke, DrinkingCapacity drinkingCapacity,
                                    PreferenceContact preferenceContact,
