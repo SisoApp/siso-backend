@@ -1,5 +1,8 @@
 package com.siso.user.infrastructure.jwt;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -19,7 +22,7 @@ import java.util.function.Function;
 public class JwtTokenUtil {
     private static final String SECRET_KEY = "LikeLionRocketCorpsInternship12SeniorBlindDate_siso";
     private static final SecretKey SECRET_KEY_OBJECT = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-
+    private final UserRepository userRepository;
     // 토큰 만료 시간
     public static final long ACCESS_TOKEN_TTL = 1000 * 60 * 60 * 2;       // 액세스 토큰 2시간
     public static final long REFRESH_TOKEN_TTL = 1000 * 60 * 60 * 24 * 14; // 리프레시 토큰 2주
@@ -108,5 +111,24 @@ public class JwtTokenUtil {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * 토큰 검증 후 userId 반환
+     * 유효하지 않으면 예외 발생
+     */
+    public Long validateAndGetUserId(String token) {
+        // 토큰에서 이메일 가져오기
+        String email = Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY_OBJECT)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+
+        // 이메일로 User 조회 후 userId 반환
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND))
+                .getId();
     }
 }

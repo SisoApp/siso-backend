@@ -8,75 +8,82 @@ import com.siso.callreview.dto.request.CallReviewRequestDto;
 import com.siso.callreview.dto.response.CallReviewResponseDto;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.matching.doamain.model.Matching;
-import com.siso.matching.doamain.model.MatchingStatus;
-import com.siso.matching.doamain.repository.MatchingRepository;
 import com.siso.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CallReviewService {
     private final CallRepository callRepository;
     private final CallReviewRepository callReviewRepository;
-    private final MatchingRepository matchingRepository;
 
-    // 리뷰 작성
+    // 평가 작성
     @Transactional
     public CallReviewResponseDto createReview(User evaluator, CallReviewRequestDto request) {
         Call call = callRepository.findById(request.getCallId())
                 .orElseThrow(() -> new ExpectedException(ErrorCode.CALL_NOT_FOUND));
 
-        Matching matching = call.getMatching();
+        // 중복 평가 방지
+        callReviewRepository.findAllReviewsWrittenByUser(evaluator).stream()
+                .filter(cr -> cr.getCall().getId().equals(request.getCallId()))
+                .findFirst()
+                .ifPresent(cr -> { throw new ExpectedException(ErrorCode.REVIEW_ALREADY_EXISTS); });
 
-        User target = matching.getUser1().equals(evaluator) ? matching.getUser2() : matching.getUser1();
+        // Call 엔티티 메서드 사용
+        call.addCallReview(request.getComment(), request.getRating());
 
-        CallReview callReview = CallReview.builder()
-                .call(call)
-                .rating(request.getRating())
-                .comment(request.getComment())
-                .wantsToContinueChat(request.getWantsToContinueChat())
-                .build();
+        // 마지막으로 방금 추가한 CallReview를 DB에 저장
+        CallReview saved = callReviewRepository.save(
+                call.getCallReviews().get(call.getCallReviews().size() - 1)
+        );
 
-        callReview.linkEvaluator(evaluator);
-        callReview.linkTarget(target);
+        return fromEntity(saved);
+    }
 
-        call.addCallReview(evaluator, target, callReview.getComment(), callReview.getRating(), callReview.getWantsToContinueChat());
+    // 평가 수정
+    @Transactional
+    public CallReviewResponseDto updateReview(User evaluator, CallReviewRequestDto request) {
+        CallReview review = callReviewRepository.findById(request.getId())
+                .orElseThrow(() -> new ExpectedException(ErrorCode.REVIEW_NOT_FOUND));
 
-        callReviewRepository.save(callReview);
-
-        // 두 사용자 모두 채팅 이어가기를 선택하면 MatchingStatus.AFTER, ChatRoom 생성
-        Optional<CallReview> otherReviewOpt = callReviewRepository.findByCallIdAndEvaluatorId(call.getId(), target.getId());
-        if (callReview.getWantsToContinueChat() && otherReviewOpt.isPresent() && otherReviewOpt.get().getWantsToContinueChat()) {
-            matching.updateStatus(MatchingStatus.AFTER);
-            matchingRepository.save(matching);
-
-//            chatRoomService.createChatRoom(matching.getId(), matching.getUser1(), matching.getUser2());
+        // 작성자 확인
+        if (!review.getCall().getCaller().getId().equals(evaluator.getId())) {
+            throw new ExpectedException(ErrorCode.FORBIDDEN);
         }
 
-        return fromEntity(callReview);
+        review.updateRating(request.getRating());
+        review.updateComment(request.getComment());
+
+        return fromEntity(review);
     }
 
-    // 내 리뷰 조회
+    // 내가 받은 평가 목록 조회 (내가 receiver일 때)
     @Transactional(readOnly = true)
-    public CallReviewResponseDto getMyReview(Long callId, User evaluator) {
-        CallReview callReview = callReviewRepository.findByCallIdAndEvaluatorId(callId, evaluator.getId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.REVIEW_NOT_FOUND));
-
-        return fromEntity(callReview);
+    public List<CallReviewResponseDto> getReceivedReviews(User target) {
+        return callReviewRepository.findAllReceivedReviews(target).stream()
+                .map(this::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    // 상대방 리뷰 조회
+    // 상대방이 받은 평가 목록 조회
     @Transactional(readOnly = true)
-    public CallReviewResponseDto getPartnerReview(Long callId, User target) {
-        CallReview callReview = callReviewRepository.findByCallIdAndTargetId(callId, target.getId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.REVIEW_NOT_FOUND));
+    public List<CallReviewResponseDto> getReviewsOfOtherUser(User otherUser) {
+        return callReviewRepository.findAllReviewsOfOtherUser(otherUser).stream()
+                .map(this::fromEntity)
+                .collect(Collectors.toList());
+    }
 
-        return fromEntity(callReview);
+    // 내가 작성한 평가 목록 조회
+    @Transactional(readOnly = true)
+    public List<CallReviewResponseDto> getMyWrittenReviews(User evaluator) {
+        return callReviewRepository.findAllReviewsWrittenByUser(evaluator).stream()
+                .map(this::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // CallReview → DTO 변환 메서드
@@ -84,12 +91,10 @@ public class CallReviewService {
         return new CallReviewResponseDto(
                 callReview.getId(),
                 callReview.getCall().getId(),
-                callReview.getEvaluator().getId(),
-                callReview.getTarget().getId(),
+                callReview.getCall().getCaller().getId(),
+                callReview.getCall().getReceiver().getId(),
                 callReview.getRating(),
-                callReview.getComment(),
-                callReview.getWantsToContinueChat(),
-                callReview.getCall().getMatching().getMatchingStatus()
+                callReview.getComment()
         );
     }
 }

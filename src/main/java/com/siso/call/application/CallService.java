@@ -1,7 +1,6 @@
 package com.siso.call.application;
 
 import com.siso.call.domain.model.Call;
-import com.siso.call.domain.model.CallStatus;
 import com.siso.call.domain.repository.CallRepository;
 
 import com.siso.call.dto.response.CallResponseDto;
@@ -18,13 +17,6 @@ import java.util.List;
 public class CallService {
     private final CallRepository callRepository;
 
-    // 특정 매칭의 통화 내역 조회
-    public List<CallResponseDto> getCallsByMatching(Long matchingId) {
-        return callRepository.findByMatchingId(matchingId).stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
     // 발신자 기준 조회
     public List<CallResponseDto> getCallsBySender(User sender) {
         return callRepository.findByCallerId(sender.getId()).stream()
@@ -39,21 +31,14 @@ public class CallService {
                 .toList();
     }
 
-    // 상태별 통화 조회
-    public List<CallResponseDto> getCallsByStatus(CallStatus callStatus) {
-        return callRepository.findByCallStatus(callStatus).stream()
-                .map(this::toResponseDto)
-                .toList();
-    }
-
     // Call → CallResponseDto 변환
     private CallResponseDto toResponseDto(Call call) {
         return new CallResponseDto(
                 true,
                 call.getAgoraToken(),
                 call.getAgoraChannelName(),
-                call.getMatching().getUser1().getId(),
-                call.getMatching().getUser2().getId(),
+                call.getCaller().getId(),
+                call.getReceiver().getId(),
                 call.getCallStatus(),
                 call.getDuration()
         );

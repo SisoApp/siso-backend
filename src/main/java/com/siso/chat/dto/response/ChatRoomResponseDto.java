@@ -1,30 +1,27 @@
 package com.siso.chat.dto.response;
 
-import com.siso.call.domain.model.Call;
-import com.siso.chat.domain.model.ChatMessage;
-import com.siso.chat.domain.model.ChatRoom;
-import com.siso.chat.dto.request.ChatRoomRequestDto;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomResponseDto {
     private Long id;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String otherUserNickname;
+    private String otherUserProfileImage;
+    private int memberCount;
+    private String lastMessageContent;
+    private LocalDateTime lastMessageSentAt;
+    private int unreadMessageCount;
 
-    public static ChatRoomResponseDto fromEntity(ChatRoom chatRoom) {
-        return ChatRoomResponseDto.builder()
-                .id(chatRoom.getId())
-                .createdAt(chatRoom.getCreatedAt())
-                .updatedAt(chatRoom.getUpdatedAt())
-                .build();
+    public  ChatRoomResponseDto(Long id, String otherUserNickname, String otherUserProfileImage, int memberCount, String lastMessageContent, LocalDateTime lastMessageSentAt, int unreadMessageCount) {
+        this.id = id;
+        this.otherUserNickname = otherUserNickname;
+        this.otherUserProfileImage = otherUserProfileImage;
+        this.memberCount = memberCount;
+        this.lastMessageContent = lastMessageContent;
+        this.lastMessageSentAt = lastMessageSentAt;
+        this.unreadMessageCount = unreadMessageCount;
     }
 }

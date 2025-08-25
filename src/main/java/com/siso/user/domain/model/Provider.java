@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public enum Provider {
-    KAKAO("카카오"), APPLE("애플");
+    KAKAO("카카오"),
+    APPLE("애플");
 
     private String provider;
 
