@@ -1,13 +1,6 @@
 spring:
   profiles:
-    default: secret  # 시작 시 secret 프로필 활성화
-
-  jpa:
-    database-platform: org.hibernate.dialect.MariaDBDialect
-    open-in-view: false
-    show-sql: true
-    hibernate:
-      ddl-auto: update
+    default: secret  # 서버 시작 시 secret 프로필 활성화
 
   security:
     oauth2:
