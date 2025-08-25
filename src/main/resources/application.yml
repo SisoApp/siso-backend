@@ -1,6 +1,27 @@
 spring:
   profiles:
-    default: dev
+    default: secret  # 시작 시 secret 프로필 활성화
+
+  jpa:
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+  security:
+    oauth2:
+      client:
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+server:
+  address: 0.0.0.0
+  port: 8080
 
 management:
   endpoints:
