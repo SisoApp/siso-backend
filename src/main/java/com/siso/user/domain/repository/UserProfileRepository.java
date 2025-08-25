@@ -13,8 +13,6 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,Long> {
     @Query("SELECT p FROM UserProfile p WHERE p.user.id = :userId")
     Optional<UserProfile> findByUserId(@Param("userId") Long userId);
 
-
-
     @Query(value = """
       SELECT p.*, 
              COALESCE(interest_match.common_interests, 0) as common_interests_count
@@ -33,49 +31,45 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,Long> {
       WHERE (:excludeId IS NULL OR u.id <> :excludeId)
         AND u.is_block = false 
         AND u.is_deleted = false
+        AND (
+          :preferenceSex IS NULL 
+          OR :preferenceSex = 'OTHER' 
+          OR (:preferenceSex = 'MALE' AND p.sex = 'MALE')
+          OR (:preferenceSex = 'FEMALE' AND p.sex = 'FEMALE')
+        )
       ORDER BY
-        -- 1순위: PreferenceSex 매칭
-        CASE
-          WHEN :preferenceSex IS NULL OR :preferenceSex = 'OTHER' THEN 0
-          WHEN :preferenceSex = 'MALE'   AND p.sex = 'MALE'   THEN 0
-          WHEN :preferenceSex = 'FEMALE' AND p.sex = 'FEMALE' THEN 0
-          ELSE 1
-        END,
-        
-        -- 2순위: 공통 관심사가 많은 순 (내림차순)
+        -- 1순위: 공통 관심사가 많은 순 (내림차순)
         COALESCE(interest_match.common_interests, 0) DESC,
         
-        -- 3순위: 나이 차이 (4살 이내 우선)
+        -- 2순위: 나이 차이 (4살 이내 우선)
         CASE
           WHEN :age IS NULL THEN 0
           WHEN ABS(p.age - :age) <= 4 THEN 0 
           ELSE 1
         END,
         
-        -- 4순위: 기타 조건들
+        -- 3순위: 기타 조건들
         CASE WHEN :location IS NOT NULL AND p.location = :location THEN 0 ELSE 1 END,
         CASE WHEN :religion IS NOT NULL AND p.religion = :religion THEN 0 ELSE 1 END,
         CASE WHEN :smoke IS NOT NULL AND p.smoke = :smoke THEN 0 ELSE 1 END,
         CASE WHEN :drinkingCapacity IS NOT NULL AND p.drinking_capacity = :drinkingCapacity THEN 0 ELSE 1 END,
         
-        -- 5순위: 나이 차이 (절댓값)
+        -- 4순위: 나이 차이 (절댓값)
         CASE WHEN :age IS NULL THEN 0 ELSE ABS(p.age - :age) END ASC,
         
-        -- 6순위: 최근 활동 순
+        -- 5순위: 최근 활동 순
         CASE WHEN u.last_active_at IS NULL THEN 1 ELSE 0 END,
         u.last_active_at DESC,
         u.id DESC
-      LIMIT :limit
     """, nativeQuery = true)
-    List<UserProfile> findMatchingProfilesWithInterests(
+    List<UserProfile> findFilteredUsersByPreferenceSex(
             @Param("userId") Long userId,                        // 본인 ID (관심사 매칭용)
             @Param("excludeId") Long excludeId,                  // 제외할 ID (보통 본인)
-            @Param("preferenceSex") String preferenceSex,        // 선호 성별
+            @Param("preferenceSex") String preferenceSex,        // 선호 성별 (필수 필터)
             @Param("religion") String religion,
             @Param("smoke") Boolean smoke,
             @Param("location") String location,
             @Param("drinkingCapacity") String drinkingCapacity,
-            @Param("age") Integer age,
-            @Param("limit") int limit
+            @Param("age") Integer age
     );
 }
