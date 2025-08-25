@@ -18,4 +18,5 @@ public class UserProfileRequestDto {
     private Location location;
     private Sex sex;
     private PreferenceSex preferenceSex;
+    private Long profileImageId;
 }
