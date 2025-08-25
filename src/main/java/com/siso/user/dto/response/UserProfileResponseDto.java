@@ -2,10 +2,7 @@ package com.siso.user.dto.response;
 
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 

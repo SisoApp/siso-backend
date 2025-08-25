@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class VoiceSampleResponseDto {
-    
     private Long id;
     private Long userId;
     private String url;

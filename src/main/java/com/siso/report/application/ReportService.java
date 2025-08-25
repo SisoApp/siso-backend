@@ -48,7 +48,6 @@ public class ReportService {
                 .reportTitle(reportRequestDto.getReportTitle())
                 .reportType(reportRequestDto.getReportType())
                 .description(reportRequestDto.getDescription())
-                .createdAt(LocalDateTime.now())
                 .build();
 
         reportRepository.save(report);
