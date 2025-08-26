@@ -62,6 +62,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
+        //refresh 토큰 에러
+        String uri = request.getRequestURI();
+        if ("/api/auth/refresh".equals(uri)) {
+            chain.doFilter(request, response);  // 이 필터 스킵하고 다음 필터로 넘김
+            return;
+        }
+        //
         // Authorization 없거나 Bearer 아님 → 인증 시도 없이 다음 필터
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
             chain.doFilter(request, response);
