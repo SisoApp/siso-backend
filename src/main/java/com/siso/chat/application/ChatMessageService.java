@@ -14,12 +14,15 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
+import com.siso.notification.application.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatMessageService {
@@ -27,6 +30,7 @@ public class ChatMessageService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomLimitRepository chatRoomLimitRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * 메시지 전송
@@ -58,6 +62,9 @@ public class ChatMessageService {
 
         ChatMessage lastMessage = chatRoom.getChatMessages()
                 .get(chatRoom.getChatMessages().size() - 1);
+
+        // 채팅방의 다른 멤버들에게 알림 전송 (본인 제외)
+        sendNotificationToOtherMembers(chatRoom, sender, requestDto.getContent());
 
         return toDto(lastMessage);
     }
@@ -105,6 +112,35 @@ public class ChatMessageService {
 
         message.updateDelete(true);
         chatMessageRepository.save(message);
+    }
+
+    /**
+     * 채팅방의 다른 멤버들에게 알림 전송 (본인 제외)
+     */
+    private void sendNotificationToOtherMembers(ChatRoom chatRoom, User sender, String messageContent) {
+        try {
+            String senderNickname = sender.getUserProfile() != null 
+                ? sender.getUserProfile().getNickname() 
+                : "익명";
+            
+            // 채팅방의 모든 멤버 중 발신자가 아닌 사용자들에게 알림 전송
+            chatRoom.getChatRoomMembers().stream()
+                .filter(member -> !member.getUser().getId().equals(sender.getId())) // 본인 제외
+                .forEach(member -> {
+                    try {
+                        notificationService.sendMessageNotification(
+                            member.getUser().getId(),
+                            sender.getId(),
+                            senderNickname,
+                            messageContent
+                        );
+                    } catch (Exception e) {
+                        log.warn("Failed to send notification to user {}: {}", member.getUser().getId(), e.getMessage());
+                    }
+                });
+        } catch (Exception e) {
+            log.warn("Failed to send message notifications: {}", e.getMessage());
+        }
     }
 
     /**

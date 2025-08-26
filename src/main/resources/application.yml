@@ -27,3 +27,9 @@ management:
       probes:
         enabled: true
       show-details: never
+
+firebase:
+  service-account: ${firebase.service-account}
+  project-id: ${firebase.project-id}
+  database-url: ${firebase.database-url}
+  admin-key: ${firebase.admin-key}
