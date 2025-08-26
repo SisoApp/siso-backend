@@ -29,15 +29,24 @@ public enum ErrorCode {
     TOO_MANY_INTERESTS(HttpStatus.NOT_FOUND, "5개를 초과 하여 선택할 수 없습니다."),
     NO_INTERESTS_SELECTED(HttpStatus.NOT_FOUND,"최소 한 개 이상 선택 해야 합니다."),
 
-    // 매칭
-    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND,"매칭 정보가 없습니다."),
-    CANNOT_CANCEL_MATCHED_LIKE(HttpStatus.BAD_REQUEST, "이미 매칭이 성립된 좋아요는 취소할 수 없습니다."),
-
     // 통화
     CALL_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 정보가 없습니다."),
 
+    // 채팅방
+    CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+
+    // 채팅 메시지 관련
+    MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다."),
+    NOT_YOUR_MESSAGE(HttpStatus.FORBIDDEN, "자신의 메시지만 수정/삭제할 수 있습니다."),
+    MESSAGE_LIMIT_EXCEEDED(HttpStatus.FORBIDDEN, "메시지 전송 횟수 제한을 초과했습니다."),
+
+    // 채팅방 멤버
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 멤버를 찾을 수 없습니다."),
+
     // 통화 리뷰
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 리뷰가 없습니다."),
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 평가를 작성하셨습니다."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다."),
 
     // 신고
     REPORTER_NOT_FOUND(HttpStatus.NOT_FOUND, "신고자를 찾을 수 없습니다."),

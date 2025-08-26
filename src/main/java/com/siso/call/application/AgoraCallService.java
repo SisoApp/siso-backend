@@ -6,125 +6,117 @@ import com.siso.call.domain.repository.CallRepository;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.response.CallResponseDto;
+import com.siso.chat.application.ChatRoomService;
+import com.siso.chat.domain.model.ChatRoom;
+import com.siso.chat.domain.repository.ChatRoomRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.matching.doamain.model.Matching;
-import com.siso.matching.doamain.model.MatchingStatus;
-import com.siso.matching.doamain.repository.MatchingRepository;
-import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AgoraCallService {
     private final CallRepository callRepository;
-    private final MatchingRepository matchingRepository;
     private final AgoraTokenService agoraTokenService;
     private final AgoraChannelNameService agoraChannelNameService;
-    private final NotificationService notificationService;
+    private final ChatRoomService chatRoomService;
+    private final ChatRoomRepository chatRoomRepository;
 
-    // 통화 요청(시작)
-    public CallInfoDto requestCall(User caller, CallRequestDto request) throws Exception {
-        Long callerId = caller.getId();
+    /**
+     * 통화 요청
+     */
+    public CallInfoDto requestCall(User caller, CallRequestDto request) {
         Long receiverId = request.getReceiverId();
 
-        // 매칭 조회
-        Matching matching = matchingRepository.findByUsers(callerId, request.getReceiverId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.MATCHING_NOT_FOUND));
-
         // Agora 채널 생성
-        String channelName = agoraChannelNameService.generateChannelName(callerId, receiverId);
-        String token = agoraTokenService.generateToken(channelName, callerId);
+        String channelName = agoraChannelNameService.generateChannelName(caller.getId(), receiverId);
+        String token = agoraTokenService.generateToken(channelName, caller.getId());
 
-        // Call 엔티티 생성 및 상태 업데이트
         Call call = Call.builder()
-                .matching(matching)
-                .callStatus(CallStatus.REQUESTED)
+                .caller(caller)
+                .callStatus(CallStatus.REQUESTED) // 통화 요청
                 .agoraChannelName(channelName)
                 .agoraToken(token)
+                .startTime(LocalDateTime.now())
                 .build();
 
         callRepository.save(call);
 
-        // 통화 요청 알림 전송
-        String callerNickname = caller.getUserProfile() != null ? 
-            caller.getUserProfile().getNickname() : "익명";
-        notificationService.sendCallNotification(receiverId, callerId, callerNickname);
-
-        return new CallInfoDto(call.getId(), channelName, token, callerId, receiverId);
+        return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId);
     }
 
-    // 통화 수락
+    /**
+     * 통화 수락
+     */
     public CallResponseDto acceptCall(CallInfoDto callInfoDto) {
-        Call call = getCall(callInfoDto);
-        Matching matching = call.getMatching();
-
-        // Call 상태 업데이트
-        call.updateCallStatus(CallStatus.ACCEPT);
-        call.startCall(); // duration, 시작 시간 초기화
-
-        // Matching 상태 업데이트
-        matching.updateStatus(MatchingStatus.CALLED);
-        // User 상태 업데이트
-        matching.getUser1().updatePresenceStatus(PresenceStatus.IN_CALL);
-        matching.getUser2().updatePresenceStatus(PresenceStatus.IN_CALL);
-
-        // 저장
+        Call call = getCall(callInfoDto.getCallerId());
+        call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
+        call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
+        call.getReceiver().updatePresenceStatus(PresenceStatus.IN_CALL);    // 사용자 상태 통화 중으로 변경
+        call.startCall();
         callRepository.save(call);
-        matchingRepository.save(matching);
 
-        return buildResponse(call, matching, true);
+        return buildResponse(call, true);
     }
 
-    // 통화 취소
+    /**
+     * 통화 거절
+     */
     public CallResponseDto denyCall(CallInfoDto callInfoDto) {
-        Call call = getCall(callInfoDto);
-        Matching matching = call.getMatching();
-
-        // Call 상태 업데이트
-        call.updateCallStatus(CallStatus.DENY);
-
-        // Matching 상태를 다시 대기(PENDING)로 변경
-        matching.updateStatus(MatchingStatus.PENDING);
-
-        // 저장
-        callRepository.save(call);
-        matchingRepository.save(matching);
-
-        return buildResponse(call, matching, false);
-    }
-
-    // 통화 종료
-    public CallResponseDto endCall(CallInfoDto callInfoDto) {
-        Call call = getCall(callInfoDto);;
-        Matching matching = call.getMatching();
-
+        Call call = getCall(callInfoDto.getCallerId());
+        call.updateCallStatus(CallStatus.DENY); // 통화 거절
         call.endCall();
-        matching.updateStatus(MatchingStatus.CALLED);
-
         callRepository.save(call);
-        matchingRepository.save(matching);
 
-        return buildResponse(call, matching, true);
+        return buildResponse(call, false);
     }
 
-    private Call getCall(CallInfoDto callInfoDto) {
-        return callRepository.findById(callInfoDto.getId())
+    /**
+     * 통화 종료 → 이어가기 선택 시 채팅방 생성
+     */
+    public CallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
+        Call call = getCall(callInfoDto.getId());
+
+        // 최초 통화인지 확인
+        boolean isFirstCallLimited = true;
+        ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
+                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
+
+        if (chatRoom != null && continueRelationship) {
+            chatRoomService.unlockChatRoom(chatRoom); // 채팅 제한 해제
+            call.updateCallStatus(CallStatus.ENDED); // 전화 무제한
+            isFirstCallLimited = false; // 이어가기 후 제한 해제
+        }
+
+        // 종료 처리
+        call.endCall(isFirstCallLimited);
+        callRepository.save(call);
+
+        return buildResponse(call, true);
+    }
+
+    /**
+     * 내부 공용 메서드
+     */
+    private Call getCall(Long callId) {
+        return callRepository.findById(callId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.CALL_NOT_FOUND));
     }
 
-    private CallResponseDto buildResponse(Call call, Matching matching, boolean accepted) {
+    private CallResponseDto buildResponse(Call call, boolean accepted) {
         return new CallResponseDto(
                 accepted,
                 call.getAgoraToken(),
                 call.getAgoraChannelName(),
-                matching.getUser1().getId(),
-                matching.getUser2().getId(),
+                call.getCaller().getId(),
+                call.getReceiver().getId(),
                 call.getCallStatus(),
                 call.getDuration()
         );

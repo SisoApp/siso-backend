@@ -16,7 +16,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ImageResponseDto {
-    
     private Long id;
     private Long userId;
     private String path; // 이미지 접근 URL

@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CallReviewRequestDto {
+    private  Long id;
     private Long callId;
     private Integer rating;
     private String comment;
-    private Boolean wantsToContinueChat;
 }

@@ -1,8 +1,7 @@
 package com.siso.call.domain.model;
 
 import com.siso.callreview.domain.model.CallReview;
-import com.siso.image.domain.model.Image;
-import com.siso.matching.doamain.model.Matching;
+import com.siso.chat.domain.model.ChatRoom;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -24,9 +23,16 @@ public class Call {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "matching_id", nullable = false)
-    private Matching matching;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "caller_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_sender"))
+    private User caller;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receiver_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_receiver"))
+    private User receiver;
+
+    @OneToOne(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ChatRoom chatRoom;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,28 +57,37 @@ public class Call {
     private List<CallReview> callReviews = new ArrayList<>();
 
     // 양방향 연관 관계 설정
-    public void linkMatching(Matching matching) {
-        this.matching = matching;
-        matching.linkCall(this);
+    public void linkCaller(User user) {
+        this.caller = user;
+        user.addCaller(this);
     }
 
-    public void addCallReview(User evaluator, User target, String comment, int rating, boolean wantsToContinueChat) {
+    public void linkReceiver(User user) {
+        this.receiver = user;
+        user.addReceiver(this);
+    }
+
+    public void linkChatRoom(ChatRoom chatRoom) {
+        this.chatRoom = chatRoom;
+        chatRoom.linkCall(this);
+    }
+
+    public void addCallReview(String comment, int rating) {
         CallReview callReview = CallReview.builder()
                 .call(this) // 현재 Call과 연결
-                .evaluator(evaluator)
-                .target(target)
                 .comment(comment)
                 .rating(rating)
-                .wantsToContinueChat(wantsToContinueChat)
                 .build();
 
         this.callReviews.add(callReview);
     }
 
     @Builder
-    public Call(Matching matching, CallStatus callStatus, LocalDateTime startTime, LocalDateTime endTime, Long duration, String agoraChannelName, String agoraToken) {
-        this.matching = matching;
-        matching.linkCall(this);
+    public Call(User caller, User receiver, CallStatus callStatus, LocalDateTime startTime, LocalDateTime endTime, Long duration, String agoraChannelName, String agoraToken) {
+        this.caller = caller;
+        this.receiver = receiver;
+        caller.addCaller(this);
+        receiver.addReceiver(this);
         this.callStatus = callStatus;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -83,20 +98,34 @@ public class Call {
 
     public void updateCallStatus(CallStatus callStatus) {
         this.callStatus = callStatus;
-        if (callStatus == CallStatus.DENY) {
-            this.endTime = LocalDateTime.now();
-            this.duration = 0L;
-        }
     }
 
+    // 시작
     public void startCall() {
         this.startTime = LocalDateTime.now();
+        this.endTime = null;
+        this.duration = 0L;
     }
 
+    // 종료
     public void endCall() {
         this.endTime = LocalDateTime.now();
         if (this.startTime != null) {
             this.duration = Duration.between(this.startTime, this.endTime).getSeconds();
+        }
+        this.callStatus = CallStatus.ENDED;
+    }
+
+    // 종료 (첫 통화 제한 여부 적용)
+    public void endCall(boolean isFirstCallLimited) {
+        this.endTime = LocalDateTime.now();
+        if (this.startTime != null) {
+            this.duration = Duration.between(this.startTime, this.endTime).getSeconds();
+
+            // 최초 통화만 8분 제한 적용
+            if (isFirstCallLimited && this.duration > 480) {
+                this.duration = 480L;
+            }
         }
         this.callStatus = CallStatus.ENDED;
     }
