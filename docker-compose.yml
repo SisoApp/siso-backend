@@ -23,6 +23,7 @@ services:
       mariadb:
         condition: service_healthy
     environment:
+      SPRING_CONFIG_IMPORT: optional:application-secret.yml
       SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/sisoappdb?characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: siso
       SPRING_DATASOURCE_PASSWORD: 1234
