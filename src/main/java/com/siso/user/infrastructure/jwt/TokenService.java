@@ -48,6 +48,7 @@ public class TokenService {
 
         // 3. DB에 RefreshToken 갱신
         user.updateRefreshToken(newRefreshToken);
+        user.updateRegistrationStatus(RegistrationStatus.LOGIN);
         userRepository.save(user);
 
         // 4. TokenResponseDto 생성
