@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Firebase Admin Key
+        run: |
+          mkdir -p src/main/resources/firebase
+          echo '${{ secrets.FIREBASE_ADMIN_KEY }}' > src/main/resources/firebase/firebase-admin-key.json
+    
       - name: Checkout
         uses: actions/checkout@v4
 
