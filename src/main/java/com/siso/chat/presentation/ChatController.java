@@ -53,9 +53,8 @@ public class ChatController {
 
     // 4. 메시지 삭제
     @DeleteMapping("/messages/{messageId}")
-    public SisoResponse<Void> deleteMessage(
-            @PathVariable Long messageId,
-            @RequestParam Long senderId) {
+    public SisoResponse<Void> deleteMessage(@PathVariable Long messageId,
+                                            @RequestParam Long senderId) {
         chatMessageService.deleteMessage(messageId, senderId);
         return SisoResponse.success(null);
     }

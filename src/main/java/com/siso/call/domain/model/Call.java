@@ -69,7 +69,6 @@ public class Call {
 
     public void linkChatRoom(ChatRoom chatRoom) {
         this.chatRoom = chatRoom;
-        chatRoom.linkCall(this);
     }
 
     public void addCallReview(String comment, int rating) {
@@ -86,8 +85,6 @@ public class Call {
     public Call(User caller, User receiver, CallStatus callStatus, LocalDateTime startTime, LocalDateTime endTime, Long duration, String agoraChannelName, String agoraToken) {
         this.caller = caller;
         this.receiver = receiver;
-        caller.addCaller(this);
-        receiver.addReceiver(this);
         this.callStatus = callStatus;
         this.startTime = startTime;
         this.endTime = endTime;

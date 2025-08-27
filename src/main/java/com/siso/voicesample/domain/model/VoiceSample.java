@@ -29,15 +29,10 @@ public class VoiceSample extends BaseTime {
     @Column(name = "file_size", columnDefinition = "INT COMMENT '바이트로 받기'")
     private Integer fileSize;
 
-    // 양방향 연관 관계 설정
-    public void linkUser(User user) {
-        this.user = user;
-        user.linkVoiceSample(this);
-    }
-
     @Builder
     public VoiceSample(User user, String url, Integer duration, Integer fileSize) {
         this.user = user;
+        // 양방향 연관 관계 설정
         user.linkVoiceSample(this);
         this.url = url;
         this.duration = duration;

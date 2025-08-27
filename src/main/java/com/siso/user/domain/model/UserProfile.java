@@ -1,6 +1,7 @@
 package com.siso.user.domain.model;
 
 import com.siso.image.domain.model.Image;
+import com.siso.user.dto.request.UserProfileRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +24,7 @@ public class UserProfile {
     private DrinkingCapacity drinkingCapacity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "interest")
+    @Column(name = "religion")
     private Religion religion;
 
     @Column(name = "is_smoke")
@@ -62,15 +63,10 @@ public class UserProfile {
     @JoinColumn(name = "profile_image_id")
     private Image profileImage;
 
-    // 양방향 연관 관계 설정
-    public void linkUser(User user) {
-        this.user = user;
-        user.linkProfile(this);
-    }
-
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti) {
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex) {
         this.user = user;
+        // 양방향 연관 관계 설정
         user.linkProfile(this);
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
@@ -83,6 +79,7 @@ public class UserProfile {
         this.sex = sex;
         this.profileImage = profileImage;
         this.mbti = mbti;
+        this.preferenceSex = preferenceSex;
     }
 
     public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Mbti mbti, PreferenceSex preferenceSex) {
@@ -95,6 +92,18 @@ public class UserProfile {
         this.location = location;
         this.mbti = mbti;
         this.preferenceSex = preferenceSex;
+    }
+
+    public void updateProfile(UserProfileRequestDto dto) {
+        this.drinkingCapacity = dto.getDrinkingCapacity();
+        this.religion = dto.getReligion();
+        this.smoke = dto.isSmoke();
+        this.nickname = dto.getNickname();
+        this.introduce = dto.getIntroduce();
+        this.preferenceContact = dto.getPreferenceContact();
+        this.location = dto.getLocation();
+        this.mbti = dto.getMbti();
+        this.preferenceSex = dto.getPreferenceSex();
     }
 
     public void setProfileImage(Image profileImage) {

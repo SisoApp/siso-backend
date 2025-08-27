@@ -8,6 +8,7 @@ import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.response.CallResponseDto;
 import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
+import com.siso.chat.domain.model.ChatRoomStatus;
 import com.siso.chat.domain.repository.ChatRoomRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
@@ -35,11 +36,17 @@ public class AgoraCallService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
 
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    }
+
     /**
      * 통화 요청
      */
     public CallInfoDto requestCall(User caller, CallRequestDto request) {
         Long receiverId = request.getReceiverId();
+        User receiver = findById(receiverId);
 
         // Agora 채널 생성
         String channelName = agoraChannelNameService.generateChannelName(caller.getId(), receiverId);
@@ -47,6 +54,7 @@ public class AgoraCallService {
 
         Call call = Call.builder()
                 .caller(caller)
+                .receiver(receiver)
                 .callStatus(CallStatus.REQUESTED) // 통화 요청
                 .agoraChannelName(channelName)
                 .agoraToken(token)
@@ -65,7 +73,7 @@ public class AgoraCallService {
      * 통화 수락
      */
     public CallResponseDto acceptCall(CallInfoDto callInfoDto) {
-        Call call = getCall(callInfoDto.getCallerId());
+        Call call = getCall(callInfoDto.getId());
         call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
         call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
         call.getReceiver().updatePresenceStatus(PresenceStatus.IN_CALL);    // 사용자 상태 통화 중으로 변경
@@ -79,7 +87,7 @@ public class AgoraCallService {
      * 통화 거절
      */
     public CallResponseDto denyCall(CallInfoDto callInfoDto) {
-        Call call = getCall(callInfoDto.getCallerId());
+        Call call = getCall(callInfoDto.getId());
         call.updateCallStatus(CallStatus.DENY); // 통화 거절
         call.endCall();
         callRepository.save(call);
@@ -95,11 +103,18 @@ public class AgoraCallService {
 
         // 최초 통화인지 확인
         boolean isFirstCallLimited = true;
-        ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
+        if (continueRelationship) {
+            // 이어가기 요청이면 ChatRoom 생성 또는 조회
+            ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
+                    .orElseGet(() -> {
+                        // ChatRoom 없으면 새로 생성
+                        ChatRoom newChatRoom = new ChatRoom(call, ChatRoomStatus.LIMITED);
+                        newChatRoom.linkCall(call); // Call과 연결
+                        return chatRoomRepository.save(newChatRoom);
+                    });
 
-        if (chatRoom != null && continueRelationship) {
-            chatRoomService.unlockChatRoom(chatRoom); // 채팅 제한 해제
+            // 채팅 제한 해제
+            chatRoomService.unlockChatRoom(chatRoom);
             call.updateCallStatus(CallStatus.ENDED); // 전화 무제한
             isFirstCallLimited = false; // 이어가기 후 제한 해제
         }

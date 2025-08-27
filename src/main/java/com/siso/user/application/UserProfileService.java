@@ -4,6 +4,7 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.image.application.ImageService;
 import com.siso.image.dto.response.ImageResponseDto;
+import com.siso.user.domain.model.Sex;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
 import com.siso.user.domain.repository.UserProfileRepository;
@@ -23,8 +24,6 @@ import java.util.List;
 @Transactional
 public class UserProfileService {
     private final UserProfileRepository userProfileRepository;
-    private final ImageService imageService;
-    private final UserRepository userRepository;
     private final ImageRepository imageRepository;
 
     // 사용자 프로필 존재 여부 확인
@@ -32,27 +31,17 @@ public class UserProfileService {
         return userProfileRepository.existsByUserId(userId);
     }
 
-    // 사용자 조회
-    public User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-    }
-
     // 단일 조회
     public UserProfileResponseDto findById(Long id) {
         UserProfile userProfile = userProfileRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.PROFILE_NOT_FOUND));
-        List<ImageResponseDto> images = imageService.getImagesByUserId(userProfile.getUser().getId());
-        return toDto(userProfile, images);
+        return toDto(userProfile);
     }
 
     // 전체 조회
     public List<UserProfileResponseDto> findAll() {
         return userProfileRepository.findAll().stream()
-                .map(profile -> {
-                    List<ImageResponseDto> images = imageService.getImagesByUserId(profile.getUser().getId());
-                    return toDto(profile, images);
-                })
+                .map(this::toDto)
                 .toList();
     }
 
@@ -60,8 +49,7 @@ public class UserProfileService {
     public UserProfileResponseDto getUserProfileByUserId(Long userId) {
         UserProfile profile = userProfileRepository.findByUserId(userId).orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
 
-        List<ImageResponseDto> images = imageService.getImagesByUserId(userId);
-        return toDto(profile, images);
+        return toDto(profile);
     }
 
     // 생성
@@ -84,19 +72,25 @@ public class UserProfileService {
                 .sex(dto.getSex())
                 .profileImage(profileImage)
                 .mbti(dto.getMbti())
+                .preferenceSex(dto.getPreferenceSex())
                 .build();
 
         UserProfile savedProfile = userProfileRepository.save(profile);
-        List<ImageResponseDto> images = imageService.getImagesByUserId(user.getId());
-        return toDto(savedProfile, images);
+        return toDto(savedProfile);
     }
 
     // 수정(전체 교체)
     public UserProfileResponseDto update(User currentUser, UserProfileRequestDto dto) {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
-                .orElse(UserProfile.builder().user(currentUser).build());
-
-        profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation(), dto.getMbti(), dto.getPreferenceSex());
+                .orElseGet(() -> UserProfile.builder()
+                        .user(currentUser)
+                        .nickname(dto.getNickname())
+                        .age(dto.getAge())
+                        .sex(dto.getSex())
+                        .preferenceSex(dto.getPreferenceSex())
+                        .build()
+                );
+        profile.updateProfile(dto); // nickname, age, sex, preferenceSex 등 세팅
 
         // 프로필 이미지 설정
         if (dto.getProfileImageId() != null) {
@@ -105,8 +99,7 @@ public class UserProfileService {
         }
 
         UserProfile savedProfile = userProfileRepository.save(profile);
-        List<ImageResponseDto> images = imageService.getImagesByUserId(currentUser.getId());
-        return toDto(savedProfile, images);
+        return toDto(savedProfile);
     }
 
     // 삭제
@@ -126,8 +119,7 @@ public class UserProfileService {
         profile.setProfileImage(profileImage);
 
         UserProfile savedProfile = userProfileRepository.save(profile);
-        List<ImageResponseDto> images = imageService.getImagesByUserId(currentUser.getId());
-        return toDto(savedProfile, images);
+        return toDto(savedProfile);
     }
 
     // 프로필 이미지 검증 및 조회
@@ -144,7 +136,7 @@ public class UserProfileService {
     }
 
     // Entity -> DTO
-    private UserProfileResponseDto toDto(UserProfile profile, List<ImageResponseDto> images) {
+    private UserProfileResponseDto toDto(UserProfile profile) {
         ImageResponseDto profileImageDto = null;
         if (profile.getProfileImage() != null) {
             profileImageDto = ImageResponseDto.fromEntity(profile.getProfileImage());
@@ -162,7 +154,7 @@ public class UserProfileService {
                 .preferenceSex(profile.getPreferenceSex())
                 .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImage(profileImageDto)
-                .profileImages(images)
+                .mbti(profile.getMbti())
                 .build();
     }
 }

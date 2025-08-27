@@ -103,12 +103,10 @@ public class User extends BaseTime {
     // 양방향 연관 관계 설정
     public void linkProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
-        userProfile.linkUser(this);
     }
 
     public void linkVoiceSample(VoiceSample voiceSample) {
         this.voiceSample = voiceSample;
-        voiceSample.linkUser(this);
     }
 
     public void addInterest(Interest interest) {
