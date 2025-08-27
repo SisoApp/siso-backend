@@ -66,4 +66,5 @@ public class UserProfileController {
         UserProfileResponseDto response = userProfileService.setProfileImage(user, imageId);
         return ResponseEntity.ok(response);
     }
+
 }
