@@ -149,17 +149,6 @@ public class NotificationService {
         return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url, NotificationType.MESSAGE);
     }
 
-//    /**
-//     * 좋아요 알림을 전송합니다.
-//     */
-//    public Notification sendLikeNotification(Long receiverId, Long senderId, String senderNickname) {
-//        String title = "좋아요!";
-//        String message = senderNickname + "님이 좋아요를 눌었습니다.";
-//        String url = "/like/" + senderId; // 좋아요 상세 페이지 URL
-//
-//        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url, NotificationType.LIKE);
-//    }
-
     /**
      * 통화 알림을 전송합니다.
      */

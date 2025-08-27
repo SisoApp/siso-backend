@@ -147,49 +147,6 @@ public class NotificationController {
         return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
     }
 
-//    /**
-//     * 메시지 알림을 전송합니다.
-//     *
-//     * @param user 현재 로그인한 사용자 (발신자)
-//     * @param receiverId 수신자 ID
-//     * @param messageContent 메시지 내용
-//     * @return 생성된 알림 정보
-//     */
-//    @PostMapping("/message")
-//    @Operation(summary = "메시지 알림 전송", description = "새로운 메시지 알림을 생성하고 전송합니다.")
-//    public SisoResponse<NotificationResponseDto> sendMessageNotification(
-//            @CurrentUser User user,
-//            @Parameter(description = "수신자 ID", example = "1")
-//            @RequestParam Long receiverId,
-//            @Parameter(description = "메시지 내용", example = "안녕하세요!")
-//            @RequestParam String messageContent) {
-//        String senderNickname = user.getUserProfile() != null ?
-//            user.getUserProfile().getNickname() : "익명";
-//
-//        Notification notification = notificationService.sendMessageNotification(receiverId, user.getId(), senderNickname, messageContent);
-//        return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
-//    }
-
-//    /**
-//     * 좋아요 알림을 전송합니다.
-//     *
-//     * @param user 현재 로그인한 사용자 (발신자)
-//     * @param receiverId 수신자 ID
-//     * @return 생성된 알림 정보
-//     */
-//    @PostMapping("/like")
-//    @Operation(summary = "좋아요 알림 전송", description = "새로운 좋아요 알림을 생성하고 전송합니다.")
-//    public SisoResponse<NotificationResponseDto> sendLikeNotification(
-//            @CurrentUser User user,
-//            @Parameter(description = "수신자 ID", example = "1")
-//            @RequestParam Long receiverId) {
-//        String senderNickname = user.getUserProfile() != null ?
-//            user.getUserProfile().getNickname() : "익명";
-//
-//        Notification notification = notificationService.sendLikeNotification(receiverId, user.getId(), senderNickname);
-//        return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
-//    }
-
     /**
      * 통화 알림을 전송합니다.
      *

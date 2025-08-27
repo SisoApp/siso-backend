@@ -11,14 +11,18 @@ import com.siso.chat.domain.model.ChatRoom;
 import com.siso.chat.domain.repository.ChatRoomRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
+import com.siso.user.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +32,8 @@ public class AgoraCallService {
     private final AgoraChannelNameService agoraChannelNameService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     /**
      * 통화 요청
@@ -48,6 +54,9 @@ public class AgoraCallService {
                 .build();
 
         callRepository.save(call);
+
+        // 수신자에게 통화 알림 전송
+        sendCallNotificationToReceiver(call, caller, receiverId);
 
         return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId);
     }
@@ -100,6 +109,33 @@ public class AgoraCallService {
         callRepository.save(call);
 
         return buildResponse(call, true);
+    }
+
+    /**
+     * 수신자에게 통화 알림 전송 (발신자 제외)
+     */
+    private void sendCallNotificationToReceiver(Call call, User caller, Long receiverId) {
+        try {
+            // 발신자 닉네임 가져오기
+            String callerNickname = caller.getUserProfile() != null 
+                ? caller.getUserProfile().getNickname() 
+                : "익명";
+            
+            // 발신자와 수신자가 다른 경우에만 알림 전송 (본인 제외)
+            if (!caller.getId().equals(receiverId)) {
+                notificationService.sendCallNotification(
+                    receiverId,
+                    caller.getId(),
+                    callerNickname
+                );
+                log.info("Call notification sent to user: {} from caller: {}", receiverId, caller.getId());
+            } else {
+                log.warn("Attempted to send call notification to self: {}", caller.getId());
+            }
+        } catch (Exception e) {
+            // 알림 전송 실패가 통화 요청을 방해하지 않도록 예외를 잡음
+            log.warn("Failed to send call notification to user {}: {}", receiverId, e.getMessage());
+        }
     }
 
     /**
