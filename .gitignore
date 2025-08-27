@@ -54,3 +54,4 @@ keystore.p12
 *.pem
 .json
 *.json
+.DS_Store

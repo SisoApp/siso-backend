@@ -211,6 +211,16 @@ public class User extends BaseTime {
         this.deletedAt = LocalDateTime.now();
     }
 
+    public void reActivateUser() {
+        this.isDeleted = false;
+        this.deletedAt = null;
+    }
+
+    // 30일이 지났는지 체크
+    public boolean isEligibleForHardDelete() {
+        return isDeleted && deletedAt != null && deletedAt.isBefore(LocalDateTime.now().minusDays(30));
+    }
+
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }

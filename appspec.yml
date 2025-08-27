@@ -2,17 +2,15 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /siso
-    overwrite: yes
-
+    destination: /opt/siso
 permissions:
-  - object: /
-    pattern: "**"
-    owner: ubuntu
-    group: ubuntu
-
+  - object: /opt/siso
+    owner: ec2-user
+    group: ec2-user
+    mode: 755
+    type: [directory]
 hooks:
   ApplicationStart:
-    - location: deploy.sh
-      timeout: 60
-      runas: ubuntu
+    - location: scripts/deploy.sh
+      timeout: 300
+      runas: ec2-user
