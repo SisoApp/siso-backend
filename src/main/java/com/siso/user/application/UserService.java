@@ -37,6 +37,14 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // 하드 삭제 (스케줄러에서 호출)
+    @Transactional
+    public void hardDeleteUser(User user) {
+        if (user.isEligibleForHardDelete()) {
+            userRepository.delete(user);
+        }
+    }
+
     @Transactional
     public void updateNotificationSubscribed(User user, boolean subscribed) {
         user.updateNotificationSubScribed(subscribed);
