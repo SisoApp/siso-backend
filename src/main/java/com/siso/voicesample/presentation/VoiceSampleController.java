@@ -98,23 +98,6 @@ public class VoiceSampleController {
         return ResponseEntity.ok(response);
     }
 
-    // /**
-    //  * 음성 샘플 단일 조회 API
-    //  *
-    //  * @param id 조회할 음성 샘플 ID
-    //  * @return 음성 샘플 상세 정보
-    //  *
-    //  * GET /api/voice-samples/{id}
-    //  */
-    // @GetMapping("/{id}")
-    // public ResponseEntity<VoiceSampleResponseDto> getVoiceSample(@PathVariable Long id) {
-    //     // log.info("음성 샘플 조회 요청 - ID: {}", id);
-
-    //     // ID로 음성 샘플 단일 조회
-    //     VoiceSampleResponseDto response = voiceSampleService.getVoiceSample(id);
-    //     return ResponseEntity.ok(response);
-    // }
-
     /**
      * 음성 샘플 수정 API (파일 교체)
      * 
