@@ -91,6 +91,7 @@ public class UserProfile {
         this.preferenceContact = dto.getPreferenceContact();
         this.location = dto.getLocation();
         this.mbti = dto.getMbti();
+        this.preferenceSex = dto.getPreferenceSex();
     }
 
     public void setProfileImage(Image profileImage) {
