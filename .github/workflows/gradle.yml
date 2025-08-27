@@ -91,7 +91,7 @@ jobs:
           aws-region: ap-northeast-2
 
       - name: Setup AWS CLI
-        uses: aws-actions/aws-cli-setup@v2
+        uses: aws-actions/setup-aws-cli@v2
 
       # ── S3 업로드 (커밋SHA로 고유화) ──────────────────
       - name: Upload to S3
