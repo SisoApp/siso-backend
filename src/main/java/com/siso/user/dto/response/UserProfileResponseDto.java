@@ -22,6 +22,7 @@ public class UserProfileResponseDto {
     private PreferenceSex preferenceSex;
     private ImageResponseDto profileImage; // 선택된 프로필 이미지 (1개)
     private List<ImageResponseDto> profileImages; // 전체 이미지 목록
+    private Mbti mbti;
 
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
@@ -29,7 +30,9 @@ public class UserProfileResponseDto {
                                   PreferenceContact preferenceContact, Location location,
                                   Sex sex, PreferenceSex preferenceSex,
                                   ImageResponseDto profileImage,
-                                  List<ImageResponseDto> profileImages) {
+                                  List<ImageResponseDto> profileImages,
+                                  Mbti mbti) {
+
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -42,5 +45,6 @@ public class UserProfileResponseDto {
         this.preferenceSex = preferenceSex;
         this.profileImage = profileImage;
         this.profileImages = profileImages;
+        this.mbti = mbti;
     }
 }
