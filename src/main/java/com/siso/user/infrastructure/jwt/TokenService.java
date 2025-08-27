@@ -2,12 +2,12 @@ package com.siso.user.infrastructure.jwt;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.application.UserProfileService;
 import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
 import com.siso.user.dto.response.UserResponseDto;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +19,7 @@ import java.util.Map;
 public class TokenService {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
+    private final UserProfileService userProfileService;
 
     public Map<String, Object> refreshAccessToken(String oldRefreshToken) {
         // 1. RefreshToken 검증
@@ -52,7 +53,8 @@ public class TokenService {
         userRepository.save(user);
 
         // 4. TokenResponseDto 생성
-        TokenResponseDto tokenResponse = new TokenResponseDto(newRefreshToken, user.getRegistrationStatus());
+        boolean hasProfile = userProfileService.existsByUserId(user.getId());
+        TokenResponseDto tokenResponse = new TokenResponseDto(newRefreshToken, user.getRegistrationStatus(), hasProfile);
 
         // 5. 응답 구조
         Map<String, Object> response = new HashMap<>();

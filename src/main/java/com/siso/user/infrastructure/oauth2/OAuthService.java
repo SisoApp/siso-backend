@@ -2,6 +2,7 @@ package com.siso.user.infrastructure.oauth2;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.application.UserProfileService;
 import com.siso.user.application.UserSignUpService;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.RegistrationStatus;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OAuthService {
     private final UserSignUpService userSignUpService;
+    private final UserProfileService userProfileService;
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final OAuthProviderClientFactory clientFactory; // Kakao/Apple REST 호출용
@@ -42,6 +44,7 @@ public class OAuthService {
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 
-        return new TokenResponseDto(jwtRefreshToken, user.getRegistrationStatus());
+        boolean hasProfile = userProfileService.existsByUserId(user.getId());
+        return new TokenResponseDto(jwtRefreshToken, user.getRegistrationStatus(), hasProfile);
     }
 }
