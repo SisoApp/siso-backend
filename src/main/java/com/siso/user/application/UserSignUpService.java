@@ -19,6 +19,7 @@ public class UserSignUpService {
                 .map(user -> {
                     // 기존 유저면 registrationStatus LOGIN으로 세팅
                     user.updateRegistrationStatus(RegistrationStatus.LOGIN);
+                    // 삭제된 유저 중복 안되게
                     return user;
                 })
                 .orElseGet(() -> {
