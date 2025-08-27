@@ -4,15 +4,22 @@ os: linux
 files:
   - source: /
     destination: /opt/siso
+    overwrite: true
 
 permissions:
-  - object: /opt/siso
+  - object: /opt/siso/scripts
     owner: ec2-user
     group: ec2-user
     mode: 755
+    type:
+      - file
 
 hooks:
-  AfterInstall:
+  BeforeInstall:
+    - location: scripts/before_install.sh
+      timeout: 180
+      runas: ec2-user
+  ApplicationStart:
     - location: scripts/deploy.sh
       timeout: 600
       runas: ec2-user
