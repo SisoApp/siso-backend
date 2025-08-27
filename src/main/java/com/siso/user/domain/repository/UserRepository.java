@@ -22,7 +22,8 @@ public interface UserRepository extends Repository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.provider = :provider AND u.isDeleted = false AND u.isBlock = false")
     Optional<User> findActiveUserByEmailAndProvider(@Param("email") String email, @Param("provider") Provider provider);
 
-    Optional<User> findByEmail(String email);
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isBlock = false AND u.isDeleted = false")
+    Optional<User> findByEmail(@Param("email")String email);
 
     Optional<User> findByRefreshToken(String refreshToken);
 }

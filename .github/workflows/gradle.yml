@@ -39,7 +39,6 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf deploy && mkdir -p deploy/scripts
-
           # ── JAR 1개만 선택 (없으면 건너뜀)
           if compgen -G "build/libs/*.jar" > /dev/null; then
             JAR="$(ls -1 build/libs/*.jar | grep -v -- '-plain' | head -n 1 || true)"
@@ -47,20 +46,15 @@ jobs:
               cp "$JAR" deploy/app.jar
             fi
           fi
-
           # Docker 관련 파일 포함(있는 경우만)
           [ -f Dockerfile ] && cp Dockerfile deploy/
           [ -f docker-compose.yml ] && cp docker-compose.yml deploy/
-
           # CodeDeploy 필수 파일
           cp appspec.yml deploy/
-
           # 배포 스크립트
           if [ -d scripts ]; then cp -r scripts/* deploy/scripts/; fi
-
           # zip 생성 (zip 루트에 appspec.yml 있어야 함)
           (cd deploy && zip -r ../bundle.zip .)
-
       # ── AWS 자격 증명 ────────────────────────────────
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

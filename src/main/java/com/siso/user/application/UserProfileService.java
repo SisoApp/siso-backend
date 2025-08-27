@@ -78,6 +78,7 @@ public class UserProfileService {
                 .location(dto.getLocation())
                 .sex(dto.getSex())
                 .profileImage(profileImage)
+                .mbti(dto.getMbti())
                 .build();
 
         UserProfile savedProfile = userProfileRepository.save(profile);
@@ -90,7 +91,7 @@ public class UserProfileService {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
                 .orElse(UserProfile.builder().user(currentUser).build());
 
-        profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation());
+        profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation(), dto.getMbti());
 
         // 프로필 이미지 설정
         if (dto.getProfileImageId() != null) {

@@ -19,4 +19,5 @@ public class UserProfileRequestDto {
     private Sex sex;
     private PreferenceSex preferenceSex;
     private Long profileImageId;
+    private Mbti mbti;
 }

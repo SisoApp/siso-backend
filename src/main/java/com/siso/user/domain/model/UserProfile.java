@@ -51,7 +51,12 @@ public class UserProfile {
     private Sex sex;
   
     @Enumerated(EnumType.STRING)
+    @Column(name = "preference_sex")
     private PreferenceSex preferenceSex;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mbti")
+    private Mbti mbti;
 
     @OneToOne
     @JoinColumn(name = "profile_image_id")
@@ -64,7 +69,7 @@ public class UserProfile {
     }
 
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage) {
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti) {
         this.user = user;
         user.linkProfile(this);
         this.drinkingCapacity = drinkingCapacity;
@@ -77,9 +82,10 @@ public class UserProfile {
         this.location = location;
         this.sex = sex;
         this.profileImage = profileImage;
+        this.mbti = mbti;
     }
 
-    public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location) {
+    public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Mbti mbti) {
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -87,6 +93,7 @@ public class UserProfile {
         this.introduce = introduce;
         this.preferenceContact = preferenceContact;
         this.location = location;
+        this.mbti = mbti;
     }
 
     public void setProfileImage(Image profileImage) {
