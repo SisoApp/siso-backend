@@ -1,5 +1,7 @@
 package com.siso.user.application;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
@@ -12,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    }
 
     public UserResponseDto getUserInfo(User user) {
         return new UserResponseDto(

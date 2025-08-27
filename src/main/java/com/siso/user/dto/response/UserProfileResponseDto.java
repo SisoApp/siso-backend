@@ -1,11 +1,8 @@
 package com.siso.user.dto.response;
 
-import com.siso.image.dto.ImageResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -23,14 +20,19 @@ public class UserProfileResponseDto {
     private Location location;
     private Sex sex;
     private PreferenceSex preferenceSex;
-    private List<ImageResponseDto> profileImages;
+    private ImageResponseDto profileImage; // 선택된 프로필 이미지 (1개)
+    private List<ImageResponseDto> profileImages; // 전체 이미지 목록
+    private Mbti mbti;
 
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
                                   String nickname, String introduce,
                                   PreferenceContact preferenceContact, Location location,
                                   Sex sex, PreferenceSex preferenceSex,
-                                  List<ImageResponseDto> profileImages) {
+                                  ImageResponseDto profileImage,
+                                  List<ImageResponseDto> profileImages,
+                                  Mbti mbti) {
+
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -41,6 +43,8 @@ public class UserProfileResponseDto {
         this.location = location;
         this.sex = sex;
         this.preferenceSex = preferenceSex;
+        this.profileImage = profileImage;
         this.profileImages = profileImages;
+        this.mbti = mbti;
     }
 }

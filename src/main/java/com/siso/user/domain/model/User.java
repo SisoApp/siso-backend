@@ -1,9 +1,13 @@
 package com.siso.user.domain.model;
 
+import com.siso.call.domain.model.Call;
+import com.siso.chat.domain.model.ChatMessage;
+import com.siso.chat.domain.model.ChatRoom;
+import com.siso.chat.domain.model.ChatRoomLimit;
+import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.common.domain.BaseTime;
 import com.siso.image.domain.model.Image;
-import com.siso.like.doamain.model.Like;
-import com.siso.matching.doamain.model.Matching;
+import com.siso.report.domain.model.Report;
 import com.siso.voicesample.domain.model.VoiceSample;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -57,37 +61,54 @@ public class User extends BaseTime {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "last_active_at")
+    private LocalDateTime lastActiveAt;
+
+    // 일대일 관계
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile userProfile;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private VoiceSample voiceSample;
 
+    // 일대다 관계
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserInterest> userInterests = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRoomMember> chatRoomMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatRoomLimit> chatRoomLimits = new ArrayList<>();
+
     @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> givenLikes = new ArrayList<>();
+    private List<ChatMessage> chatMessages = new ArrayList<>();
+
+    // 다대다 관계
+    @OneToMany(mappedBy = "caller", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Call> caller = new ArrayList<>();
 
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> receivedLikes = new ArrayList<>();
+    private List<Call> receiver = new ArrayList<>();
 
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Matching> matchAsUser1 = new ArrayList<>();
+    @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Report> reporter = new ArrayList<>();
 
-    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Matching> matchAsUser2 = new ArrayList<>();
+    @OneToMany(mappedBy = "reported", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Report> reported = new ArrayList<>();
 
     // 양방향 연관 관계 설정
     public void linkProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
+        userProfile.linkUser(this);
     }
 
     public void linkVoiceSample(VoiceSample voiceSample) {
         this.voiceSample = voiceSample;
+        voiceSample.linkUser(this);
     }
 
     public void addInterest(Interest interest) {
@@ -108,24 +129,56 @@ public class User extends BaseTime {
         this.images.add(image);
     }
 
-    public void addMatchAsUser1(Matching matching) {
-        this.matchAsUser1.add(matching);
+    public void addChatRoomMember(ChatRoom chatRoom, Long lastReadMessageId) {
+        ChatRoomMember chatRoomMember = ChatRoomMember.builder()
+                .chatRoom(chatRoom)
+                .user(this)
+                .lastReadMessageId(lastReadMessageId)
+                .build();
+        this.chatRoomMembers.add(chatRoomMember);
     }
 
-    public void addMatchAsUser2(Matching matching) {
-        this.matchAsUser2.add(matching);
+    public ChatRoomLimit addChatRoomLimit(ChatRoom chatRoom, int messageCount) {
+        ChatRoomLimit chatRoomLimit = ChatRoomLimit.builder()
+                .chatRoom(chatRoom)
+                .user(this)
+                .messageCount(messageCount)
+                .build();
+        this.chatRoomLimits.add(chatRoomLimit);
+        return chatRoomLimit;
     }
 
-    public void addGivenLike(Like like) {
-        this.givenLikes.add(like);
+    public void addChatMessage(ChatRoom chatRoom,String content) {
+        ChatMessage chatMessage = ChatMessage.builder()
+                .sender(this)
+                .chatRoom(chatRoom)
+                .content(content)
+                .build();
+        this.chatMessages.add(chatMessage);
     }
 
-    public void addReceivedLike(Like like) {
-        this.receivedLikes.add(like);
+    public void addCaller(Call call) {
+        this.caller.add(call);
+        call.linkCaller(this);
+    }
+
+    public void addReceiver(Call call) {
+        this.receiver.add(call);
+        call.linkReceiver(this);
+    }
+
+    public void addReporter(Report report) {
+        this.reporter.add(report);
+        report.linkReporter(this);
+    }
+
+    public void addReported(Report report) {
+        this.reported.add(report);
+        report.linkReported(this);
     }
 
     @Builder
-    public User(Provider provider, String email, String phoneNumber, PresenceStatus presenceStatus, RegistrationStatus registrationStatus, String refreshToken, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt) {
+    public User(Provider provider, String email, String phoneNumber, PresenceStatus presenceStatus, RegistrationStatus registrationStatus, String refreshToken, boolean notificationSubscribed, boolean isBlock, boolean isDeleted, LocalDateTime deletedAt, LocalDateTime lastActiveAt) {
         this.provider = provider;
         this.email = email;
         this.phoneNumber = phoneNumber;
@@ -136,6 +189,7 @@ public class User extends BaseTime {
         this.isBlock = isBlock;
         this.isDeleted = isDeleted;
         this.deletedAt = deletedAt;
+        this.lastActiveAt = lastActiveAt;
     }
 
     @Builder

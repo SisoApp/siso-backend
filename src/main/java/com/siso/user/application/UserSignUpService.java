@@ -34,6 +34,7 @@ public class UserSignUpService {
                             .isDeleted(false)
                             .refreshToken(null)
                             .deletedAt(null)
+                            .lastActiveAt(null)
                             .build();
                     return userRepository.save(newUser);
                 });

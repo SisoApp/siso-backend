@@ -2,7 +2,6 @@ package com.siso.user.dto.request;
 
 import com.siso.user.domain.model.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -19,22 +18,6 @@ public class UserProfileRequestDto {
     private Location location;
     private Sex sex;
     private PreferenceSex preferenceSex;
-
-    @Builder
-    public UserProfileRequestDto( DrinkingCapacity drinkingCapacity,
-                                 Religion religion, boolean smoke, int age,
-                                 String nickname, String introduce,
-                                 PreferenceContact preferenceContact, Location location,
-                                 Sex sex, PreferenceSex preferenceSex) {
-        this.drinkingCapacity = drinkingCapacity;
-        this.religion = religion;
-        this.smoke = smoke;
-        this.age = age;
-        this.nickname = nickname;
-        this.introduce = introduce;
-        this.preferenceContact = preferenceContact;
-        this.location = location;
-        this.sex = sex;
-        this.preferenceSex = preferenceSex;
-    }
+    private Long profileImageId;
+    private Mbti mbti;
 }

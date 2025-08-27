@@ -19,7 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final JwtRequestFilter jwtRequestFilter;
     private final RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
@@ -49,7 +48,16 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/api/auth/**",      // 로그인/리프레시 등
-                                "/api/users/**"      // 회원가입 등 퍼블릭이면 여기 포함
+                                "/api/users/**",      // 회원가입 등 퍼블릭이면 여기 포함
+                                "/api/calls/**",
+                                "/api/images/**",
+                                "/api/reposts/**",
+                                "/api/profiles/**",
+                                "/api/voice-samples/**",
+                                "/api/call-reviews/**",
+                                "/ws-stomp/**", // STOMP endpoint 허용
+                                "/topic/**",    // 구독 대상 허용 (필요시)
+                                "/queue/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
