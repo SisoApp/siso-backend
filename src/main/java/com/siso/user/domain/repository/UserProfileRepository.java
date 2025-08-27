@@ -14,9 +14,9 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,Long> {
     Optional<UserProfile> findByUserId(@Param("userId") Long userId);
 
     @Query(value = """
-      SELECT p.*, 
+      SELECT p.*,
              COALESCE(interest_match.common_interests, 0) as common_interests_count
-      FROM user_profiles p
+      FROM profiles p
       JOIN users u ON u.id = p.user_id
       LEFT JOIN (
         SELECT 
@@ -51,7 +51,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,Long> {
         -- 3순위: 기타 조건들
         CASE WHEN :location IS NOT NULL AND p.location = :location THEN 0 ELSE 1 END,
         CASE WHEN :religion IS NOT NULL AND p.religion = :religion THEN 0 ELSE 1 END,
-        CASE WHEN :smoke IS NOT NULL AND p.smoke = :smoke THEN 0 ELSE 1 END,
+        CASE WHEN :smoke IS NOT NULL AND p.is_smoke = :smoke THEN 0 ELSE 1 END,
         CASE WHEN :drinkingCapacity IS NOT NULL AND p.drinking_capacity = :drinkingCapacity THEN 0 ELSE 1 END,
         
         -- 4순위: 나이 차이 (절댓값)

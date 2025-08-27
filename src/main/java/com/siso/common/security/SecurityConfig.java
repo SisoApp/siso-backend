@@ -51,10 +51,11 @@ public class SecurityConfig {
                                 "/api/users/**",      // 회원가입 등 퍼블릭이면 여기 포함
                                 "/api/calls/**",
                                 "/api/images/**",
-                                "/api/reposts/**",
+                                "/api/reports/**",
                                 "/api/profiles/**",
                                 "/api/voice-samples/**",
                                 "/api/call-reviews/**",
+                                "/api/notifications/**",
                                 "/ws-stomp/**", // STOMP endpoint 허용
                                 "/topic/**",    // 구독 대상 허용 (필요시)
                                 "/queue/**"
