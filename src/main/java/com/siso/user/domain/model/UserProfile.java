@@ -85,7 +85,7 @@ public class UserProfile {
         this.mbti = mbti;
     }
 
-    public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Mbti mbti) {
+    public void updateProfile(DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, String introduce, PreferenceContact preferenceContact, Location location, Mbti mbti, PreferenceSex preferenceSex) {
         this.drinkingCapacity = drinkingCapacity;
         this.religion = religion;
         this.smoke = smoke;
@@ -94,6 +94,7 @@ public class UserProfile {
         this.preferenceContact = preferenceContact;
         this.location = location;
         this.mbti = mbti;
+        this.preferenceSex = preferenceSex;
     }
 
     public void setProfileImage(Image profileImage) {

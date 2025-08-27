@@ -96,7 +96,7 @@ public class UserProfileService {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
                 .orElse(UserProfile.builder().user(currentUser).build());
 
-        profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation(), dto.getMbti());
+        profile.updateProfile(dto.getDrinkingCapacity(), dto.getReligion(), dto.isSmoke(), dto.getNickname(), dto.getIntroduce(), dto.getPreferenceContact(), dto.getLocation(), dto.getMbti(), dto.getPreferenceSex());
 
         // 프로필 이미지 설정
         if (dto.getProfileImageId() != null) {
