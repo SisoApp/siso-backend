@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 public class TokenResponseDto {
     private String refreshToken;
     private RegistrationStatus registrationStatus;
+    private boolean hasProfile;
 
-    public TokenResponseDto(String refreshToken, RegistrationStatus registrationStatus) {
+    public TokenResponseDto(String refreshToken, RegistrationStatus registrationStatus, boolean hasProfile) {
         this.refreshToken = refreshToken;
         this.registrationStatus = registrationStatus;
+        this.hasProfile = hasProfile;
     }
 }

@@ -27,6 +27,11 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
 
+    // 사용자 프로필 존재 여부 확인
+    public boolean existsByUserId(Long userId) {
+        return userProfileRepository.existsByUserId(userId);
+    }
+
     // 사용자 조회
     public User getUserById(Long userId) {
         return userRepository.findById(userId)

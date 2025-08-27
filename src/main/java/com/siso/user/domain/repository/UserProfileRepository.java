@@ -72,4 +72,6 @@ public interface UserProfileRepository extends JpaRepository<UserProfile,Long> {
             @Param("drinkingCapacity") String drinkingCapacity,
             @Param("age") Integer age
     );
+
+    boolean existsByUserId(Long userId);
 }
