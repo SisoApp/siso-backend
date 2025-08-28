@@ -93,7 +93,6 @@ public class UserProfile {
         this.mbti = dto.getMbti();
         this.preferenceSex = dto.getPreferenceSex();
     }
-
     public void setProfileImage(Image profileImage) {
         this.profileImage = profileImage;
     }
