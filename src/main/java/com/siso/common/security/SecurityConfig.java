@@ -43,27 +43,12 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(f -> f.disable()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",                 // 루트
-                                "/oauth2/**",
-                                "/login/oauth2/**",
-<<<<<<< HEAD
-                                "/api/auth/**",      // 로그인/리프레시 등
-                                "/api/users/**",      // 회원가입 등 퍼블릭이면 여기 포함
-                                "/api/calls/**",
-                                "/api/images/**",
-                                "/api/reports/**",
-                                "/api/profiles/**",
-                                "/api/voice-samples/**",
-                                "/api/call-reviews/**",
-                                "/api/notifications/**",
-                                "/api/chats/**",
-                                "/ws-stomp/**", // STOMP endpoint 허용
-                                "/topic/**",    // 구독 대상 허용 (필요시)
-                                "/queue/**"
-=======
-                                "/api/auth/**",    // 로그인/리프레시 등
-                                "/api/users/**"      // 회원가입 등 퍼블릭이면 여기 포함
+                                .requestMatchers(
+                                        "/",                 // 루트
+                                        "/oauth2/**",
+                                        "/login/oauth2/**",
+                                        "/api/auth/**"    // 로그인/리프레시 등
+//                                "/api/users/**",
 //                                "/api/calls/**",
 //                                "/api/images/**",
 //                                "/api/reports/**",
@@ -71,12 +56,12 @@ public class SecurityConfig {
 //                                "/api/voice-samples/**",
 //                                "/api/call-reviews/**",
 //                                "/api/notifications/**",
-//                                "/ws-stomp/**" // STOMP endpoint 허용
+//                                "/api/chats/**,
+//                                "/ws-stomp/**", // STOMP endpoint 허용
 //                                "/topic/**",    // 구독 대상 허용 (필요시)
 //                                "/queue/**"
->>>>>>> origin/develop
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                                ).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthenticationEntryPoint));
 
