@@ -1,6 +1,6 @@
 package com.siso.common.firebase.application;
 
-import com.siso.common.firebase.domain.model.DeviceType;
+
 import com.siso.common.firebase.domain.model.FcmToken;
 import com.siso.common.firebase.domain.repository.FcmTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,29 +29,26 @@ public class FcmTokenService {
     /**
      * FCM 토큰을 저장하거나 업데이트합니다.
      * 
-     * 동일한 사용자의 동일한 토큰이 이미 존재하는 경우 디바이스 타입을 업데이트하고,
+     * 동일한 사용자의 동일한 토큰이 이미 존재하는 경우 활성화 상태로 업데이트하고,
      * 존재하지 않는 경우 새로운 토큰을 등록합니다.
      * 
      * @param userId 사용자 ID
      * @param token FCM 토큰 문자열
-     * @param deviceType 디바이스 타입 (ANDROID 또는 IOS)
      */
     @Transactional
-    public void saveOrUpdateToken(Long userId, String token, DeviceType deviceType) {
+    public void saveOrUpdateToken(Long userId, String token) {
         // 기존 토큰이 있는지 확인
         fcmTokenRepository.findByUserIdAndTokenAndIsActiveTrue(userId, token)
                 .ifPresentOrElse(
                         existingToken -> {
-                            // 이미 존재하는 토큰이면 디바이스 타입 업데이트
-                            existingToken.setDeviceType(deviceType);
-                            log.info("Updated existing FCM token for user: {}", userId);
+                            // 이미 존재하는 토큰이면 로그만 출력 (이미 활성화 상태)
+                            log.info("FCM token already exists and active for user: {}", userId);
                         },
                         () -> {
                             // 새로운 토큰 저장
                             FcmToken fcmToken = FcmToken.builder()
                                     .userId(userId)
                                     .token(token)
-                                    .deviceType(deviceType)
                                     .isActive(true)
                                     .build();
                             fcmTokenRepository.save(fcmToken);

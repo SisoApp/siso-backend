@@ -35,9 +35,9 @@ public class FirebaseController {
      * FCM 토큰을 등록하거나 업데이트합니다.
      * 
      * 클라이언트 앱에서 FCM 토큰을 획득한 후 이 API를 호출하여 서버에 등록해야 합니다.
-     * 동일한 사용자의 동일한 토큰이 이미 존재하는 경우 디바이스 타입만 업데이트됩니다.
+     * 동일한 사용자의 동일한 토큰이 이미 존재하는 경우 활성화 상태로 유지됩니다.
      * 
-     * @param requestDto FCM 토큰 등록 요청 데이터 (userId, token, deviceType 포함)
+     * @param requestDto FCM 토큰 등록 요청 데이터 (userId, token 포함)
      * @return 등록 성공/실패 메시지
      */
     @PostMapping("/token")
@@ -47,8 +47,7 @@ public class FirebaseController {
             // FCM 토큰 저장 또는 업데이트
             fcmTokenService.saveOrUpdateToken(
                 requestDto.getUserId(),
-                requestDto.getToken(),
-                requestDto.getDeviceType()
+                requestDto.getToken()
             );
             return ResponseEntity.ok("Token registered successfully");
         } catch (Exception e) {
