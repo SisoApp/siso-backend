@@ -73,6 +73,7 @@ public class UserProfileService {
                 .profileImage(profileImage)
                 .mbti(dto.getMbti())
                 .preferenceSex(dto.getPreferenceSex())
+                .meetings(dto.getMeetings())
                 .build();
 
         UserProfile savedProfile = userProfileRepository.save(profile);
@@ -88,6 +89,7 @@ public class UserProfileService {
                         .age(dto.getAge())
                         .sex(dto.getSex())
                         .preferenceSex(dto.getPreferenceSex())
+                        .meetings(dto.getMeetings())
                         .build()
                 );
         profile.updateProfile(dto); // nickname, age, sex, preferenceSex 등 세팅
@@ -155,6 +157,7 @@ public class UserProfileService {
                 .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImage(profileImageDto)
                 .mbti(profile.getMbti())
+                .meetings(profile.getMeetings())
                 .build();
     }
 }

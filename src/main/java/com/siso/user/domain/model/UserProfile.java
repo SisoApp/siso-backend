@@ -5,6 +5,8 @@ import com.siso.user.dto.request.UserProfileRequestDto;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -59,12 +61,19 @@ public class UserProfile {
     @Column(name = "mbti")
     private Mbti mbti;
 
+    //이런 인연을 만나고 싶어요 파트
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "profile_meetings", joinColumns = @JoinColumn(name = "profile_id"))
+    @Column(name = "meeting")
+    private List<Meeting> meetings;
+
     @OneToOne
     @JoinColumn(name = "profile_image_id")
     private Image profileImage;
 
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex) {
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
         this.user = user;
         // 양방향 연관 관계 설정
         user.linkProfile(this);
@@ -80,6 +89,7 @@ public class UserProfile {
         this.profileImage = profileImage;
         this.mbti = mbti;
         this.preferenceSex = preferenceSex;
+        this.meetings = meetings;
     }
 
     public void updateProfile(UserProfileRequestDto dto) {
@@ -92,7 +102,9 @@ public class UserProfile {
         this.location = dto.getLocation();
         this.mbti = dto.getMbti();
         this.preferenceSex = dto.getPreferenceSex();
+        this.meetings = dto.getMeetings();
     }
+    
     public void setProfileImage(Image profileImage) {
         this.profileImage = profileImage;
     }

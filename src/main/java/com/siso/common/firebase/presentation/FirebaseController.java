@@ -23,7 +23,7 @@ import java.util.List;
  * @since 1.0
  */
 @RestController
-@RequestMapping("/api/v1/fcm")
+@RequestMapping("/api/fcm")
 @RequiredArgsConstructor
 @Tag(name = "Firebase Cloud Messaging", description = "FCM 관련 API")
 public class FirebaseController {

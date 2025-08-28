@@ -147,23 +147,5 @@ public class NotificationController {
         return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
     }
 
-    /**
-     * 통화 알림을 전송합니다.
-     *
-     * @param user 현재 로그인한 사용자 (발신자)
-     * @param receiverId 수신자 ID
-     * @return 생성된 알림 정보
-     */
-    @PostMapping("/call")
-    @Operation(summary = "통화 알림 전송", description = "새로운 통화 알림을 생성하고 전송합니다.")
-    public SisoResponse<NotificationResponseDto> sendCallNotification(
-            @CurrentUser User user,
-            @Parameter(description = "수신자 ID", example = "1")
-            @RequestParam Long receiverId) {
-        String senderNickname = user.getUserProfile() != null ? 
-            user.getUserProfile().getNickname() : "익명";
-        
-        Notification notification = notificationService.sendCallNotification(receiverId, user.getId(), senderNickname);
-        return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
-    }
+
 }
