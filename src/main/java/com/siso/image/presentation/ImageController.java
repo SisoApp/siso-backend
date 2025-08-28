@@ -54,10 +54,9 @@ public class ImageController {
     /**
      * 이미지 업로드 API
      */
-    public ResponseEntity<ImageResponseDto> uploadImage(
-            @RequestPart("file") MultipartFile file,
-            @CurrentUser User user
-    ) {
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImageResponseDto> uploadImage(@RequestPart("file") MultipartFile file,
+                                                        @CurrentUser User user) {
         // 1) 인증 체크 (리졸버에서 401을 던지도록 해도, 마지막 안전망으로 둡니다)
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
@@ -89,7 +88,7 @@ public class ImageController {
         ImageResponseDto response = imageService.uploadImage(file, request);
         return ResponseEntity.ok(response);
     }
-    
+
     /**
      * 사용자별 이미지 목록 조회 API
      */

@@ -47,13 +47,13 @@ public class SecurityConfig {
                                         "/",                 // 루트
                                         "/oauth2/**",
                                         "/login/oauth2/**",
-                                        "/api/auth/**"    // 로그인/리프레시 등
+                                        "/api/auth/**",    // 로그인/리프레시 등
 //                                "/api/users/**",
 //                                "/api/calls/**",
-//                                "/api/images/**",
+                                "/api/images/**",
 //                                "/api/reports/**",
-//                                "/api/profiles/**",
-//                                "/api/voice-samples/**",
+                                "/api/profiles/**",
+                                "/api/voice-samples/**"
 //                                "/api/call-reviews/**",
 //                                "/api/notifications/**",
 //                                "/api/chats/**,

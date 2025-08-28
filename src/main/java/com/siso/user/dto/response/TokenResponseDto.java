@@ -8,13 +8,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TokenResponseDto {
-    private String accessToken;
     private String refreshToken;
     private RegistrationStatus registrationStatus;
     private boolean hasProfile;
 
-    public TokenResponseDto(String accessToken, String refreshToken, RegistrationStatus registrationStatus, boolean hasProfile) {
-        this.accessToken = accessToken;
+    public TokenResponseDto(String refreshToken, RegistrationStatus registrationStatus, boolean hasProfile) {
         this.refreshToken = refreshToken;
         this.registrationStatus = registrationStatus;
         this.hasProfile = hasProfile;

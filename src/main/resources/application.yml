@@ -1,6 +1,11 @@
 spring:
   config:
-    import: application-secret.yml
+    import: application-local.yml
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   security:
     oauth2:

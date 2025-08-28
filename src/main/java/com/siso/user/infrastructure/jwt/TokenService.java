@@ -54,7 +54,7 @@ public class TokenService {
 
         // 4. TokenResponseDto 생성
         boolean hasProfile = userProfileService.existsByUserId(user.getId());
-        TokenResponseDto tokenResponse = new TokenResponseDto(newAccessToken, newRefreshToken, user.getRegistrationStatus(), hasProfile);
+        TokenResponseDto tokenResponse = new TokenResponseDto(newRefreshToken, user.getRegistrationStatus(), hasProfile);
 
         // 5. 응답 구조
         Map<String, Object> response = new HashMap<>();
