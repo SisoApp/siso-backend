@@ -44,7 +44,9 @@ public class OAuthService {
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 
+        System.out.println("====================wtAccessToken22222222222222222: " + jwtAccessToken);
         boolean hasProfile = userProfileService.existsByUserId(user.getId());
+        System.out.println("====================wtAccessToken33333333333333333: " + jwtAccessToken);
         return new TokenResponseDto(jwtAccessToken, jwtRefreshToken, user.getRegistrationStatus(), hasProfile);
     }
 }
