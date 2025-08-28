@@ -18,8 +18,8 @@ public class CallService {
     private final CallRepository callRepository;
 
     // 발신자 기준 조회
-    public List<CallResponseDto> getCallsBySender(User sender) {
-        return callRepository.findByCallerId(sender.getId()).stream()
+    public List<CallResponseDto> getCallsByCaller(User caller) {
+        return callRepository.findByCallerId(caller.getId()).stream()
                 .map(this::toResponseDto)
                 .toList();
     }

@@ -5,7 +5,6 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.user.application.UserProfileService;
 import com.siso.user.application.UserSignUpService;
 import com.siso.user.domain.model.Provider;
-import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
@@ -38,7 +37,7 @@ public class OAuthService {
 
         String jwtAccessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
         String jwtRefreshToken = jwtTokenUtil.generateRefreshToken(user.getEmail());
-        System.out.println("====================wtAccessToken: " + jwtAccessToken);
+        System.out.println("====================jwtAccessToken: " + jwtAccessToken);
         System.out.println("====================jwtRefreshToken: " + jwtRefreshToken);
 
         user.updateRefreshToken(jwtRefreshToken);

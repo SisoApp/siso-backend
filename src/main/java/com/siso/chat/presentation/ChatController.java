@@ -6,10 +6,7 @@ import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
 import com.siso.chat.domain.model.ChatRoomMember;
-import com.siso.chat.dto.request.ChatMessageRequestDto;
-import com.siso.chat.dto.request.ChatReadRequestDto;
-import com.siso.chat.dto.request.ChatRoomLimitRequestDto;
-import com.siso.chat.dto.request.EditMessageRequestDto;
+import com.siso.chat.dto.request.*;
 import com.siso.chat.dto.response.ChatMessageResponseDto;
 import com.siso.chat.dto.response.ChatRoomLimitResponseDto;
 import com.siso.chat.dto.response.ChatRoomResponseDto;
@@ -59,12 +56,12 @@ public class ChatController {
         return SisoResponse.success(null);
     }
 
-    // 5. 채팅방 생성
-    @PostMapping("/rooms")
-    public SisoResponse<ChatRoom> createChatRoom(@Valid @RequestBody List<Long> userIds) {
-        ChatRoom chatRoom = chatRoomService.createChatRoom(userIds);
-        return SisoResponse.success(chatRoom);
-    }
+//    // 5. 채팅방 생성
+//    @PostMapping("/rooms")
+//    public SisoResponse<ChatRoom> createChatRoom(@Valid @RequestBody List<Long> userIds) {
+//        ChatRoom chatRoom = chatRoomService.createChatRoom(userIds);
+//        return SisoResponse.success(chatRoom);
+//    }
 
     // 6. 사용자의 채팅방 조회
     @GetMapping("/users/{userId}/rooms")
@@ -75,8 +72,8 @@ public class ChatController {
 
     // 7. 채팅방 나가기
     @DeleteMapping("/rooms/{chatRoomId}/users/{userId}")
-    public SisoResponse<Void> leaveChatRoom(@PathVariable Long chatRoomId, @PathVariable Long userId) {
-        chatRoomService.leaveChatRoom(chatRoomId, userId);
+    public SisoResponse<Void> leaveChatRoom(@Valid ChatRoomRequestDto requestDto, @PathVariable Long userId) {
+        chatRoomService.leaveChatRoom(requestDto, userId);
         return SisoResponse.success(null);
     }
 
@@ -113,6 +110,13 @@ public class ChatController {
     public SisoResponse<List<ChatRoomMember>> getMembers(@PathVariable Long chatRoomId) {
         List<ChatRoomMember> members = chatRoomMemberService.getMembers(chatRoomId);
         return SisoResponse.success(members);
+    }
+
+    // 13. 채팅 이어나가기
+    @PatchMapping("/{chatRoomId}/accept")
+    public SisoResponse<Void> acceptChatRoom(@Valid @RequestBody ChatRoomRequestDto requestDto) {
+        chatRoomService.acceptChatRoom(requestDto);
+        return SisoResponse.success(null);
     }
 }
 

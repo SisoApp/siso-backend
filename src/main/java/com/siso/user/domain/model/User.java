@@ -84,8 +84,8 @@ public class User extends BaseTime {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatRoomLimit> chatRoomLimits = new ArrayList<>();
 
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatMessage> chatMessages = new ArrayList<>();
+//    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+//    private List<ChatMessage> chatMessages = new ArrayList<>();
 
     // 다대다 관계
     @OneToMany(mappedBy = "caller", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -127,15 +127,6 @@ public class User extends BaseTime {
         this.images.add(image);
     }
 
-    public void addChatRoomMember(ChatRoom chatRoom, Long lastReadMessageId) {
-        ChatRoomMember chatRoomMember = ChatRoomMember.builder()
-                .chatRoom(chatRoom)
-                .user(this)
-                .lastReadMessageId(lastReadMessageId)
-                .build();
-        this.chatRoomMembers.add(chatRoomMember);
-    }
-
     public ChatRoomLimit addChatRoomLimit(ChatRoom chatRoom, int messageCount) {
         ChatRoomLimit chatRoomLimit = ChatRoomLimit.builder()
                 .chatRoom(chatRoom)
@@ -146,14 +137,14 @@ public class User extends BaseTime {
         return chatRoomLimit;
     }
 
-    public void addChatMessage(ChatRoom chatRoom,String content) {
-        ChatMessage chatMessage = ChatMessage.builder()
-                .sender(this)
-                .chatRoom(chatRoom)
-                .content(content)
-                .build();
-        this.chatMessages.add(chatMessage);
-    }
+//    public void addChatMessage(ChatRoom chatRoom,String content) {
+//        ChatMessage chatMessage = ChatMessage.builder()
+//                .sender(this)
+//                .chatRoom(chatRoom)
+//                .content(content)
+//                .build();
+//        this.chatMessages.add(chatMessage);
+//    }
 
     public void addCaller(Call call) {
         this.caller.add(call);

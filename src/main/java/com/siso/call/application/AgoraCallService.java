@@ -6,9 +6,12 @@ import com.siso.call.domain.repository.CallRepository;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.response.CallResponseDto;
+import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
+import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.chat.domain.model.ChatRoomStatus;
+import com.siso.chat.domain.repository.ChatRoomMemberRepository;
 import com.siso.chat.domain.repository.ChatRoomRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
@@ -22,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -33,6 +37,7 @@ public class AgoraCallService {
     private final AgoraChannelNameService agoraChannelNameService;
     private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
 
@@ -100,6 +105,8 @@ public class AgoraCallService {
      */
     public CallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
         Call call = getCall(callInfoDto.getId());
+        User caller = findById(callInfoDto.getCallerId());
+        User receiver = findById(callInfoDto.getReceiverId());
 
         // 최초 통화인지 확인
         boolean isFirstCallLimited = true;
@@ -112,6 +119,20 @@ public class AgoraCallService {
                         newChatRoom.linkCall(call); // Call과 연결
                         return chatRoomRepository.save(newChatRoom);
                     });
+            List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoomId(chatRoom.getId());
+            ChatRoomMember chatRoomMember = members.isEmpty()
+                    ? chatRoomMemberRepository.save(new ChatRoomMember(chatRoom, caller, null))
+                    : members.get(0);
+            chatRoomMemberRepository.save(chatRoomMember);
+
+//            chatRoom.addChatRoomMember(caller, null);
+//            caller.addChatRoomLimit(chatRoom, 0);
+//
+//            chatRoom.addChatRoomMember(receiver, null);
+//            receiver.addChatRoomLimit(chatRoom, 0);
+//
+//            userRepository.save(caller);
+//            userRepository.save(receiver);
 
             // 채팅 제한 해제
             chatRoomService.unlockChatRoom(chatRoom);

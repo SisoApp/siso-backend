@@ -17,9 +17,9 @@ public class CallController {
     private final CallService callService;
 
     // 1. 발신자 기준 통화 조회
-    @GetMapping("/sender/{senderId}")
-    public SisoResponse<List<CallResponseDto>> getCallsBySender(@CurrentUser User sender) {
-        return SisoResponse.success(callService.getCallsBySender(sender));
+    @GetMapping("/caller/{callerId}")
+    public SisoResponse<List<CallResponseDto>> getCallsByCaller(@CurrentUser User caller) {
+        return SisoResponse.success(callService.getCallsByCaller(caller));
     }
 
     // 2. 수신자 기준 통화 조회

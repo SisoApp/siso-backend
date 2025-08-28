@@ -35,11 +35,13 @@ public enum ErrorCode {
 
     // 채팅방
     CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
+    CHATROOM_EMPTY(HttpStatus.NOT_FOUND, "채팅방에 메시지가 없습니다."),
 
     // 채팅 메시지 관련
     MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다."),
     NOT_YOUR_MESSAGE(HttpStatus.FORBIDDEN, "자신의 메시지만 수정/삭제할 수 있습니다."),
     MESSAGE_LIMIT_EXCEEDED(HttpStatus.FORBIDDEN, "메시지 전송 횟수 제한을 초과했습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
 
     // 채팅방 멤버
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 멤버를 찾을 수 없습니다."),

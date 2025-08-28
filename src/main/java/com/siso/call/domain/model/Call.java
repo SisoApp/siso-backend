@@ -24,11 +24,11 @@ public class Call {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "caller_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_sender"))
+    @JoinColumn(name = "caller_id", nullable = false)
     private User caller;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id", nullable = false, foreignKey = @ForeignKey(name = "FK_likes_receiver"))
+    @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
     @OneToOne(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)

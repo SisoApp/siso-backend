@@ -43,7 +43,7 @@ public class ChatMessageService {
         User sender = userRepository.findById(requestDto.getSenderId())
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
 
-        // 메시지 제한 체크
+        // 메시지 제한 체크 (LIMITED 상태일 때만 적용)
         if (chatRoom.getChatRoomStatus() == ChatRoomStatus.LIMITED) {
             ChatRoomLimit limit = chatRoomLimitRepository.findByChatRoomIdAndUserId(chatRoom.getId(), sender.getId())
                     .orElseGet(() -> sender.addChatRoomLimit(chatRoom, 0)); // User 메서드로 초기화
@@ -56,17 +56,21 @@ public class ChatMessageService {
             chatRoomLimitRepository.save(limit);
         }
 
-        // User 도메인 메서드로 메시지 추가
-        sender.addChatMessage(chatRoom, requestDto.getContent());
-        userRepository.save(sender); // cascade로 ChatMessage도 저장됨
+        ChatMessage message = ChatMessage.builder()
+                .sender(sender)
+                .chatRoom(chatRoom)
+                .content(requestDto.getContent())
+                .build();
 
-        ChatMessage lastMessage = chatRoom.getChatMessages()
-                .get(chatRoom.getChatMessages().size() - 1);
+        chatMessageRepository.save(message);
+
+//        ChatMessage lastMessage = chatRoom.getChatMessages()
+//                .get(chatRoom.getChatMessages().size() - 1);
 
         // 채팅방의 다른 멤버들에게 알림 전송 (본인 제외)
         sendNotificationToOtherMembers(chatRoom, sender, requestDto.getContent());
 
-        return toDto(lastMessage);
+        return toDto(message);
     }
 
     /**
