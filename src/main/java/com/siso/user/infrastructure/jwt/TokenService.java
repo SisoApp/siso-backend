@@ -20,7 +20,6 @@ public class TokenService {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final UserProfileService userProfileService;
-    private final ErrorCode errorCode;
 
     public Map<String, Object> refreshAccessToken(String oldRefreshToken) {
         // 1. RefreshToken 검증
