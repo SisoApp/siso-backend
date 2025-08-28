@@ -4,6 +4,7 @@ import com.siso.common.web.CurrentUser;
 import com.siso.image.dto.request.ImageRequestDto;
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.application.ImageService;
+import com.siso.image.infrastructure.properties.ImageProperties;
 import com.siso.image.infrastructure.properties.MediaTypeProperties;
 import com.siso.image.domain.model.Image;
 import com.siso.image.domain.repository.ImageRepository;
@@ -14,10 +15,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -42,6 +45,7 @@ import java.util.List;
 public class ImageController {
     // === 의존성 주입 ===
     private final ImageService imageService;
+    private final ImageProperties imageProperties;
     private final MediaTypeProperties mediaTypeProperties;
     private final ImageRepository imageRepository;
     
@@ -50,10 +54,37 @@ public class ImageController {
     /**
      * 이미지 업로드 API
      */
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ImageResponseDto> uploadImage(@RequestPart("file") MultipartFile file,
-                                                        @CurrentUser User user) {
+    public ResponseEntity<ImageResponseDto> uploadImage(
+            @RequestPart("file") MultipartFile file,
+            @CurrentUser User user
+    ) {
+        // 1) 인증 체크 (리졸버에서 401을 던지도록 해도, 마지막 안전망으로 둡니다)
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
 
+        // 2) 파일 기본 검증
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.");
+        }
+
+        // 3) 형식/사이즈 검증 (이미 구현해둔 ImageProperties/MediaTypeProperties 사용 권장)
+        // 확장자 검사
+        String originalName = file.getOriginalFilename();
+        String ext = (originalName != null && originalName.contains("."))
+                ? originalName.substring(originalName.lastIndexOf('.') + 1)
+                : "";
+        if (!imageProperties.isSupportedFormat(ext)) {     // 주입 받아 사용: private final ImageProperties imageProperties;
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "허용되지 않은 파일 형식입니다.");
+        }
+
+        // 사이즈 검사 (바이트 단위)
+        if (file.getSize() > imageProperties.getMaxFileSize()) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
+                    "파일은 최대 " + imageProperties.getMaxFileSizeInMB() + "MB까지 업로드할 수 있습니다.");
+        }
+
+        // 4) 실제 업로드
         ImageRequestDto request = new ImageRequestDto(user.getId());
         ImageResponseDto response = imageService.uploadImage(file, request);
         return ResponseEntity.ok(response);
@@ -64,7 +95,7 @@ public class ImageController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@CurrentUser User user) {
-        
+
         List<ImageResponseDto> response = imageService.getImagesByUserId(user.getId());
         return ResponseEntity.ok(response);
     }
