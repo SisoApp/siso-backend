@@ -42,6 +42,7 @@ public class UserProfileController {
     @PostMapping
     public ResponseEntity<UserProfileResponseDto> createProfile(@CurrentUser User user,
                                                                 @Valid @RequestBody UserProfileRequestDto dto) {
+        System.out.println("========================= user: " + user);
         return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(user, dto));
     }
 
