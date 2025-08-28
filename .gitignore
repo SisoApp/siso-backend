@@ -39,6 +39,7 @@ out/
 ### SISO Backend ###
 # 사용자 업로드 파일들 (런타임에 생성됨)
 uploads/
+local-uploads/
 # 로그 파일들
 logs/
 *.log
@@ -55,3 +56,4 @@ keystore.p12
 .json
 *.json
 .DS_Store
+
