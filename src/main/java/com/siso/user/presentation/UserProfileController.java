@@ -2,10 +2,12 @@ package com.siso.user.presentation;
 
 import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserProfileService;
+import com.siso.user.application.UserFilterService;
 import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
 import com.siso.image.dto.response.ImageResponseDto;
+import com.siso.user.dto.response.MatchingProfileResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequestMapping("/api/profiles")
 public class UserProfileController {
     private final UserProfileService userProfileService;
+    private final UserFilterService userFilterService;
 
     // 단일 조회
     @GetMapping("/{id}")
@@ -76,4 +79,10 @@ public class UserProfileController {
         return ResponseEntity.ok(images);
     }
 
+    // 매칭용 프로필 조회
+    @GetMapping("/matching")
+    public ResponseEntity<List<MatchingProfileResponseDto>> getMatchingProfiles(@CurrentUser User user) {
+        List<MatchingProfileResponseDto> profiles = userFilterService.getMatchingProfiles(user);
+        return ResponseEntity.ok(profiles);
+    }
 }

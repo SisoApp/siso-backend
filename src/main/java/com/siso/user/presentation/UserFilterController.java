@@ -5,7 +5,9 @@ import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserFilterService;
 import com.siso.user.domain.model.User;
 import com.siso.user.dto.response.FilteredUserResponseDto;
+import com.siso.user.dto.response.MatchingProfileResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,5 +23,16 @@ public class UserFilterController {
     public SisoResponse<List<FilteredUserResponseDto>> getFilteredUsers(@CurrentUser User user) {
         List<FilteredUserResponseDto> filteredUsers = userFilterService.getFilteredUsers(user);
         return SisoResponse.success(filteredUsers);
+    }
+
+    // 매칭용 프로필 조회 (페이징 지원)
+    @GetMapping("/filtered/matching")
+    public ResponseEntity<List<MatchingProfileResponseDto>> getMatchingProfiles(
+            @CurrentUser User user,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+
+        List<MatchingProfileResponseDto> profiles = userFilterService.getMatchingProfiles(user, page, size);
+        return ResponseEntity.ok(profiles);
     }
 }
