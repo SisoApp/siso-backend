@@ -22,7 +22,8 @@ public class MatchingProfileResponseDto {
     private List<String> interests;         // 취향 (관심사)
     private String introduce;               // 소개글
     private List<String> imageUrls;         // 사진 URL 배열
-    private String voiceSampleUrl;          // 음성 샘플 URL (추후 구현)
+    private String voiceSampleUrl;// 음성 샘플 URL (추후 구현)
+    private Enum presenseStatus;
     
     /**
      * UserProfile 엔티티를 매칭용 DTO로 변환
@@ -41,6 +42,7 @@ public class MatchingProfileResponseDto {
                 .introduce(profile.getIntroduce())
                 .imageUrls(imageUrls)
                 .voiceSampleUrl(null) // 추후 음성 샘플 기능 구현 시 수정
+                .presenseStatus(profile.getUser().getPresenceStatus())
                 .build();
     }
 }

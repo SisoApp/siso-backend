@@ -55,32 +55,7 @@ public class ImageService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
 
-    /** 단일 이미지 업로드 (S3) */
-    @Transactional
-    public ImageResponseDto uploadImage(MultipartFile file, ImageRequestDto request) {
-        Long userId = request.getUserId();
-        User user = findById(userId);
 
-        userValidationUtil.validateUserExists(userId);
-        validateFileNotEmpty(file);
-        validateImageCountLimit(userId, 1);
-
-        String originalName = Optional.ofNullable(file.getOriginalFilename()).orElse("file");
-        String serverFileName = uuidName(originalName);
-        String key = buildKey(/*withUser*/ false ? userId : null, serverFileName);
-        String contentType = Optional.ofNullable(file.getContentType()).orElse("application/octet-stream");
-
-        putObject(key, file, contentType);
-
-        user.addImage(s3Url(key), serverFileName, originalName);
-
-        Image savedImage = imageRepository.findByServerImageName(serverFileName)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
-        savedImage.setPath(s3Url(key)); // S3 URL 유지
-
-        log.info("이미지 업로드 완료 - ID: {}, 사용자: {}, key: {}", savedImage.getId(), userId, key);
-        return ImageResponseDto.fromEntity(savedImage);
-    }
 
     /** 다중 이미지 업로드 (S3) */
     @Transactional

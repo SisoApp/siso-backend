@@ -125,7 +125,7 @@ public class UserFilterService {
                     // 각 프로필의 이미지 URL 조회
                     List<String> imageUrls = imageRepository.findByUserIdOrderByCreatedAtAsc(profile.getUser().getId())
                             .stream()
-                            .map(image -> "https://13.124.11.3:8080/api/images/view/" + image.getId())
+                            .map(image -> image.getPath())
                             .collect(Collectors.toList());
 
                     return MatchingProfileResponseDto.fromUserProfile(profile, interestNames, imageUrls);
