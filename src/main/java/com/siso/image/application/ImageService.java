@@ -14,46 +14,45 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * 이미지 비즈니스 로직 처리 서비스
- * 
- * 주요 기능:
- * - 이미지 파일 업로드 및 저장 (사용자당 최대 5개)
- * - 이미지 CRUD 작업 (생성, 조회, 수정, 삭제)
- * - 파일 저장소 관리 (로컬 파일 시스템)
- * 
- * 지원 파일 형식: JPG, JPEG, PNG, GIF, WEBP
- * 파일 크기 제한: 10MB
+ * 이미지 비즈니스 로직 처리 서비스 (S3 업로드 적용)
+ *
+ * 변경 사항:
+ * - 로컬 저장 대신 S3에 바로 업로드
+ * - DB path에는 S3 URL을 저장 (기존 /api/images/view/{id} 덮어쓰기 제거)
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ImageService {
-    
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
     // === 의존성 주입 ===
-    /** 이미지 데이터 접근 레이어 */
     private final ImageRepository imageRepository;
-    
-    /** 사용자 데이터 접근 레이어 */
     private final UserRepository userRepository;
-    
-    /** 사용자 검증 유틸리티 */
     private final UserValidationUtil userValidationUtil;
-    
-    /** 이미지 파일 처리 핸들러 */
-    private final ImageFileHandler imageFileHandler;
-    
-    /** 이미지 관련 설정 프로퍼티 */
+    private final ImageFileHandler imageFileHandler; // 검증/이름 생성 등 일부 유틸은 그대로 사용 가능
     private final ImageProperties imageProperties;
-    
+    private final S3Client s3Client;
+
+    private static final String PREFIX = "images/"; // S3 폴더 prefix
+
     // ===================== 공개 API 메서드들 =====================
 
     public User findById(Long userId) {
@@ -62,165 +61,123 @@ public class ImageService {
     }
 
     /**
-     * 이미지 파일 업로드 및 저장
-     * 
-     * 처리 과정:
-     * 1. 사용자별 이미지 개수 제한 확인 (최대 5개)
-     * 2. 파일 검증 (형식, 크기)
-     * 3. 고유 파일명으로 저장
-     * 4. 데이터베이스에 메타데이터 저장
-     * 
-     * @param file 업로드할 이미지 파일 (MultipartFile)
-     * @param request 사용자 ID 등 추가 정보
-     * @return 저장된 이미지 정보
-     * @throws IllegalArgumentException 파일 검증 실패 또는 개수 제한 초과 시
-     * @throws RuntimeException 파일 저장 실패 시
+     * 이미지 파일 업로드 및 저장 (S3)
      */
     @Transactional
     public ImageResponseDto uploadImage(MultipartFile file, ImageRequestDto request) {
         Long userId = request.getUserId();
         User user = findById(userId);
 
-        // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
 
-        // 사용자별 이미지 개수 제한 확인
+        if (file == null || file.isEmpty()) {
+            throw new ExpectedException(ErrorCode.IMAGE_NOT_FOUND);
+        }
+
         long currentImageCount = imageRepository.countByUserId(userId);
         if (currentImageCount >= imageProperties.getMaxImagesPerUser()) {
             throw new ExpectedException(ErrorCode.IMAGE_MAX_COUNT_EXCEEDED);
         }
 
-        // 통합 파일 처리: 검증 → 저장 (사용자별 폴더)
-        FileProcessResult result = imageFileHandler.processImageFile(file, userId);
+        // 파일명 생성 (안전한 이름 + UUID)
+        String originalName = Optional.ofNullable(file.getOriginalFilename()).orElse("file");
+        String safeName = originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String serverFileName = UUID.randomUUID() + "-" + safeName;
 
-        log.info("이미지 업로드 - 사용자: {}, 파일명: {}", userId, result.getServerImageName());
+        // 필요 시 사용자별 폴더로 구분하려면 PREFIX + userId + "/" + serverFileName
+        String key = PREFIX + serverFileName;
 
-        // ⭐ 엔티티의 addImage 메서드를 호출하여 관계 설정 및 객체 생성
-        //    User가 Image를 생성하고 관리하는 책임을 가짐.
+        String contentType = Optional.ofNullable(file.getContentType()).orElse("application/octet-stream");
+
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(contentType)
+                            .build(),
+                    RequestBody.fromBytes(file.getBytes())
+            );
+        } catch (Exception e) {
+            log.error("S3 업로드 실패 - userId: {}, filename: {}", userId, serverFileName, e);
+            throw new ExpectedException(ErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        // 사용자 엔티티에 이미지 추가 (path에는 S3 URL 저장)
         user.addImage(
-                result.getFileUrl(),
-                result.getServerImageName(),
-                result.getOriginalName()
+                s3Url(key),
+                serverFileName,
+                originalName
         );
 
-        // ⭐ JPA 변경 감지로 인해 user와 image 엔티티가 모두 저장됨.
-        //    imageRepository.save(image) 코드가 필요 없음.
-
-        // ⭐ Image 엔티티에 접근하여 URL 업데이트
-        //    하지만 이 방식은 user.getImages().get(0)과 같이 비효율적
-        //    따라서 URL 업데이트 로직을 Image 엔티티 내부에 넣거나
-        //    업로드 로직을 개선해야 함.
-        //    현재 로직에서는 Image 엔티티에 getId()를 통해 접근해야 함.
-        //    여기서는 임시로 imageRepository를 사용해 접근하는 방식을 보여줌.
-        Image savedImage = imageRepository.findByServerImageName(result.getServerImageName())
+        Image savedImage = imageRepository.findByServerImageName(serverFileName)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
 
-        String imageIdBasedUrl = imageProperties.getBaseUrl() + "/api/images/view/" + savedImage.getId();
-        savedImage.setPath(imageIdBasedUrl);
+        // S3 URL 유지 (기존 /api/images/view/{id}로 덮어쓰지 않음)
+        savedImage.setPath(s3Url(key));
 
-        log.info("이미지 업로드 완료 - ID: {}, 사용자: {}", savedImage.getId(), userId);
-
+        log.info("이미지 업로드 완료 - ID: {}, 사용자: {}, key: {}", savedImage.getId(), userId, key);
         return ImageResponseDto.fromEntity(savedImage);
     }
-    
-    /**
-     * 특정 사용자의 이미지 목록 조회
-     * 
-     * @param userId 조회할 사용자 ID
-     * @return 해당 사용자의 이미지 목록 (생성일 기준 오름차순 정렬)
-     */
+
+    /** 특정 사용자의 이미지 목록 조회 */
     public List<ImageResponseDto> getImagesByUserId(Long userId) {
         List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
         return images.stream()
-                .map(ImageResponseDto::fromEntity) // 엔티티 → DTO 변환
+                .map(ImageResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
-    
-    /**
-     * 이미지 단일 조회
-     * 
-     * @param id 조회할 이미지 ID
-     * @return 이미지 상세 정보
-     * @throws RuntimeException 해당 ID의 이미지가 존재하지 않는 경우
-     */
+
+    /** 이미지 단일 조회 */
     public ImageResponseDto getImage(Long id) {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
         return ImageResponseDto.fromEntity(image);
     }
-    
-    /**
-     * 이미지 수정 (파일 교체)
-     * 
-     * 처리 과정:
-     * 1. 기존 이미지 조회
-     * 2. 새 파일이 있는 경우: 기존 파일 삭제 → 새 파일 처리 (검증, 저장)
-     * 3. 메타데이터 업데이트 (path, serverImageName, originalName)
-     * 4. 데이터베이스 저장 (updatedAt 자동 갱신)
-     * 
-     * @param id 수정할 이미지 ID
-     * @param file 새로운 이미지 파일 (null 가능 - 메타데이터만 수정 시)
-     * @param request 수정할 정보 (userId 등)
-     * @return 수정된 이미지 정보
-     * @throws RuntimeException 해당 ID의 이미지가 존재하지 않는 경우
+
+    /** 이미지 수정 (파일 교체) — 현재는 기존 로직 유지 (로컬 삭제 호출 포함)
+     *  필요 시 S3 교체/삭제 로직으로 전환 가능
      */
     @Transactional
     public ImageResponseDto updateImage(Long id, MultipartFile file, ImageRequestDto request) {
         Long userId = request.getUserId();
 
-        // 기존 이미지 조회
         Image existingImage = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
 
-        // 이미지 소유자 확인
         userValidationUtil.validateUserOwnership(existingImage.getUser().getId(), userId);
 
-        // 새 파일이 제공된 경우에만 파일 교체
         if (file != null && !file.isEmpty()) {
-            // 기존 파일 삭제 (사용자별 폴더)
+            // 기존 로직 유지: 필요 시 S3 삭제 + 재업로드로 대체 가능
             imageFileHandler.deleteImageFile(existingImage.getServerImageName(), userId);
 
-            // 새 파일 처리
             FileProcessResult result = imageFileHandler.processImageFile(file, userId);
-
-            // ⭐ Image 엔티티의 업데이트 메서드 호출
             existingImage.updateImage(
                     result.getFileUrl(),
                     result.getServerImageName(),
                     result.getOriginalName()
             );
-
             log.info("이미지 파일 교체 완료 - 기존: {}, 새파일: {}", existingImage.getServerImageName(), result.getServerImageName());
         }
 
         log.info("이미지 수정 완료 - ID: {}, 사용자: {}", existingImage.getId(), userId);
-
-        // @Transactional 덕분에 별도의 save() 없이도 변경 내용이 DB에 반영됩니다.
-
         return ImageResponseDto.fromEntity(existingImage);
     }
-    
-    /**
-     * 이미지 삭제
-     * 
-     * 처리 과정:
-     * 1. 기존 이미지 조회
-     * 2. 파일 시스템에서 이미지 파일 삭제 (실패해도 계속 진행)
-     * 3. 데이터베이스에서 레코드 삭제
-     * 
-     * @param id 삭제할 이미지 ID
-     * @throws RuntimeException 해당 ID의 이미지가 존재하지 않는 경우
-     */
+
+    /** 이미지 삭제 — 현재는 로컬 삭제 호출 유지 */
     @Transactional
     public void deleteImage(Long id) {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
-        
-        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더, serverImageName 사용
+
         imageFileHandler.deleteImageFile(image.getServerImageName(), image.getUser().getId());
-        
-        // 데이터베이스에서 레코드 삭제
         imageRepository.delete(image);
         log.info("이미지 삭제 완료 - ID: {}", id);
+    }
+
+    // ===================== 내부 유틸 =====================
+
+    private String s3Url(String key) {
+        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/" + key;
     }
 }

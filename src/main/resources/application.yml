@@ -32,3 +32,14 @@ management:
       probes:
         enabled: true
       show-details: never
+
+image:
+  profile:
+    upload_path: "uploads/images/profiles"
+  use_s3: ${profile.use_s3}
+  view_url: "/api/v1/images/view/" # 이미지를 보는용, s3는 버킷 저장소 url
+
+cloud:
+  aws:
+    s3:
+      bucket: siso-deploy
