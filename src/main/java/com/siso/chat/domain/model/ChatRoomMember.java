@@ -11,7 +11,7 @@ import lombok.*;
 public class ChatRoomMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long Id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id")
@@ -22,6 +22,9 @@ public class ChatRoomMember {
     private User user;
 
     private Long lastReadMessageId; // 읽음 처리
+
+    @OneToOne(mappedBy = "chat_room_members", cascade = CascadeType.ALL, orphanRemoval = true)
+    private ChatRoomLimit limit;
 
     @Builder
     public ChatRoomMember(ChatRoom chatRoom, User user, Long lastReadMessageId) {

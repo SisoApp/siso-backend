@@ -1,5 +1,7 @@
 package com.siso.chat.domain.model;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,22 +23,31 @@ public class ChatRoomLimit {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private int messageCount = 0; // 보낸 메세지 수
+    @Column(name = "sent_count")
+    private int sentCount;    // 보낸 메시지 수
 
     @Builder
-    public ChatRoomLimit(ChatRoom chatRoom, User user, int messageCount) {
+    public ChatRoomLimit(ChatRoom chatRoom, User user, int sentCount) {
         this.chatRoom = chatRoom;
         this.user = user;
-        this.messageCount = messageCount;
-    }
-
-    // 메시지 전송 횟수 증가
-    public void incrementMessageCount() {
-        this.messageCount += 1;
+        this.sentCount = sentCount;
     }
 
     // 메시지 전송 횟수 초기화
     public void resetMessageCount() {
         this.messageCount = 0;
+    }
+
+    // 메시지 전송 횟수 5
+    public boolean canSendMessage() {
+        return sentCount <= 5;
+    }
+
+    // 메시지 전송 횟수 증가
+    public void increaseCount() {
+        if (!canSendMessage()) {
+            throw new ExpectedException(ErrorCode.MESSAGE_LIMIT_EXCEEDED);
+        }
+        sentCount++;
     }
 }
