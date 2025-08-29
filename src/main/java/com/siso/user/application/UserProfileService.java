@@ -54,10 +54,10 @@ public class UserProfileService {
 
     // 생성
     public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
-        Image profileImage = null;
-        if (dto.getProfileImageId() != null) {
-            profileImage = validateAndGetProfileImage(dto.getProfileImageId(), user.getId());
-        }
+//        Image profileImage = null;
+//        if (dto.getProfileImageId() != null) {
+//            profileImage = validateAndGetProfileImage(dto.getProfileImageId(), user.getId());
+//        }
 
         UserProfile profile = UserProfile.builder()
                 .user(user)
@@ -69,7 +69,7 @@ public class UserProfileService {
                 .introduce(dto.getIntroduce())
                 .location(dto.getLocation())
                 .sex(dto.getSex())
-                .profileImage(profileImage)
+//                .profileImage(profileImage)
                 .mbti(dto.getMbti())
                 .preferenceSex(dto.getPreferenceSex())
                 .meetings(dto.getMeetings())
@@ -94,10 +94,10 @@ public class UserProfileService {
         profile.updateProfile(dto); // nickname, age, sex, preferenceSex 등 세팅
 
         // 프로필 이미지 설정
-        if (dto.getProfileImageId() != null) {
-            Image profileImage = validateAndGetProfileImage(dto.getProfileImageId(), currentUser.getId());
-            profile.setProfileImage(profileImage);
-        }
+//        if (dto.getProfileImageId() != null) {
+//            Image profileImage = validateAndGetProfileImage(dto.getProfileImageId(), currentUser.getId());
+//            profile.setProfileImage(profileImage);
+//        }
 
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
