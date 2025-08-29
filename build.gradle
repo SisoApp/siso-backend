@@ -25,6 +25,15 @@ repositories {
 
 dependencies {
 
+    // AWS SDK v2 BOM (버전은 예시)
+    implementation platform("software.amazon.awssdk:bom:2.25.50")
+
+    // S3 클라이언트
+    implementation "software.amazon.awssdk:s3"
+
+    // URLConnection 기반 HTTP 클라이언트 (현재 코드에서 사용)
+    implementation "software.amazon.awssdk:url-connection-client"
+
 	// 드라이버는 둘 다 runtimeOnly (스프링이 URL로 자동 선택)
 
     implementation 'org.mariadb.jdbc:mariadb-java-client:3.4.1' // 예시 버전
