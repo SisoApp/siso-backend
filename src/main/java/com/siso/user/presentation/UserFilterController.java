@@ -1,25 +1,39 @@
 package com.siso.user.presentation;
 
-import com.siso.common.response.SisoResponse;
 import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserFilterService;
 import com.siso.user.domain.model.User;
-import com.siso.user.dto.response.FilteredUserResponseDto;
+import com.siso.user.dto.response.MatchingProfileResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 사용자 필터링 및 매칭 관련 API 컨트롤러
+ * 
+ * 무한 스크롤 매칭 기능을 담당합니다.
+ */
 @RestController
-@RequestMapping("/api/users")
 @RequiredArgsConstructor
+@RequestMapping("/api/filter")
 public class UserFilterController {
     private final UserFilterService userFilterService;
 
-    // 필터링된 사용자 목록 조회 (PreferenceSex 기준 + 관심사 많이 겹치는 순)
-    @GetMapping("/filtered")
-    public SisoResponse<List<FilteredUserResponseDto>> getFilteredUsers(@CurrentUser User user) {
-        List<FilteredUserResponseDto> filteredUsers = userFilterService.getFilteredUsers(user);
-        return SisoResponse.success(filteredUsers);
+    /**
+     * 매칭용 프로필 조회 (무한 스크롤 지원)
+     * 
+     * @param user 현재 사용자
+     * @param count 조회할 프로필 개수 (기본값: 5)
+     * @return 매칭용 프로필 리스트
+     */
+    @GetMapping("/matching")
+    public ResponseEntity<List<MatchingProfileResponseDto>> getMatchingProfiles(
+            @CurrentUser User user,
+            @RequestParam(defaultValue = "5") int count) {
+        
+        List<MatchingProfileResponseDto> profiles = userFilterService.getMatchingProfiles(user, count);
+        return ResponseEntity.ok(profiles);
     }
 }

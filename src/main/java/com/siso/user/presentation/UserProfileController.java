@@ -5,6 +5,7 @@ import com.siso.user.application.UserProfileService;
 import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -68,4 +69,10 @@ public class UserProfileController {
         return ResponseEntity.ok(response);
     }
 
+    // 사용자의 모든 이미지 조회
+    @GetMapping("/images")
+    public ResponseEntity<List<ImageResponseDto>> getUserImages(@CurrentUser User user) {
+        List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
+        return ResponseEntity.ok(images);
+    }
 }

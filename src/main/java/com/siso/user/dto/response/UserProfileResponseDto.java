@@ -17,7 +17,7 @@ public class UserProfileResponseDto {
     private String nickname;
     private String introduce;
     private PreferenceContact preferenceContact;
-    private Location location;
+    private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;
     private ImageResponseDto profileImage; // 선택된 프로필 이미지 (1개)
@@ -27,7 +27,7 @@ public class UserProfileResponseDto {
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
                                   String nickname, String introduce,
-                                  PreferenceContact preferenceContact, Location location,
+                                  PreferenceContact preferenceContact, String location,
                                   Sex sex, PreferenceSex preferenceSex,
                                   ImageResponseDto profileImage,
                                   Mbti mbti, List<Meeting> meetings) {

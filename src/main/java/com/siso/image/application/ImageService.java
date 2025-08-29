@@ -90,7 +90,7 @@ public class ImageService {
 
         userValidationUtil.validateUserExists(userId);
         if (files == null || files.isEmpty()) {
-            throw new ExpectedException(ErrorCode.IMAGE_NOT_FOUND);
+            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
         }
         validateImageCountLimit(userId, files.size());
 
@@ -176,7 +176,7 @@ public class ImageService {
 
     private void validateFileNotEmpty(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new ExpectedException(ErrorCode.IMAGE_NOT_FOUND);
+            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
         }
     }
 
@@ -213,7 +213,7 @@ public class ImageService {
             );
         } catch (Exception e) {
             log.error("S3 업로드 실패 - key: {}", key, e);
-            throw new ExpectedException(ErrorCode.IMAGE_NOT_FOUND);
+            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
         }
     }
 

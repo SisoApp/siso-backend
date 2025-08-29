@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.siso.user.dto.response.MatchingProfileResponseDto;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class UserFilterService {
                 userProfile.getPreferenceSex() != null ? userProfile.getPreferenceSex().name() : null,
                 userProfile.getReligion() != null ? userProfile.getReligion().name() : null,
                 userProfile.isSmoke(),
-                userProfile.getLocation() != null ? userProfile.getLocation().name() : null,
+                userProfile.getLocation() != null ? userProfile.getLocation() : null,
                 userProfile.getDrinkingCapacity() != null ? userProfile.getDrinkingCapacity().name() : null,
                 userProfile.getAge()
         );
@@ -81,6 +82,53 @@ public class UserFilterService {
                             .profileImages(profileImages)
                             .commonInterestsCount(commonInterestsCount)
                             .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 매칭용 프로필 조회 (무한 스크롤 지원)
+     * 
+     * @param user 현재 사용자
+     * @param count 조회할 프로필 개수
+     * @return 매칭용 프로필 리스트
+     */
+    @Transactional(readOnly = true)
+    public List<MatchingProfileResponseDto> getMatchingProfiles(User user, int count) {
+        // 사용자와 사용자 프로필 조회
+        Long userId = user.getId();
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
+
+        // PreferenceSex에 해당하는 모든 사용자를 관심사 겹치는 순으로 조회
+        List<UserProfile> filteredProfiles = userProfileRepository.findFilteredUsersByPreferenceSex(
+                userId,
+                userId, // 자기 자신 제외
+                userProfile.getPreferenceSex() != null ? userProfile.getPreferenceSex().name() : null,
+                userProfile.getReligion() != null ? userProfile.getReligion().name() : null,
+                userProfile.isSmoke(),
+                userProfile.getLocation() != null ? userProfile.getLocation() : null,
+                userProfile.getDrinkingCapacity() != null ? userProfile.getDrinkingCapacity().name() : null,
+                userProfile.getAge()
+        );
+
+        // count만큼만 반환
+        return filteredProfiles.stream()
+                .limit(count)
+                .map(profile -> {
+                    // 각 프로필의 관심사 조회
+                    List<UserInterest> interests = userInterestRepository.findByUserId(profile.getUser().getId());
+                    List<String> interestNames = interests.stream()
+                            .map(interest -> interest.getInterest().name())
+                            .collect(Collectors.toList());
+
+                    // 각 프로필의 이미지 URL 조회
+                    List<String> imageUrls = imageRepository.findByUserIdOrderByCreatedAtAsc(profile.getUser().getId())
+                            .stream()
+                            .map(image -> "https://13.124.11.3:8080/api/images/view/" + image.getId())
+                            .collect(Collectors.toList());
+
+                    return MatchingProfileResponseDto.fromUserProfile(profile, interestNames, imageUrls);
                 })
                 .collect(Collectors.toList());
     }

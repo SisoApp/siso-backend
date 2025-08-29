@@ -137,6 +137,14 @@ public class UserProfileService {
         return image;
     }
 
+    // 사용자의 모든 이미지 조회
+    public List<ImageResponseDto> getUserImages(Long userId) {
+        List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        return images.stream()
+                .map(ImageResponseDto::fromEntity)
+                .toList();
+    }
+
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile) {
         ImageResponseDto profileImageDto = null;
