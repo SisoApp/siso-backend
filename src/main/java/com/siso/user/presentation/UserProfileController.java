@@ -1,5 +1,7 @@
 package com.siso.user.presentation;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserProfileService;
 import com.siso.user.domain.model.User;
@@ -43,6 +45,10 @@ public class UserProfileController {
     @PostMapping
     public ResponseEntity<UserProfileResponseDto> createProfile(@CurrentUser User user,
                                                                 @Valid @RequestBody UserProfileRequestDto dto) {
+        if (user == null) { // 인증 실패는 401로
+            throw new ExpectedException(ErrorCode.UNAUTHROIZED);
+        }
+
         System.out.println("========================= user: " + user);
         return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(user, dto));
     }
@@ -62,7 +68,7 @@ public class UserProfileController {
     }
 
     // 사용자의 모든 이미지 조회 (프로필 이미지 설정용)
-    @GetMapping("/profiles/images")
+    @GetMapping("/images")
     public ResponseEntity<List<ImageResponseDto>> getProfileImages(@CurrentUser User user) {
         List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
         return ResponseEntity.ok(images);

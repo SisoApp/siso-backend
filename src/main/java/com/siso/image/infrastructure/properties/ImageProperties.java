@@ -30,7 +30,7 @@ public class ImageProperties {
      */
     @NotBlank(message = "기본 URL은 필수입니다")
      private String baseUrl = "https://13.124.11.3:8080"; // 배포시에
-//   private String baseUrl = "https://localhost:8080";
+//    private String baseUrl = "https://localhost:8080";
     /**
      * 파일 크기 제한 (바이트 단위)
      */

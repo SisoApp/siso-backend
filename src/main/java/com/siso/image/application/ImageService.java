@@ -13,14 +13,18 @@ import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,8 +59,6 @@ public class ImageService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
 
-
-
     /** 다중 이미지 업로드 (S3) */
     @Transactional
     public List<ImageResponseDto> uploadMultipleImages(List<MultipartFile> files, ImageRequestDto request) {
@@ -65,7 +67,7 @@ public class ImageService {
 
         userValidationUtil.validateUserExists(userId);
         if (files == null || files.isEmpty()) {
-            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
+            throw new ExpectedException(ErrorCode.IMAGE_EMPTY);
         }
         validateImageCountLimit(userId, files.size());
 
@@ -82,9 +84,12 @@ public class ImageService {
 
             user.addImage(s3Url(key), serverFileName, originalName);
 
-            Image saved = imageRepository.findByServerImageName(serverFileName)
-                    .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
-            saved.setPath(s3Url(key));
+//            Image saved = imageRepository.findByServerImageName(serverFileName)
+//                    .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_UPLOAD_PERSIST_FAIL));
+//            saved.setPath(s3Url(key));
+            // 명시적으로 저장
+            Image image = new Image(user, s3Url(key), serverFileName, originalName);
+            Image saved = imageRepository.save(image);
 
             uploaded.add(ImageResponseDto.fromEntity(saved));
         }
@@ -151,7 +156,7 @@ public class ImageService {
 
     private void validateFileNotEmpty(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
+            throw new ExpectedException(ErrorCode.IMAGE_EMPTY);
         }
     }
 
@@ -184,11 +189,17 @@ public class ImageService {
                             .key(key)
                             .contentType(contentType)
                             .build(),
-                    RequestBody.fromBytes(file.getBytes())
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
+        } catch (SdkClientException sce) {
+            log.error("S3 업로드 실패 - AWS 자격 증명 오류 - key: {}, message: {}", key, sce.getMessage(), sce);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "AWS 자격 증명 오류로 이미지를 업로드할 수 없습니다.");
+        } catch (IOException ioe) {
+            log.error("S3 업로드 실패 - 파일 읽기 오류 - key: {}, message: {}", key, ioe.getMessage(), ioe);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미지 파일을 읽는 데 실패했습니다.");
         } catch (Exception e) {
-            log.error("S3 업로드 실패 - key: {}", key, e);
-            throw new ExpectedException(ErrorCode.INVALID_IMAGE_FILE);
+            log.error("S3 업로드 실패 - 기타 오류 - key: {}, message: {}", key, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드 중 알 수 없는 오류가 발생했습니다.");
         }
     }
 

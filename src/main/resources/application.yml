@@ -1,6 +1,6 @@
 spring:
   config:
-    import: application-secret.yml
+    import: application-local.yml
 
   servlet:
     multipart:
@@ -16,6 +16,19 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      s3:
+        bucket: siso-deploy
+
+  image:
+    profile:
+      upload_path: "uploads/images/profiles"
+    use_s3: true
+    view_url: "/api/v1/images/view/"
+
 
 server:
   address: 0.0.0.0
@@ -32,16 +45,3 @@ management:
       probes:
         enabled: true
       show-details: never
-
-image:
-  profile:
-    upload_path: "uploads/images/profiles"
-  use_s3: true
-  view_url: "/api/v1/images/view/" # 이미지를 보는용, s3는 버킷 저장소 url
-
-cloud:
-  aws:
-    region:
-      static: ap-northeast-2
-    s3:
-      bucket: siso-deploy

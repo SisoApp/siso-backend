@@ -91,6 +91,7 @@ public class UserProfile {
         this.drinkingCapacity = dto.getDrinkingCapacity();
         this.religion = dto.getReligion();
         this.smoke = dto.isSmoke();
+        this.age = dto.getAge();
         this.nickname = dto.getNickname();
         this.introduce = dto.getIntroduce();
         this.location = dto.getLocation();

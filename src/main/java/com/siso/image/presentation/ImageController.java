@@ -6,15 +6,10 @@ import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.application.ImageService;
 import com.siso.image.infrastructure.properties.ImageProperties;
 import com.siso.image.infrastructure.properties.MediaTypeProperties;
-import com.siso.image.domain.model.Image;
 import com.siso.image.domain.repository.ImageRepository;
-import com.siso.common.exception.ErrorCode;
-import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -46,8 +38,6 @@ public class ImageController {
     // === 의존성 주입 ===
     private final ImageService imageService;
     private final ImageProperties imageProperties;
-    private final MediaTypeProperties mediaTypeProperties;
-    private final ImageRepository imageRepository;
     
     // ===================== 이미지 CRUD API =====================
     
@@ -158,6 +148,7 @@ public class ImageController {
     }
     
     // 테스트용 이미지 업로드 API (userId path variable)
+    @Operation(summary = "테스트용 다중 이미지 업로드")
     @PostMapping(value = "/upload/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadImagesForTest(@RequestPart(value = "files") List<MultipartFile> files,
                                                 @PathVariable Long userId) {
@@ -165,7 +156,7 @@ public class ImageController {
 
         // 파일 검증
         if (files == null || files.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드한 파일이 없습니다.");
         }
 
         // 각 파일 검증

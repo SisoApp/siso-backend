@@ -27,6 +27,7 @@ dependencies {
 
     // AWS SDK v2 BOM (버전은 예시)
     implementation platform("software.amazon.awssdk:bom:2.25.50")
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3:3.0.2")
 
     // S3 클라이언트
     implementation "software.amazon.awssdk:s3"

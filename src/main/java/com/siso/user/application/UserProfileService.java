@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -53,6 +54,7 @@ public class UserProfileService {
     }
 
     // 생성
+    @Transactional
     public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
 //        Image profileImage = null;
 //        if (dto.getProfileImageId() != null) {
@@ -64,17 +66,16 @@ public class UserProfileService {
                 .drinkingCapacity(dto.getDrinkingCapacity())
                 .religion(dto.getReligion())
                 .smoke(dto.isSmoke())
-                .age(dto.getAge())
                 .nickname(dto.getNickname())
+                .age(dto.getAge())
                 .introduce(dto.getIntroduce())
                 .location(dto.getLocation())
                 .sex(dto.getSex())
-//                .profileImage(profileImage)
                 .mbti(dto.getMbti())
                 .preferenceSex(dto.getPreferenceSex())
-                .meetings(dto.getMeetings())
+                .meetings(Objects.requireNonNullElse(dto.getMeetings(), List.of()))
+//                .profileImage(profileImage)
                 .build();
-
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
     }

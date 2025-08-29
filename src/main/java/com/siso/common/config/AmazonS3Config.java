@@ -18,7 +18,7 @@ public class AmazonS3Config {
     public S3Client s3Client() {
         return S3Client.builder()
                 .region(Region.AP_NORTHEAST_2)
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.create()) // 여기서 키가 필요하다고 함
                 .httpClient(UrlConnectionHttpClient.builder().build())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallTimeout(Duration.ofMinutes(3))         // 전체 API 타임아웃
