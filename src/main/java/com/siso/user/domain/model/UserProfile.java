@@ -45,9 +45,8 @@ public class UserProfile {
     @Column(name = "contact")
     private PreferenceContact preferenceContact;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "location")
-    private Location location;
+    private String location;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "sex")
@@ -73,7 +72,8 @@ public class UserProfile {
     private Image profileImage;
 
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact,
+                       String location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
         this.user = user;
         // 양방향 연관 관계 설정
         user.linkProfile(this);

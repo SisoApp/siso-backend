@@ -39,7 +39,7 @@ public class UserFilterService {
                 userProfile.getPreferenceSex() != null ? userProfile.getPreferenceSex().name() : null,
                 userProfile.getReligion() != null ? userProfile.getReligion().name() : null,
                 userProfile.isSmoke(),
-                userProfile.getLocation() != null ? userProfile.getLocation().name() : null,
+                userProfile.getLocation() != null ? userProfile.getLocation() : null,
                 userProfile.getDrinkingCapacity() != null ? userProfile.getDrinkingCapacity().name() : null,
                 userProfile.getAge()
         );

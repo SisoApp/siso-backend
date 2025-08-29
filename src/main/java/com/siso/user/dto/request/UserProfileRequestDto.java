@@ -18,7 +18,7 @@ public class UserProfileRequestDto {
     private String nickname;
     private String introduce;
     private PreferenceContact preferenceContact;
-    private Location location;
+    private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;
     private Long profileImageId;

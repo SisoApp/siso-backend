@@ -188,19 +188,20 @@ public class ImageController {
     // ===================== 이미지 뷰어 API =====================
     
     /**
-     * 이미지 뷰어 API (다운로드 완전 방지)
+     * 모바일 클라이언트용 이미지 뷰어 API
      * 
-     * 이미지 ID를 통해 안전하게 이미지를 볼 수 있습니다.
-     * 사용자는 실제 파일명이나 경로를 알 필요 없이 imageId만으로 이미지를 볼 수 있습니다.
-     * 다운로드는 절대 불가능하고 브라우저에서 보기만 가능합니다.
+     * iOS/Android 앱에서 이미지를 표시하기 위한 최적화된 API입니다.
+     * - 적절한 캐싱 지원
+     * - 모바일 친화적인 헤더 설정
+     * - 다운로드 제한 완화
      * 
      * @param imageId 조회할 이미지 ID
-     * @return 이미지 리소스 (뷰어용)
+     * @return 이미지 리소스 (모바일 최적화)
      * 
      * GET /api/images/view/{imageId}
      */
     @GetMapping("/view/{imageId}")
-    public ResponseEntity<Resource> viewImage(@PathVariable(name = "imageId") Long imageId) {
+    public ResponseEntity<Resource> viewImageForMobile(@PathVariable(name = "imageId") Long imageId) {
         try {
             // 이미지 ID로 이미지 조회
             Image image = imageRepository.findById(imageId)
@@ -212,8 +213,8 @@ public class ImageController {
                 throw new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND);
             }
             
-            // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
-            Path filePath = Paths.get("uploads/images").resolve(image.getUser().toString()).resolve(serverImageName).normalize();
+            // 사용자별 파일 경로 생성 및 정규화
+            Path filePath = Paths.get("local-uploads/images").resolve(image.getUser().getId().toString()).resolve(serverImageName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             
             // 파일 존재 여부 및 읽기 가능 여부 확인
@@ -222,15 +223,61 @@ public class ImageController {
                 MediaType contentType = mediaTypeProperties.determineContentType(serverImageName);
                 
                 return ResponseEntity.ok()
-                        // 다운로드 완전 방지 헤더들
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline") // 파일명 없이 인라인 표시
-                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate, private") // 캐시 완전 방지
-                        .header(HttpHeaders.PRAGMA, "no-cache") // HTTP/1.0 캐시 방지
-                        .header(HttpHeaders.EXPIRES, "0") // 만료 시간 0
+                        // 모바일 친화적인 헤더들
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + image.getOriginalName() + "\"") // 원본 파일명 포함
+                        .header(HttpHeaders.CACHE_CONTROL, "public, max-age=86400") // 24시간 캐시 허용
+                        .header(HttpHeaders.ETAG, "\"" + image.getId() + "_" + image.getUpdatedAt().hashCode() + "\"") // ETag 설정
                         .header("X-Content-Type-Options", "nosniff") // MIME 스니핑 방지
-                        .header("X-Frame-Options", "DENY") // 프레임 내 표시 방지
-                        .header("X-Download-Options", "noopen") // IE 다운로드 방지
-                        .header("Content-Security-Policy", "default-src 'none'; img-src 'self'") // CSP 적용
+                        .header("Access-Control-Allow-Origin", "*") // CORS 허용 (필요시 도메인 제한)
+                        .header("Access-Control-Allow-Methods", "GET, OPTIONS")
+                        .header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+                        .contentType(contentType)
+                        .body(resource);
+            } else {
+                throw new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND);
+            }
+        } catch (MalformedURLException e) {
+            throw new ExpectedException(ErrorCode.IMAGE_INVALID_PATH);
+        }
+    }
+
+    /**
+     * 이미지 다운로드 API (모바일 클라이언트용)
+     * 
+     * 모바일 앱에서 이미지를 로컬에 저장하기 위한 API입니다.
+     * 
+     * @param imageId 다운로드할 이미지 ID
+     * @return 이미지 리소스 (다운로드용)
+     * 
+     * GET /api/images/download/{imageId}
+     */
+    @GetMapping("/download/{imageId}")
+    public ResponseEntity<Resource> downloadImage(@PathVariable(name = "imageId") Long imageId) {
+        try {
+            // 이미지 ID로 이미지 조회
+            Image image = imageRepository.findById(imageId)
+                    .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND));
+            
+            // 실제 파일명 가져오기
+            String serverImageName = image.getServerImageName();
+            if (serverImageName == null) {
+                throw new ExpectedException(ErrorCode.IMAGE_FILE_NOT_FOUND);
+            }
+            
+            // 사용자별 파일 경로 생성 및 정규화
+            Path filePath = Paths.get("local-uploads/images").resolve(image.getUser().getId().toString()).resolve(serverImageName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            // 파일 존재 여부 및 읽기 가능 여부 확인
+            if (resource.exists() && resource.isReadable()) {
+                // Infrastructure Properties를 활용한 MediaType 결정
+                MediaType contentType = mediaTypeProperties.determineContentType(serverImageName);
+                
+                return ResponseEntity.ok()
+                        // 다운로드용 헤더들
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + image.getOriginalName() + "\"") // 다운로드 강제
+                        .header(HttpHeaders.CACHE_CONTROL, "no-cache") // 다운로드 시 캐시 방지
+                        .header("X-Content-Type-Options", "nosniff")
                         .contentType(contentType)
                         .body(resource);
             } else {
