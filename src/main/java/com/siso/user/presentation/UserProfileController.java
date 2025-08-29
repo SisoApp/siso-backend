@@ -69,7 +69,14 @@ public class UserProfileController {
         return ResponseEntity.ok(response);
     }
 
-    // 사용자의 모든 이미지 조회
+    // 사용자의 모든 이미지 조회 (프로필 이미지 설정용)
+    @GetMapping("/profile-images")
+    public ResponseEntity<List<ImageResponseDto>> getProfileImages(@CurrentUser User user) {
+        List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
+        return ResponseEntity.ok(images);
+    }
+
+    // 사용자의 모든 이미지 조회 (기존)
     @GetMapping("/images")
     public ResponseEntity<List<ImageResponseDto>> getUserImages(@CurrentUser User user) {
         List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());

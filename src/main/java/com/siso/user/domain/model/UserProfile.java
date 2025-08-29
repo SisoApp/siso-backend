@@ -26,7 +26,7 @@ public class UserProfile {
     private DrinkingCapacity drinkingCapacity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "religion")
+    @Column(name = "religion", nullable = true)
     private Religion religion;
 
     @Column(name = "is_smoke")
@@ -42,33 +42,33 @@ public class UserProfile {
     private String introduce;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "contact")
+    @Column(name = "contact", nullable = true)
     private PreferenceContact preferenceContact;
 
-    @Column(name = "location")
+    @Column(name = "location", nullable = true)
     private String location;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "sex")
+    @Column(name = "sex", nullable = true)
     private Sex sex;
   
     @Enumerated(EnumType.STRING)
-    @Column(name = "preference_sex")
+    @Column(name = "preference_sex", nullable = true)
     private PreferenceSex preferenceSex;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mbti")
+    @Column(name = "mbti", nullable = true)
     private Mbti mbti;
 
     //이런 인연을 만나고 싶어요 파트
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "profile_meetings", joinColumns = @JoinColumn(name = "profile_id"))
-    @Column(name = "meeting")
+    @Column(name = "meeting", nullable = true)
     private List<Meeting> meetings;
 
     @OneToOne
-    @JoinColumn(name = "profile_image_id")
+    @JoinColumn(name = "profile_image_id", nullable = true)
     private Image profileImage;
 
     @Builder
