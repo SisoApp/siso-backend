@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 /**
  * 이미지 비즈니스 로직 처리 서비스
@@ -123,6 +124,67 @@ public class ImageService {
         return ImageResponseDto.fromEntity(savedImage);
     }
     
+    /**
+     * 다중 이미지 파일 업로드 및 저장
+     * 
+     * 처리 과정:
+     * 1. 사용자별 이미지 개수 제한 확인 (최대 5개)
+     * 2. 각 파일 검증 (형식, 크기)
+     * 3. 고유 파일명으로 저장
+     * 4. 데이터베이스에 메타데이터 저장
+     * 
+     * @param files 업로드할 이미지 파일들 (MultipartFile 리스트)
+     * @param request 사용자 ID 등 추가 정보
+     * @return 저장된 이미지 정보 리스트
+     * @throws IllegalArgumentException 파일 검증 실패 또는 개수 제한 초과 시
+     * @throws RuntimeException 파일 저장 실패 시
+     */
+    @Transactional
+    public List<ImageResponseDto> uploadMultipleImages(List<MultipartFile> files, ImageRequestDto request) {
+        Long userId = request.getUserId();
+        User user = findById(userId);
+
+        // 사용자 존재 여부 확인
+        userValidationUtil.validateUserExists(userId);
+
+        // 사용자별 이미지 개수 제한 확인
+        long currentImageCount = imageRepository.countByUserId(userId);
+        int maxImagesPerUser = imageProperties.getMaxImagesPerUser();
+        
+        if (currentImageCount + files.size() > maxImagesPerUser) {
+            throw new ExpectedException(ErrorCode.IMAGE_MAX_COUNT_EXCEEDED);
+        }
+
+        List<ImageResponseDto> uploadedImages = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            // 통합 파일 처리: 검증 → 저장 (사용자별 폴더)
+            FileProcessResult result = imageFileHandler.processImageFile(file, userId);
+
+            log.info("이미지 업로드 - 사용자: {}, 파일명: {}", userId, result.getServerImageName());
+
+            // ⭐ 엔티티의 addImage 메서드를 호출하여 관계 설정 및 객체 생성
+            user.addImage(
+                    result.getFileUrl(),
+                    result.getServerImageName(),
+                    result.getOriginalName()
+            );
+
+            // ⭐ Image 엔티티에 접근하여 URL 업데이트
+            Image savedImage = imageRepository.findByServerImageName(result.getServerImageName())
+                    .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
+
+            String imageIdBasedUrl = imageProperties.getBaseUrl() + "/api/images/view/" + savedImage.getId();
+            savedImage.setPath(imageIdBasedUrl);
+
+            uploadedImages.add(ImageResponseDto.fromEntity(savedImage));
+        }
+
+        log.info("다중 이미지 업로드 완료 - 사용자: {}, 업로드된 파일 수: {}", userId, uploadedImages.size());
+
+        return uploadedImages;
+    }
+
     /**
      * 특정 사용자의 이미지 목록 조회
      * 

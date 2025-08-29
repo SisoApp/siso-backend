@@ -52,41 +52,94 @@ public class ImageController {
     // ===================== 이미지 CRUD API =====================
     
     /**
-     * 이미지 업로드 API
+     * 통합 이미지 업로드 API
+     * 
+     * 단일 파일 또는 다중 파일 업로드를 모두 지원합니다.
+     * - 단일 파일: @RequestPart("file") MultipartFile file
+     * - 다중 파일: @RequestPart("files") List<MultipartFile> files
+     * 
+     * 한 번에 최대 5개까지 이미지를 업로드할 수 있습니다.
+     * 사용자별 이미지 개수 제한(5개)을 초과하지 않도록 주의하세요.
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ImageResponseDto> uploadImage(@RequestPart("file") MultipartFile file,
-                                                        @CurrentUser User user) {
-        // 1) 인증 체크 (리졸버에서 401을 던지도록 해도, 마지막 안전망으로 둡니다)
+    public ResponseEntity<?> uploadImages(@RequestPart(value = "file", required = false) MultipartFile singleFile,
+                                         @RequestPart(value = "files", required = false) List<MultipartFile> multipleFiles,
+                                         @CurrentUser User user) {
+        // 1) 인증 체크
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }
 
-        // 2) 파일 기본 검증
-        if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.");
+        // 2) 파일 입력 검증 (단일 또는 다중 중 하나만 허용)
+        if (singleFile != null && multipleFiles != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "단일 파일과 다중 파일을 동시에 업로드할 수 없습니다.");
+        }
+        
+        if (singleFile == null && (multipleFiles == null || multipleFiles.isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
         }
 
-        // 3) 형식/사이즈 검증 (이미 구현해둔 ImageProperties/MediaTypeProperties 사용 권장)
-        // 확장자 검사
+        ImageRequestDto request = new ImageRequestDto(user.getId());
+
+        // 3) 단일 파일 업로드 처리
+        if (singleFile != null) {
+            // 파일 기본 검증
+            if (singleFile.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.");
+            }
+
+            // 형식/사이즈 검증
+            validateFile(singleFile);
+
+            // 실제 업로드
+            ImageResponseDto response = imageService.uploadImage(singleFile, request);
+            return ResponseEntity.ok(response);
+        }
+
+        // 4) 다중 파일 업로드 처리
+        if (multipleFiles != null && !multipleFiles.isEmpty()) {
+            // 파일 개수 제한 확인 (최대 5개)
+            if (multipleFiles.size() > imageProperties.getMaxImagesPerUser()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "한 번에 최대 " + imageProperties.getMaxImagesPerUser() + "개까지 업로드할 수 있습니다.");
+            }
+
+            // 각 파일 검증
+            for (MultipartFile file : multipleFiles) {
+                if (file == null || file.isEmpty()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "빈 파일이 포함되어 있습니다.");
+                }
+                validateFile(file);
+            }
+
+            // 실제 다중 업로드
+            List<ImageResponseDto> responses = imageService.uploadMultipleImages(multipleFiles, request);
+            return ResponseEntity.ok(responses);
+        }
+
+        // 이 부분은 도달하지 않아야 하지만 안전장치
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "잘못된 요청입니다.");
+    }
+
+    /**
+     * 파일 검증 헬퍼 메서드
+     */
+    private void validateFile(MultipartFile file) {
+        // 형식 검사
         String originalName = file.getOriginalFilename();
         String ext = (originalName != null && originalName.contains("."))
                 ? originalName.substring(originalName.lastIndexOf('.') + 1)
                 : "";
-        if (!imageProperties.isSupportedFormat(ext)) {     // 주입 받아 사용: private final ImageProperties imageProperties;
-            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "허용되지 않은 파일 형식입니다.");
+        if (!imageProperties.isSupportedFormat(ext)) {
+            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, 
+                "허용되지 않은 파일 형식입니다: " + originalName);
         }
 
-        // 사이즈 검사 (바이트 단위)
+        // 사이즈 검사
         if (file.getSize() > imageProperties.getMaxFileSize()) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
-                    "파일은 최대 " + imageProperties.getMaxFileSizeInMB() + "MB까지 업로드할 수 있습니다.");
+                "파일은 최대 " + imageProperties.getMaxFileSizeInMB() + "MB까지 업로드할 수 있습니다: " + originalName);
         }
-
-        // 4) 실제 업로드
-        ImageRequestDto request = new ImageRequestDto(user.getId());
-        ImageResponseDto response = imageService.uploadImage(file, request);
-        return ResponseEntity.ok(response);
     }
 
     /**
