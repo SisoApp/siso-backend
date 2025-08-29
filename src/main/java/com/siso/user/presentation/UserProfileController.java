@@ -61,24 +61,9 @@ public class UserProfileController {
         return ResponseEntity.noContent().build();
     }
 
-    // 프로필 이미지 설정 (PATCH)
-    @PatchMapping("/profile-image/{imageId}")
-    public ResponseEntity<UserProfileResponseDto> setProfileImage(@CurrentUser User user,
-                                                                  @PathVariable(name = "imageId") Long imageId) {
-        UserProfileResponseDto response = userProfileService.setProfileImage(user, imageId);
-        return ResponseEntity.ok(response);
-    }
-
     // 사용자의 모든 이미지 조회 (프로필 이미지 설정용)
-    @GetMapping("/profile-images")
+    @GetMapping("/profiles/images")
     public ResponseEntity<List<ImageResponseDto>> getProfileImages(@CurrentUser User user) {
-        List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
-        return ResponseEntity.ok(images);
-    }
-
-    // 사용자의 모든 이미지 조회 (기존)
-    @GetMapping("/images")
-    public ResponseEntity<List<ImageResponseDto>> getUserImages(@CurrentUser User user) {
         List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
         return ResponseEntity.ok(images);
     }

@@ -22,14 +22,14 @@ public class UserProfile {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "drinking_capacity")
+    @Column(name = "drinking_capacity", nullable = true)
     private DrinkingCapacity drinkingCapacity;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "religion", nullable = true)
     private Religion religion;
 
-    @Column(name = "is_smoke")
+    @Column(name = "is_smoke", nullable = true)
     private boolean smoke;
 
     @Column(name = "age", nullable = false)
@@ -40,10 +40,6 @@ public class UserProfile {
 
     @Column(name = "introduce", length = 255)
     private String introduce;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "contact", nullable = true)
-    private PreferenceContact preferenceContact;
 
     @Column(name = "location", nullable = true)
     private String location;
@@ -72,7 +68,7 @@ public class UserProfile {
     private Image profileImage;
 
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact,
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce,
                        String location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
         this.user = user;
         // 양방향 연관 관계 설정
@@ -83,7 +79,6 @@ public class UserProfile {
         this.age = age;
         this.nickname = nickname;
         this.introduce = introduce;
-        this.preferenceContact = preferenceContact;
         this.location = location;
         this.sex = sex;
         this.profileImage = profileImage;
@@ -98,7 +93,6 @@ public class UserProfile {
         this.smoke = dto.isSmoke();
         this.nickname = dto.getNickname();
         this.introduce = dto.getIntroduce();
-        this.preferenceContact = dto.getPreferenceContact();
         this.location = dto.getLocation();
         this.mbti = dto.getMbti();
         this.preferenceSex = dto.getPreferenceSex();

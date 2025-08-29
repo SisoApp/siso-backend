@@ -77,7 +77,6 @@ public class UserFilterService {
                             .religion(profile.getReligion())
                             .smoke(profile.isSmoke())
                             .drinkingCapacity(profile.getDrinkingCapacity())
-                            .preferenceContact(profile.getPreferenceContact())
                             .interests(interestDtos)
                             .profileImages(profileImages)
                             .commonInterestsCount(commonInterestsCount)

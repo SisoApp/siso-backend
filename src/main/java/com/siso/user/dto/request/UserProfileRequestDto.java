@@ -17,7 +17,6 @@ public class UserProfileRequestDto {
     private int age;
     private String nickname;
     private String introduce;
-    private PreferenceContact preferenceContact;
     private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;

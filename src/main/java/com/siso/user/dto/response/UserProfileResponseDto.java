@@ -16,7 +16,6 @@ public class UserProfileResponseDto {
     private int age;
     private String nickname;
     private String introduce;
-    private PreferenceContact preferenceContact;
     private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;
@@ -27,7 +26,7 @@ public class UserProfileResponseDto {
     public UserProfileResponseDto(DrinkingCapacity drinkingCapacity,
                                   Religion religion, boolean smoke, int age,
                                   String nickname, String introduce,
-                                  PreferenceContact preferenceContact, String location,
+                                  String location,
                                   Sex sex, PreferenceSex preferenceSex,
                                   ImageResponseDto profileImage,
                                   Mbti mbti, List<Meeting> meetings) {
@@ -38,7 +37,6 @@ public class UserProfileResponseDto {
         this.age = age;
         this.nickname = nickname;
         this.introduce = introduce;
-        this.preferenceContact = preferenceContact;
         this.location = location;
         this.sex = sex;
         this.preferenceSex = preferenceSex;
