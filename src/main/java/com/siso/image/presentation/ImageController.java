@@ -159,26 +159,25 @@ public class ImageController {
     
     // 테스트용 이미지 업로드 API (userId path variable)
     @PostMapping(value = "/upload/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadImagesForTest(@RequestPart(value = "file", required = false) MultipartFile singleFile,
-                                                @RequestPart(value = "files", required = false) List<MultipartFile> multipleFiles,
+    public ResponseEntity<?> uploadImagesForTest(@RequestPart(value = "files") List<MultipartFile> files,
                                                 @PathVariable Long userId) {
         ImageRequestDto request = new ImageRequestDto(userId);
 
-        // 단일 파일 업로드 처리
-        if (singleFile != null) {
-            if (singleFile.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.");
+        // 파일 검증
+        if (files == null || files.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
+        }
+
+        // 각 파일 검증
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "빈 파일이 포함되어 있습니다.");
             }
-            ImageResponseDto response = imageService.uploadImage(singleFile, request);
-            return ResponseEntity.ok(response);
+            validateFile(file);
         }
 
         // 다중 파일 업로드 처리
-        if (multipleFiles != null && !multipleFiles.isEmpty()) {
-            List<ImageResponseDto> responses = imageService.uploadMultipleImages(multipleFiles, request);
-            return ResponseEntity.ok(responses);
-        }
-
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
+        List<ImageResponseDto> responses = imageService.uploadMultipleImages(files, request);
+        return ResponseEntity.ok(responses);
     }
 }
