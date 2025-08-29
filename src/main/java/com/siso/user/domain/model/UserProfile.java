@@ -22,14 +22,14 @@ public class UserProfile {
     private User user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "drinking_capacity")
+    @Column(name = "drinking_capacity", nullable = true)
     private DrinkingCapacity drinkingCapacity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "religion")
+    @Column(name = "religion", nullable = true)
     private Religion religion;
 
-    @Column(name = "is_smoke")
+    @Column(name = "is_smoke", nullable = true)
     private boolean smoke;
 
     @Column(name = "age", nullable = false)
@@ -41,39 +41,35 @@ public class UserProfile {
     @Column(name = "introduce", length = 255)
     private String introduce;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "contact")
-    private PreferenceContact preferenceContact;
+    @Column(name = "location", nullable = true)
+    private String location;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "location")
-    private Location location;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "sex")
+    @Column(name = "sex", nullable = true)
     private Sex sex;
   
     @Enumerated(EnumType.STRING)
-    @Column(name = "preference_sex")
+    @Column(name = "preference_sex", nullable = true)
     private PreferenceSex preferenceSex;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mbti")
+    @Column(name = "mbti", nullable = true)
     private Mbti mbti;
 
     //이런 인연을 만나고 싶어요 파트
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "profile_meetings", joinColumns = @JoinColumn(name = "profile_id"))
-    @Column(name = "meeting")
+    @Column(name = "meeting", nullable = true)
     private List<Meeting> meetings;
 
     @OneToOne
-    @JoinColumn(name = "profile_image_id")
+    @JoinColumn(name = "profile_image_id", nullable = true)
     private Image profileImage;
 
     @Builder
-    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce, PreferenceContact preferenceContact, Location location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
+    public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce,
+                       String location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
         this.user = user;
         // 양방향 연관 관계 설정
         user.linkProfile(this);
@@ -83,7 +79,6 @@ public class UserProfile {
         this.age = age;
         this.nickname = nickname;
         this.introduce = introduce;
-        this.preferenceContact = preferenceContact;
         this.location = location;
         this.sex = sex;
         this.profileImage = profileImage;
@@ -98,7 +93,6 @@ public class UserProfile {
         this.smoke = dto.isSmoke();
         this.nickname = dto.getNickname();
         this.introduce = dto.getIntroduce();
-        this.preferenceContact = dto.getPreferenceContact();
         this.location = dto.getLocation();
         this.mbti = dto.getMbti();
         this.preferenceSex = dto.getPreferenceSex();

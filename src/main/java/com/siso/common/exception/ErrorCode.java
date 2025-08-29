@@ -66,6 +66,7 @@ public enum ErrorCode {
     IMAGE_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지 파일을 찾을 수 없습니다."),
     IMAGE_INVALID_PATH(HttpStatus.BAD_REQUEST, "잘못된 파일 경로입니다."),
     IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 이미지에 접근할 권한이 없습니다."),
+    INVALID_IMAGE_FILE(HttpStatus.FORBIDDEN, "유효하지 않는 파일 입니다."),
     
     // 음성 샘플
     VOICE_SAMPLE_NOT_FOUND(HttpStatus.NOT_FOUND, "음성 샘플을 찾을 수 없습니다."),

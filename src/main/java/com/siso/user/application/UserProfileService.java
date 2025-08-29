@@ -67,7 +67,6 @@ public class UserProfileService {
                 .age(dto.getAge())
                 .nickname(dto.getNickname())
                 .introduce(dto.getIntroduce())
-                .preferenceContact(dto.getPreferenceContact())
                 .location(dto.getLocation())
                 .sex(dto.getSex())
                 .profileImage(profileImage)
@@ -137,6 +136,14 @@ public class UserProfileService {
         return image;
     }
 
+    // 사용자의 모든 이미지 조회
+    public List<ImageResponseDto> getUserImages(Long userId) {
+        List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        return images.stream()
+                .map(ImageResponseDto::fromEntity)
+                .toList();
+    }
+
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile) {
         ImageResponseDto profileImageDto = null;
@@ -152,7 +159,6 @@ public class UserProfileService {
                 .religion(profile.getReligion())
                 .location(profile.getLocation())
                 .sex(profile.getSex())
-                .preferenceContact(profile.getPreferenceContact())
                 .preferenceSex(profile.getPreferenceSex())
                 .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImage(profileImageDto)

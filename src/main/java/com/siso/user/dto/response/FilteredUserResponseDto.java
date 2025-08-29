@@ -19,19 +19,17 @@ public class FilteredUserResponseDto {
     private String introduce;
     private int age;
     private Sex sex;
-    private Location location;
+    private String location;
     private Religion religion;
     private boolean smoke;
     private DrinkingCapacity drinkingCapacity;
-    private PreferenceContact preferenceContact;
     private List<UserInterestResponseDto> interests;
     private List<ImageResponseDto> profileImages;
     private int commonInterestsCount; // 공통 관심사 개수
 
     public FilteredUserResponseDto(Long userId, Long profileId, String nickname, String introduce,
-                                   int age, Sex sex, Location location, Religion religion,
+                                   int age, Sex sex, String location, Religion religion,
                                    boolean smoke, DrinkingCapacity drinkingCapacity,
-                                   PreferenceContact preferenceContact,
                                    List<UserInterestResponseDto> interests,
                                    List<ImageResponseDto> profileImages,
                                    int commonInterestsCount) {
@@ -45,7 +43,6 @@ public class FilteredUserResponseDto {
         this.religion = religion;
         this.smoke = smoke;
         this.drinkingCapacity = drinkingCapacity;
-        this.preferenceContact = preferenceContact;
         this.interests = interests;
         this.profileImages = profileImages;
         this.commonInterestsCount = commonInterestsCount;
