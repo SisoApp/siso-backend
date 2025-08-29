@@ -87,13 +87,14 @@ public class UserFilterService {
     }
 
     /**
-     * 매칭용 프로필 조회
+     * 매칭용 프로필 조회 (무한 스크롤 지원)
      * 
      * @param user 현재 사용자
+     * @param count 조회할 프로필 개수
      * @return 매칭용 프로필 리스트
      */
     @Transactional(readOnly = true)
-    public List<MatchingProfileResponseDto> getMatchingProfiles(User user) {
+    public List<MatchingProfileResponseDto> getMatchingProfiles(User user, int count) {
         // 사용자와 사용자 프로필 조회
         Long userId = user.getId();
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
@@ -111,7 +112,9 @@ public class UserFilterService {
                 userProfile.getAge()
         );
 
+        // count만큼만 반환
         return filteredProfiles.stream()
+                .limit(count)
                 .map(profile -> {
                     // 각 프로필의 관심사 조회
                     List<UserInterest> interests = userInterestRepository.findByUserId(profile.getUser().getId());
