@@ -60,7 +60,7 @@ public class UserProfile {
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "profile_meetings", joinColumns = @JoinColumn(name = "profile_id"))
-    @Column(name = "meeting", nullable = true)
+    @Column(name = "meeting")
     private List<Meeting> meetings;
 
     @OneToOne
