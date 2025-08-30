@@ -29,11 +29,20 @@ public class ChatMessage extends BaseTime {
     @Column(name = "deleted", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean deleted;
 
-    @Builder
-    public ChatMessage(User sender, ChatRoom chatRoom, String content) {
-        this.sender = sender;
+    // 양방향 연관 관계 설정
+    public void linkChatRoom(ChatRoom chatRoom) {
         this.chatRoom = chatRoom;
+        chatRoom.getChatMessages().add(this);
+    }
+
+    public void linkSender(User sender) {
+        this.sender = sender;
+    }
+
+    @Builder public ChatMessage(String content, ChatRoom chatRoom, User sender) {
         this.content = content;
+        linkChatRoom(chatRoom);
+        linkSender(sender);
     }
 
     public void updateContent(String content) {

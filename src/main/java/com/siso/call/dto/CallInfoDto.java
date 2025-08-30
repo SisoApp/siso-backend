@@ -12,12 +12,14 @@ public class CallInfoDto {
     private String token;
     private Long callerId;
     private Long receiverId;
+    private boolean firstCall;
 
-    public CallInfoDto(Long id, String channelName, String token, Long callerId, Long receiverId) {
+    public CallInfoDto(Long id, String channelName, String token, Long callerId, Long receiverId, boolean firstCall) {
         this.id = id;
         this.channelName = channelName;
         this.token = token;
         this.callerId = callerId;
         this.receiverId = receiverId;
+        this.firstCall = firstCall;
     }
 }
