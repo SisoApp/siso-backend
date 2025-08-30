@@ -23,7 +23,9 @@ public class MediaTypeProperties {
             ".webp", MediaType.parseMediaType("image/webp"),
             ".bmp", MediaType.parseMediaType("image/bmp"),
             ".svg", MediaType.parseMediaType("image/svg+xml"),
-            ".ico", MediaType.parseMediaType("image/x-icon")
+            ".ico", MediaType.parseMediaType("image/x-icon"),
+            ".heic", MediaType.parseMediaType("image/heic"),
+            ".heif", MediaType.parseMediaType("image/heif")
     );
     
     /**

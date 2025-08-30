@@ -1,10 +1,13 @@
 package com.siso.user.presentation;
 
+import com.siso.common.exception.ErrorCode;
+import com.siso.common.exception.ExpectedException;
 import com.siso.common.web.CurrentUser;
 import com.siso.user.application.UserProfileService;
 import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
+import com.siso.image.dto.response.ImageResponseDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -42,6 +45,10 @@ public class UserProfileController {
     @PostMapping
     public ResponseEntity<UserProfileResponseDto> createProfile(@CurrentUser User user,
                                                                 @Valid @RequestBody UserProfileRequestDto dto) {
+        if (user == null) { // 인증 실패는 401로
+            throw new ExpectedException(ErrorCode.UNAUTHROIZED);
+        }
+
         System.out.println("========================= user: " + user);
         return ResponseEntity.status(HttpStatus.CREATED).body(userProfileService.create(user, dto));
     }
@@ -60,12 +67,10 @@ public class UserProfileController {
         return ResponseEntity.noContent().build();
     }
 
-    // 프로필 이미지 설정 (PATCH)
-    @PatchMapping("/profile-image/{imageId}")
-    public ResponseEntity<UserProfileResponseDto> setProfileImage(@CurrentUser User user,
-                                                                  @PathVariable(name = "imageId") Long imageId) {
-        UserProfileResponseDto response = userProfileService.setProfileImage(user, imageId);
-        return ResponseEntity.ok(response);
+    // 사용자의 모든 이미지 조회 (프로필 이미지 설정용)
+    @GetMapping("/images")
+    public ResponseEntity<List<ImageResponseDto>> getProfileImages(@CurrentUser User user) {
+        List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
+        return ResponseEntity.ok(images);
     }
-
 }

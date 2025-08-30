@@ -6,7 +6,6 @@ import com.siso.call.domain.repository.CallRepository;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.response.CallResponseDto;
-import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
 import com.siso.chat.domain.model.ChatRoomMember;
@@ -157,12 +156,22 @@ public class AgoraCallService {
             
             // 발신자와 수신자가 다른 경우에만 알림 전송 (본인 제외)
             if (!caller.getId().equals(receiverId)) {
+                // 발신자 프로필 이미지 가져오기
+                String callerImage = caller.getUserProfile() != null && caller.getUserProfile().getProfileImage() != null
+                    ? caller.getUserProfile().getProfileImage().getPath()
+                    : "";
+                
                 notificationService.sendCallNotification(
                     receiverId,
                     caller.getId(),
-                    callerNickname
+                    callerNickname,
+                    call.getId(),
+                    call.getAgoraChannelName(),
+                    call.getAgoraToken(),
+                    callerImage
                 );
-                log.info("Call notification sent to user: {} from caller: {}", receiverId, caller.getId());
+                log.info("Call notification with details sent to user: {} from caller: {}, callId: {}", 
+                        receiverId, caller.getId(), call.getId());
             } else {
                 log.warn("Attempted to send call notification to self: {}", caller.getId());
             }

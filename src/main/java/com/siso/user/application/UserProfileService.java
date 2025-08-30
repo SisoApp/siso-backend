@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -53,28 +54,28 @@ public class UserProfileService {
     }
 
     // 생성
+    @Transactional
     public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
-        Image profileImage = null;
-        if (dto.getProfileImageId() != null) {
-            profileImage = validateAndGetProfileImage(dto.getProfileImageId(), user.getId());
-        }
+//        Image profileImage = null;
+//        if (dto.getProfileImageId() != null) {
+//            profileImage = validateAndGetProfileImage(dto.getProfileImageId(), user.getId());
+//        }
 
         UserProfile profile = UserProfile.builder()
                 .user(user)
                 .drinkingCapacity(dto.getDrinkingCapacity())
                 .religion(dto.getReligion())
                 .smoke(dto.isSmoke())
-                .age(dto.getAge())
                 .nickname(dto.getNickname())
+                .age(dto.getAge())
                 .introduce(dto.getIntroduce())
-                .preferenceContact(dto.getPreferenceContact())
                 .location(dto.getLocation())
                 .sex(dto.getSex())
-                .profileImage(profileImage)
                 .mbti(dto.getMbti())
                 .preferenceSex(dto.getPreferenceSex())
+                .meetings(Objects.requireNonNullElse(dto.getMeetings(), List.of()))
+//                .profileImage(profileImage)
                 .build();
-
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
     }
@@ -88,15 +89,16 @@ public class UserProfileService {
                         .age(dto.getAge())
                         .sex(dto.getSex())
                         .preferenceSex(dto.getPreferenceSex())
+                        .meetings(dto.getMeetings())
                         .build()
                 );
         profile.updateProfile(dto); // nickname, age, sex, preferenceSex 등 세팅
 
         // 프로필 이미지 설정
-        if (dto.getProfileImageId() != null) {
-            Image profileImage = validateAndGetProfileImage(dto.getProfileImageId(), currentUser.getId());
-            profile.setProfileImage(profileImage);
-        }
+//        if (dto.getProfileImageId() != null) {
+//            Image profileImage = validateAndGetProfileImage(dto.getProfileImageId(), currentUser.getId());
+//            profile.setProfileImage(profileImage);
+//        }
 
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
@@ -135,6 +137,14 @@ public class UserProfileService {
         return image;
     }
 
+    // 사용자의 모든 이미지 조회
+    public List<ImageResponseDto> getUserImages(Long userId) {
+        List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
+        return images.stream()
+                .map(ImageResponseDto::fromEntity)
+                .toList();
+    }
+
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile) {
         ImageResponseDto profileImageDto = null;
@@ -150,11 +160,11 @@ public class UserProfileService {
                 .religion(profile.getReligion())
                 .location(profile.getLocation())
                 .sex(profile.getSex())
-                .preferenceContact(profile.getPreferenceContact())
                 .preferenceSex(profile.getPreferenceSex())
                 .drinkingCapacity(profile.getDrinkingCapacity())
                 .profileImage(profileImageDto)
                 .mbti(profile.getMbti())
+                .meetings(profile.getMeetings())
                 .build();
     }
 }

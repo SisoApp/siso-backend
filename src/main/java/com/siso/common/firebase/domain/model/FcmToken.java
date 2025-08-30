@@ -45,13 +45,7 @@ public class FcmToken extends BaseTime {
     @Column(name = "token", nullable = false, length = 500)
     private String token;
 
-    /**
-     * 디바이스 타입 (ANDROID 또는 IOS)
-     * 푸시 알림 전송 시 플랫폼별 처리를 위해 사용됩니다.
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "device_type", length = 20)
-    private DeviceType deviceType;
+
 
     /**
      * 토큰 활성화 상태

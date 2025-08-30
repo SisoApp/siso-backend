@@ -151,12 +151,58 @@ public class NotificationService {
 
     /**
      * 통화 알림을 전송합니다.
+     * 클라이언트가 바로 통화에 참여할 수 있도록 필요한 모든 정보를 포함합니다.
      */
-    public Notification sendCallNotification(Long receiverId, Long senderId, String senderNickname) {
-        String title = "통화 요청";
-        String message = senderNickname + "님이 통화를 요청했습니다.";
-        String url = "/call/" + senderId; // 통화 페이지 URL
-
-        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url, NotificationType.CALL);
+    @Transactional
+    public Notification sendCallNotification(Long receiverId, Long senderId, String senderNickname,
+                                             Long callId, String channelName, String agoraToken, String callerImage) {
+        try {
+            // 1. 데이터베이스에 알림 저장
+            String title = "통화 요청";
+            String message = senderNickname + "님이 통화를 요청했습니다.";
+            String url = "/call/" + callId;
+            
+            Notification notification = Notification.builder()
+                    .receiverId(receiverId)
+                    .senderId(senderId)
+                    .senderNickname(senderNickname)
+                    .title(title)
+                    .message(message)
+                    .url(url)
+                    .type(NotificationType.CALL)
+                    .isRead(false)
+                    .build();
+            
+            notification = notificationRepository.save(notification);
+            log.info("Call notification saved to database with ID: {}", notification.getId());
+            
+            // 2. FCM 토큰 조회
+            List<String> tokens = fcmTokenService.getActiveTokensByUserId(receiverId);
+            
+            if (tokens.isEmpty()) {
+                log.warn("No active FCM tokens found for user: {}", receiverId);
+                return notification;
+            }
+            
+            // 3. 통화 정보를 포함한 FCM 푸시 알림 전송
+            firebaseService.sendCallNotificationWithDetails(
+                tokens,
+                title,
+                message,
+                String.valueOf(callId),
+                channelName,
+                agoraToken,
+                String.valueOf(senderId),
+                senderNickname,
+                callerImage
+            );
+            
+            log.info("Call notification with details sent successfully to user: {} with {} tokens", receiverId, tokens.size());
+            return notification;
+            
+        } catch (Exception e) {
+            log.error("Failed to send call notification with details to user: {}", receiverId, e);
+            throw e;
+        }
     }
 }

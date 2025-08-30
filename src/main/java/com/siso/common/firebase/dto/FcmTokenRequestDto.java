@@ -1,6 +1,6 @@
 package com.siso.common.firebase.dto;
 
-import com.siso.common.firebase.domain.model.DeviceType;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,10 +34,5 @@ public class FcmTokenRequestDto {
     @Schema(description = "FCM 토큰", example = "dQw4w9WgXcQ:APA91bGHXQBhizGnubvizQoUHR...")
     private String token;
 
-    /**
-     * 디바이스 타입
-     * 토큰이 생성된 플랫폼 (ANDROID 또는 IOS)
-     */
-    @Schema(description = "디바이스 타입", example = "ANDROID")
-    private DeviceType deviceType;
+
 }
