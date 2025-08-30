@@ -21,8 +21,6 @@ public class AmazonS3Config {
                 .credentialsProvider(DefaultCredentialsProvider.create()) // 여기서 키가 필요하다고 함
                 .httpClient(UrlConnectionHttpClient.builder().build())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
-                        .apiCallTimeout(Duration.ofMinutes(3))         // 전체 API 타임아웃
-                        .apiCallAttemptTimeout(Duration.ofSeconds(60)) // 한 번 시도할 때 타임아웃
                         .build()
                 )
                 .build();
