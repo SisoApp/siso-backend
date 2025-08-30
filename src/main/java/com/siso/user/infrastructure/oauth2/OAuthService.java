@@ -44,6 +44,6 @@ public class OAuthService {
         userRepository.save(user);
 
         boolean hasProfile = userProfileService.existsByUserId(user.getId());
-        return new TokenResponseDto(jwtRefreshToken, user.getRegistrationStatus(), hasProfile);
+        return new TokenResponseDto(jwtAccessToken, jwtRefreshToken, user.getRegistrationStatus(), hasProfile);
     }
 }

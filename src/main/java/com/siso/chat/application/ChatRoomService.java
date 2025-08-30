@@ -25,44 +25,15 @@ public class ChatRoomService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final UserRepository userRepository;
 
-//    @Transactional
-//    public ChatRoom createChatRoom(List<Long> userIds) {
-//        ChatRoom chatRoom = ChatRoom.builder()
-//                .call(null)
-//                .chatRoomStatus(ChatRoomStatus.LIMITED)
-//                .build();
-//
-//        userIds.forEach(userId -> {
-//            User user = userRepository.findById(userId)
-//                    .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-//
-//            // User 도메인 메서드 활용
-//            user.addChatRoomMember(chatRoom, null);
-//            user.addChatRoomLimit(chatRoom, 0);
-//
-//            userRepository.save(user); // cascade 때문에 member, limit도 함께 저장됨
-//        });
-//
-//        return chatRoomRepository.save(chatRoom);
-//    }
+    public List<ChatRoomResponseDto> getChatRoomsForUser(User user) {
+        Long userId = user.getId();
 
-    public List<ChatRoomResponseDto> getChatRoomsForUser(Long userId) {
-        // 사용자가 속한 모든 채팅방 조회
-        return chatRoomRepository.findByChatRoomMembersUserId(userId)
+        return chatRoomRepository.findRoomsByUserId(userId)
                 .stream()
                 .map(chatRoom -> {
-                    // 다른 멤버(1:1 기준) 조회
-                    ChatRoomMember otherMember = chatRoom.getChatRoomMembers().stream()
-                            .filter(m -> !m.getUser().getId().equals(userId))
-                            .findFirst()
-                            .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
+                    ChatRoomMember otherMember = getOtherMember(chatRoom, userId);
+                    ChatMessage lastMessage = getLastMessage(chatRoom);
 
-                    // 마지막 메시지 조회
-                    ChatMessage lastMessage = chatRoom.getChatMessages().stream()
-                            .max(Comparator.comparing(ChatMessage::getCreatedAt))
-                            .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_EMPTY));
-
-                    // 읽지 않은 메시지 개수 계산 (마지막 메시지 기준)
                     int unreadCount = chatRoom.getChatRoomMembers().stream()
                             .filter(m -> m.getUser().getId().equals(userId))
                             .mapToInt(m -> lastMessage != null
@@ -70,7 +41,6 @@ public class ChatRoomService {
                                     && lastMessage.getId() > m.getLastReadMessageId() ? 1 : 0)
                             .sum();
 
-                    // DTO 생성
                     return new ChatRoomResponseDto(
                             chatRoom.getId(),
                             otherMember != null ? otherMember.getUser().getUserProfile().getNickname() : "",
@@ -84,33 +54,150 @@ public class ChatRoomService {
                 .toList();
     }
 
-    @Transactional
-    public void acceptChatRoom(ChatRoomRequestDto requestDto) {
-        ChatRoom chatRoom = chatRoomRepository.findById(requestDto.getChatRoomId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
-
-        User receiver = userRepository.findById(requestDto.getReceiverId())
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
-
-        // receiver가 멤버인지 확인
-        boolean isMember = chatRoom.getChatRoomMembers().stream()
-                .anyMatch(member -> member.getUser().getId().equals(receiver.getId()));
-
-        if (!isMember) {
-            throw new ExpectedException(ErrorCode.ACCESS_DENIED);
-        }
+    public void acceptChatRoom(ChatRoomRequestDto requestDto, User user) {
+        ChatRoom chatRoom = getChatRoom(requestDto.getChatRoomId());
+        checkUserIsMember(chatRoom, user.getId());
 
         chatRoom.updateChatRoomStatus(ChatRoomStatus.MATCHED);
         chatRoomRepository.save(chatRoom);
     }
 
-    public void leaveChatRoom(ChatRoomRequestDto requestDto, Long userId) {
-        chatRoomMemberRepository.findByChatRoomIdAndUserId(requestDto.getChatRoomId(), userId)
-                .ifPresent(chatRoomMemberRepository::delete);
+    public void leaveChatRoom(ChatRoomRequestDto requestDto, User user) {
+        ChatRoom chatRoom = getChatRoom(requestDto.getChatRoomId());
+        ChatRoomMember member = getChatRoomMember(chatRoom.getId(), user.getId());
+
+        member.leave();
+
+        boolean allLeft = chatRoom.getChatRoomMembers().stream()
+                .allMatch(m -> m.getChatRoomMemberStatus() == ChatRoomMemberStatus.LEFT);
+
+        if (allLeft) {
+            chatRoomRepository.delete(chatRoom);
+        }
     }
 
     public void unlockChatRoom(ChatRoom chatRoom) {
         chatRoomRepository.save(chatRoom);
     }
+
+    // =================== Helper Methods ===================
+
+    private ChatRoom getChatRoom(Long chatRoomId) {
+        return chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
+    }
+
+    private ChatRoomMember getChatRoomMember(Long chatRoomId, Long userId) {
+        return chatRoomMemberRepository.findMemberByChatRoomIdAndUserId(chatRoomId, userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.NOT_CHATROOM_MEMBER));
+    }
+
+    private ChatRoomMember getOtherMember(ChatRoom chatRoom, Long userId) {
+        return chatRoom.getChatRoomMembers().stream()
+                .filter(m -> !m.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private ChatMessage getLastMessage(ChatRoom chatRoom) {
+        return chatRoom.getChatMessages().stream()
+                .max(Comparator.comparing(ChatMessage::getCreatedAt))
+                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_EMPTY));
+    }
+
+    private void checkUserIsMember(ChatRoom chatRoom, Long userId) {
+        boolean isMember = chatRoom.getChatRoomMembers().stream()
+                .anyMatch(member -> member.getUser().getId().equals(userId));
+        if (!isMember) {
+            throw new ExpectedException(ErrorCode.ACCESS_DENIED);
+        }
+    }
 }
+
+
+//public class ChatRoomService {
+//    private final ChatRoomRepository chatRoomRepository;
+//    private final ChatRoomMemberRepository chatRoomMemberRepository;
+//    private final UserRepository userRepository;
+//
+//    public List<ChatRoomResponseDto> getChatRoomsForUser(Long userId) {
+//        // 사용자가 속한 모든 채팅방 조회
+//        return chatRoomRepository.findRoomsByUserId(userId)
+//                .stream()
+//                .map(chatRoom -> {
+//                    // 다른 멤버(1:1 기준) 조회
+//                    ChatRoomMember otherMember = chatRoom.getChatRoomMembers().stream()
+//                            .filter(m -> !m.getUser().getId().equals(userId))
+//                            .findFirst()
+//                            .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
+//
+//                    // 마지막 메시지 조회
+//                    ChatMessage lastMessage = chatRoom.getChatMessages().stream()
+//                            .max(Comparator.comparing(ChatMessage::getCreatedAt))
+//                            .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_EMPTY));
+//
+//                    // 읽지 않은 메시지 개수 계산 (마지막 메시지 기준)
+//                    int unreadCount = chatRoom.getChatRoomMembers().stream()
+//                            .filter(m -> m.getUser().getId().equals(userId))
+//                            .mapToInt(m -> lastMessage != null
+//                                    && m.getLastReadMessageId() != null
+//                                    && lastMessage.getId() > m.getLastReadMessageId() ? 1 : 0)
+//                            .sum();
+//
+//                    // DTO 생성
+//                    return new ChatRoomResponseDto(
+//                            chatRoom.getId(),
+//                            otherMember != null ? otherMember.getUser().getUserProfile().getNickname() : "",
+//                            otherMember != null ? otherMember.getUser().getUserProfile().getProfileImage() : null,
+//                            chatRoom.getChatRoomMembers().size(),
+//                            lastMessage != null ? lastMessage.getContent() : "",
+//                            lastMessage != null ? lastMessage.getCreatedAt() : null,
+//                            unreadCount
+//                    );
+//                })
+//                .toList();
+//    }
+//
+//    public void acceptChatRoom(ChatRoomRequestDto requestDto) {
+//        ChatRoom chatRoom = chatRoomRepository.findById(requestDto.getChatRoomId())
+//                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
+//
+//        User receiver = userRepository.findById(requestDto.getReceiverId())
+//                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+//
+//        // receiver가 멤버인지 확인
+//        boolean isMember = chatRoom.getChatRoomMembers().stream()
+//                .anyMatch(member -> member.getUser().getId().equals(receiver.getId()));
+//
+//        if (!isMember) {
+//            throw new ExpectedException(ErrorCode.ACCESS_DENIED);
+//        }
+//
+//        chatRoom.updateChatRoomStatus(ChatRoomStatus.MATCHED);
+//        chatRoomRepository.save(chatRoom);
+//    }
+//
+//    public void leaveChatRoom(ChatRoomRequestDto requestDto) {
+//        ChatRoom chatRoom = chatRoomRepository.findById(requestDto.getChatRoomId())
+//                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
+//
+//        ChatRoomMember member = chatRoomMemberRepository.findMemberByChatRoomIdAndUserId(requestDto.getChatRoomId(), requestDto.getReceiverId())
+//                .orElseThrow(() -> new ExpectedException(ErrorCode.NOT_CHATROOM_MEMBER));
+//
+//        // 상태 변경
+//        member.leave();
+//
+//        // 두 명 모두 나갔는지 체크
+//        boolean allLeft = chatRoom.getChatRoomMembers().stream()
+//                .allMatch(m -> m.getChatRoomMemberStatus() == ChatRoomMemberStatus.LEFT);
+//
+//        if (allLeft) {
+//            chatRoomRepository.delete(chatRoom); // cascade 옵션 있으면 member, message도 같이 삭제됨
+//        }
+//    }
+//
+//    public void unlockChatRoom(ChatRoom chatRoom) {
+//        chatRoomRepository.save(chatRoom);
+//    }
+//}
 

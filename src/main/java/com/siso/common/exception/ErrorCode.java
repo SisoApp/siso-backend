@@ -45,6 +45,7 @@ public enum ErrorCode {
 
     // 채팅방 멤버
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 멤버를 찾을 수 없습니다."),
+    NOT_CHATROOM_MEMBER(HttpStatus.FORBIDDEN, "채팅방에 속한 멤버가 아닙니다."),
 
     // 통화 리뷰
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 리뷰가 없습니다."),

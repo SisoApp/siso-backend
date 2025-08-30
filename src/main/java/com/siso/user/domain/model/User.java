@@ -81,11 +81,8 @@ public class User extends BaseTime {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatRoomMember> chatRoomMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChatRoomLimit> chatRoomLimits = new ArrayList<>();
-
-//    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<ChatMessage> chatMessages = new ArrayList<>();
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMessage> chatMessages = new ArrayList<>();
 
     // 다대다 관계
     @OneToMany(mappedBy = "caller", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -127,24 +124,15 @@ public class User extends BaseTime {
         this.images.add(image);
     }
 
-    public ChatRoomLimit addChatRoomLimit(ChatRoom chatRoom, int messageCount) {
-        ChatRoomLimit chatRoomLimit = ChatRoomLimit.builder()
-                .chatRoom(chatRoom)
-                .user(this)
-                .messageCount(messageCount)
-                .build();
-        this.chatRoomLimits.add(chatRoomLimit);
-        return chatRoomLimit;
+    public void addChatRoomMember(ChatRoomMember member) {
+        chatRoomMembers.add(member);
+        member.linkUser(this);
     }
 
-//    public void addChatMessage(ChatRoom chatRoom,String content) {
-//        ChatMessage chatMessage = ChatMessage.builder()
-//                .sender(this)
-//                .chatRoom(chatRoom)
-//                .content(content)
-//                .build();
-//        this.chatMessages.add(chatMessage);
-//    }
+    public void addChatMessage(ChatMessage chatMessage) {
+        chatMessages.add(chatMessage);
+        chatMessage.linkSender(this);
+    }
 
     public void addCaller(Call call) {
         this.caller.add(call);

@@ -104,46 +104,44 @@ public class AgoraCallService {
      * 통화 종료 → 이어가기 선택 시 채팅방 생성
      */
     public CallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
+        // 1. 통화 정보 조회
         Call call = getCall(callInfoDto.getId());
         User caller = findById(callInfoDto.getCallerId());
         User receiver = findById(callInfoDto.getReceiverId());
 
-        // 최초 통화인지 확인
-        boolean isFirstCallLimited = true;
+        // 2. ChatRoom 생성 또는 조회
+        ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
+                .orElseGet(() -> chatRoomRepository.save(new ChatRoom(call, ChatRoomStatus.LIMITED)));
+
+        // 3. ChatRoomMember 생성/조회
+        List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoomId(chatRoom.getId());
+
+        ChatRoomMember callerMember = members.stream()
+                .filter(m -> m.getUser().getId().equals(caller.getId()))
+                .findFirst()
+                .orElseGet(() -> chatRoomMemberRepository.save(
+                        ChatRoomMember.builder().user(caller).build()
+                ));
+
+        ChatRoomMember receiverMember = members.stream()
+                .filter(m -> m.getUser().getId().equals(receiver.getId()))
+                .findFirst()
+                .orElseGet(() -> chatRoomMemberRepository.save(
+                        ChatRoomMember.builder().user(receiver).build()
+                ));
+
+        // 4. 이어가기 요청이면 메시지 제한 초기화
         if (continueRelationship) {
-            // 이어가기 요청이면 ChatRoom 생성 또는 조회
-            ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
-                    .orElseGet(() -> {
-                        // ChatRoom 없으면 새로 생성
-                        ChatRoom newChatRoom = new ChatRoom(call, ChatRoomStatus.LIMITED);
-                        newChatRoom.linkCall(call); // Call과 연결
-                        return chatRoomRepository.save(newChatRoom);
-                    });
-            List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoomId(chatRoom.getId());
-            ChatRoomMember chatRoomMember = members.isEmpty()
-                    ? chatRoomMemberRepository.save(new ChatRoomMember(chatRoom, caller, null))
-                    : members.get(0);
-            chatRoomMemberRepository.save(chatRoomMember);
-
-//            chatRoom.addChatRoomMember(caller, null);
-//            caller.addChatRoomLimit(chatRoom, 0);
-//
-//            chatRoom.addChatRoomMember(receiver, null);
-//            receiver.addChatRoomLimit(chatRoom, 0);
-//
-//            userRepository.save(caller);
-//            userRepository.save(receiver);
-
-            // 채팅 제한 해제
+            callerMember.resetMessageCount();
+            receiverMember.resetMessageCount();
             chatRoomService.unlockChatRoom(chatRoom);
-            call.updateCallStatus(CallStatus.ENDED); // 전화 무제한
-            isFirstCallLimited = false; // 이어가기 후 제한 해제
         }
 
-        // 종료 처리
-        call.endCall(isFirstCallLimited);
+        // 5. 통화 종료 상태 업데이트
+        call.updateCallStatus(CallStatus.ENDED);
         callRepository.save(call);
 
+        // 6. DTO 반환 (buildResponse 활용)
         return buildResponse(call, true);
     }
 

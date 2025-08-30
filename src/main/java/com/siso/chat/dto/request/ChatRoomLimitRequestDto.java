@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomLimitRequestDto {
     private Long chatRoomId;
-    private Long userId;
+//    private Long userId;
 }

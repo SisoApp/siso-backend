@@ -33,9 +33,20 @@ public class ChatRoom extends BaseTime {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatMessage> chatMessages = new ArrayList<>();
 
+    // 양방향 연관 관계 설정
     public void linkCall(Call call) {
         this.call = call;
         call.linkChatRoom(this);
+    }
+
+    public void addChatRoomMember(ChatRoomMember chatRoomMember) {
+        chatRoomMembers.add(chatRoomMember);
+        chatRoomMember.linkChatRoom(this);
+    }
+
+    public void addChatMessage(ChatMessage chatMessage) {
+        chatMessages.add(chatMessage);
+        chatMessage.linkChatRoom(this);
     }
 
     @Builder

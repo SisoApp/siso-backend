@@ -15,27 +15,21 @@ public class ChatRoomLimit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id")
-    private ChatRoom chatRoom;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_room_member")
+    private ChatRoomMember chatRoomMember;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "sent_count")
-    private int sentCount;    // 보낸 메시지 수
+    private int sentCount = 0;    // 보낸 메시지 수
 
-    @Builder
-    public ChatRoomLimit(ChatRoom chatRoom, User user, int sentCount) {
-        this.chatRoom = chatRoom;
-        this.user = user;
-        this.sentCount = sentCount;
-    }
-
-    // 메시지 전송 횟수 초기화
-    public void resetMessageCount() {
-        this.messageCount = 0;
+    @Builder public ChatRoomLimit(ChatRoomMember chatRoomMember) {
+        this.chatRoomMember = chatRoomMember;
+        this.user = chatRoomMember.getUser();
+        chatRoomMember.chatRoomLimit = this;
     }
 
     // 메시지 전송 횟수 5
@@ -49,5 +43,10 @@ public class ChatRoomLimit {
             throw new ExpectedException(ErrorCode.MESSAGE_LIMIT_EXCEEDED);
         }
         sentCount++;
+    }
+
+    // 메시지 전송 횟수 초기화
+    public void resetSentCount() {
+        this.sentCount = 0;
     }
 }
