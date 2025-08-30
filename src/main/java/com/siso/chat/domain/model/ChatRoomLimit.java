@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "chat_messages")
+@Table(name = "chat_room_limits")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatRoomLimit {
@@ -16,7 +16,7 @@ public class ChatRoomLimit {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_member")
+    @JoinColumn(name = "chat_room_member_id")
     private ChatRoomMember chatRoomMember;
 
     @ManyToOne(fetch = FetchType.LAZY)

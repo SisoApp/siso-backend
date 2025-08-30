@@ -4,10 +4,10 @@ import com.siso.chat.application.ChatMessageService;
 import com.siso.chat.application.ChatRoomLimitService;
 import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.application.ChatRoomService;
-import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.chat.dto.request.*;
 import com.siso.chat.dto.response.ChatMessageResponseDto;
 import com.siso.chat.dto.response.ChatRoomLimitResponseDto;
+import com.siso.chat.dto.response.ChatRoomMemberResponseDto;
 import com.siso.chat.dto.response.ChatRoomResponseDto;
 import com.siso.common.response.SisoResponse;
 import com.siso.common.web.CurrentUser;
@@ -58,46 +58,49 @@ public class ChatController {
         return SisoResponse.success(messages);
     }
 
-
     // 채팅방 멤버 조회
     @GetMapping("/rooms/{chatRoomId}/members")
-    public SisoResponse<List<ChatRoomMember>> getMembers(@PathVariable Long chatRoomId) {
-        List<ChatRoomMember> members = chatRoomMemberService.getMembers(chatRoomId);
+    public SisoResponse<List<ChatRoomMemberResponseDto>> getMembers(@PathVariable Long chatRoomId) {
+        List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(chatRoomId);
         return SisoResponse.success(members);
     }
 
     // 사용자의 채팅방 조회
     @GetMapping("/rooms")
-    public List<ChatRoomResponseDto> getChatRooms(@CurrentUser User user) {
-        return chatRoomService.getChatRoomsForUser(user);
+    public SisoResponse<List<ChatRoomResponseDto>> getChatRooms(@CurrentUser User user) {
+        List<ChatRoomResponseDto> chatRooms = chatRoomService.getChatRoomsForUser(user);
+        return SisoResponse.success(chatRooms);
     }
 
     // 채팅 이어나가기
     @PostMapping("/accept")
-    public void acceptChatRoom(@CurrentUser User user,
-                               @RequestBody ChatRoomRequestDto requestDto) {
+    public SisoResponse<Void> acceptChatRoom(@CurrentUser User user,
+                                             @Valid @RequestBody ChatRoomRequestDto requestDto) {
         chatRoomService.acceptChatRoom(requestDto, user);
+        return SisoResponse.success(null);
     }
 
     // 채팅방 나가기
     @PostMapping("/leave")
-    public void leaveChatRoom(@CurrentUser User user,
-                              @RequestBody ChatRoomRequestDto requestDto) {
+    public SisoResponse<Void> leaveChatRoom(@CurrentUser User user,
+                                            @Valid @RequestBody ChatRoomRequestDto requestDto) {
         chatRoomService.leaveChatRoom(requestDto, user);
+        return SisoResponse.success(null);
     }
 
     // 마지막 읽은 메시지 업데이트
     @PostMapping("/read")
-    public void markAsRead(@CurrentUser User user,
-                           @RequestBody ChatReadRequestDto requestDto) {
+    public SisoResponse<Void> markAsRead(@CurrentUser User user,
+                                         @Valid @RequestBody ChatReadRequestDto requestDto) {
         chatRoomMemberService.markAsRead(requestDto, user);
+        return SisoResponse.success(null);
     }
 
     // 메시지 제한 조회
     @GetMapping("/rooms/limits")
     public SisoResponse<ChatRoomLimitResponseDto> getChatRoomLimit(@CurrentUser User user,
-                                                                   @Valid @RequestBody ChatRoomLimitRequestDto requestDto) {
-        ChatRoomLimitResponseDto response = chatRoomLimitService.getLimit(requestDto, user);
+                                                                   @RequestParam(name = "chatRoomId") Long chatRoomId) {
+        ChatRoomLimitResponseDto response = chatRoomLimitService.getLimit(chatRoomId, user);
         return SisoResponse.success(response);
     }
 }

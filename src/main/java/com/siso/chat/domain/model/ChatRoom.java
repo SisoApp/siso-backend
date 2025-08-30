@@ -30,7 +30,7 @@ public class ChatRoom extends BaseTime {
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatRoomMember> chatRoomMembers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<ChatMessage> chatMessages = new ArrayList<>();
 
     // 양방향 연관 관계 설정

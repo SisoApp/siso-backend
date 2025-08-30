@@ -43,10 +43,13 @@ public class ChatRoomMember extends BaseTime {
         user.getChatRoomMembers().add(this);
     }
 
-    @Builder public ChatRoomMember(User user) {
-        linkUser(user);
-        linkChatRoom(chatRoom);
-        this.chatRoomLimit = new ChatRoomLimit(this); // messageLimit 5
+    @Builder
+    public static ChatRoomMember of(User user, ChatRoom chatRoom) {
+        ChatRoomMember member = new ChatRoomMember();
+        member.linkUser(user);
+        member.linkChatRoom(chatRoom);
+        member.chatRoomLimit = new ChatRoomLimit(member); // messageLimit 5
+        return member;
     }
 
     public boolean canSendMessage() {

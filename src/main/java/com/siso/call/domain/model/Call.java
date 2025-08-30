@@ -112,18 +112,4 @@ public class Call {
         }
         this.callStatus = CallStatus.ENDED;
     }
-
-    // 종료 (첫 통화 제한 여부 적용)
-    public void endCall(boolean isFirstCallLimited) {
-        this.endTime = LocalDateTime.now();
-        if (this.startTime != null) {
-            this.duration = Duration.between(this.startTime, this.endTime).getSeconds();
-
-            // 최초 통화만 8분 제한 적용
-            if (isFirstCallLimited && this.duration > 480) {
-                this.duration = 480L;
-            }
-        }
-        this.callStatus = CallStatus.ENDED;
-    }
 }
