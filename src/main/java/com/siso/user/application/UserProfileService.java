@@ -2,13 +2,10 @@ package com.siso.user.application;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.image.application.ImageService;
 import com.siso.image.dto.response.ImageResponseDto;
-import com.siso.user.domain.model.Sex;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
 import com.siso.user.domain.repository.UserProfileRepository;
-import com.siso.user.domain.repository.UserRepository;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
 import com.siso.image.domain.model.Image;
@@ -56,10 +53,6 @@ public class UserProfileService {
     // 생성
     @Transactional
     public UserProfileResponseDto create(User user, UserProfileRequestDto dto) {
-//        Image profileImage = null;
-//        if (dto.getProfileImageId() != null) {
-//            profileImage = validateAndGetProfileImage(dto.getProfileImageId(), user.getId());
-//        }
 
         UserProfile profile = UserProfile.builder()
                 .user(user)
@@ -74,7 +67,6 @@ public class UserProfileService {
                 .mbti(dto.getMbti())
                 .preferenceSex(dto.getPreferenceSex())
                 .meetings(Objects.requireNonNullElse(dto.getMeetings(), List.of()))
-//                .profileImage(profileImage)
                 .build();
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
@@ -94,12 +86,6 @@ public class UserProfileService {
                 );
         profile.updateProfile(dto); // nickname, age, sex, preferenceSex 등 세팅
 
-        // 프로필 이미지 설정
-//        if (dto.getProfileImageId() != null) {
-//            Image profileImage = validateAndGetProfileImage(dto.getProfileImageId(), currentUser.getId());
-//            profile.setProfileImage(profileImage);
-//        }
-
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
     }
@@ -116,9 +102,6 @@ public class UserProfileService {
     public UserProfileResponseDto setProfileImage(User currentUser, Long imageId) {
         UserProfile profile = userProfileRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
-
-        Image profileImage = validateAndGetProfileImage(imageId, currentUser.getId());
-        profile.setProfileImage(profileImage);
 
         UserProfile savedProfile = userProfileRepository.save(profile);
         return toDto(savedProfile);
@@ -147,10 +130,6 @@ public class UserProfileService {
 
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile) {
-        ImageResponseDto profileImageDto = null;
-        if (profile.getProfileImage() != null) {
-            profileImageDto = ImageResponseDto.fromEntity(profile.getProfileImage());
-        }
 
         return UserProfileResponseDto.builder()
                 .nickname(profile.getNickname())
@@ -162,7 +141,6 @@ public class UserProfileService {
                 .sex(profile.getSex())
                 .preferenceSex(profile.getPreferenceSex())
                 .drinkingCapacity(profile.getDrinkingCapacity())
-                .profileImage(profileImageDto)
                 .mbti(profile.getMbti())
                 .meetings(profile.getMeetings())
                 .build();

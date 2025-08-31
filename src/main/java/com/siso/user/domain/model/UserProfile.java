@@ -63,13 +63,9 @@ public class UserProfile {
     @Column(name = "meeting")
     private List<Meeting> meetings;
 
-    @OneToOne
-    @JoinColumn(name = "profile_image_id", nullable = true)
-    private Image profileImage;
-
     @Builder
     public UserProfile(User user, DrinkingCapacity drinkingCapacity, Religion religion, boolean smoke, String nickname, int age, String introduce,
-                       String location, Sex sex, Image profileImage, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
+                       String location, Sex sex, Mbti mbti, PreferenceSex preferenceSex, List<Meeting> meetings) {
         this.user = user;
         // 양방향 연관 관계 설정
         user.linkProfile(this);
@@ -81,7 +77,6 @@ public class UserProfile {
         this.introduce = introduce;
         this.location = location;
         this.sex = sex;
-        this.profileImage = profileImage;
         this.mbti = mbti;
         this.preferenceSex = preferenceSex;
         this.meetings = meetings;
@@ -98,9 +93,5 @@ public class UserProfile {
         this.mbti = dto.getMbti();
         this.preferenceSex = dto.getPreferenceSex();
         this.meetings = dto.getMeetings();
-    }
-
-    public void setProfileImage(Image profileImage) {
-        this.profileImage = profileImage;
     }
 }

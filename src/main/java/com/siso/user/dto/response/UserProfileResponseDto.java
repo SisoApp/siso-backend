@@ -19,7 +19,6 @@ public class UserProfileResponseDto {
     private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;
-    private ImageResponseDto profileImage; // 선택된 프로필 이미지 (1개)
     private Mbti mbti;
     private List<Meeting> meetings;
 
@@ -28,7 +27,6 @@ public class UserProfileResponseDto {
                                   String nickname, String introduce,
                                   String location,
                                   Sex sex, PreferenceSex preferenceSex,
-                                  ImageResponseDto profileImage,
                                   Mbti mbti, List<Meeting> meetings) {
 
         this.drinkingCapacity = drinkingCapacity;
@@ -40,7 +38,6 @@ public class UserProfileResponseDto {
         this.location = location;
         this.sex = sex;
         this.preferenceSex = preferenceSex;
-        this.profileImage = profileImage;
         this.mbti = mbti;
         this.meetings = meetings;
     }
