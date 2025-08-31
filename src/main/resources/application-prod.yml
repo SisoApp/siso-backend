@@ -38,3 +38,8 @@ firebase:
   project-id: siso-e6ef2
   database-url: https://siso-e6ef2-default-rtdb.firebaseio.com
   service-account: ${FIREBASE_SERVICE_ACCOUNT:file:/run/secrets/firebase-adminsdk.json}
+
+logging:
+  level:
+    root: INFO         # 전체 기본 레벨
+    com.siso: DEBUG    # 우리 패키지 디버그
