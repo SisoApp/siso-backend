@@ -7,6 +7,8 @@ import com.siso.notification.domain.model.NotificationType;
 import com.siso.notification.domain.repository.NotificationRepository;
 import com.siso.notification.dto.response.NotificationResponseDto;
 import com.siso.notification.dto.response.UnreadCountResponseDto;
+import com.siso.user.domain.model.User;
+import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final FirebaseService firebaseService;
     private final FcmTokenService fcmTokenService;
+    private final UserRepository userRepository;
     
     /**
      * 알림을 생성하고 FCM을 통해 푸시 알림을 전송합니다.
@@ -46,7 +49,16 @@ public class NotificationService {
             notification = notificationRepository.save(notification);
             log.info("Notification saved to database with ID: {}", notification.getId());
             
-            // 2. FCM 토큰 조회
+            // 2. 사용자의 알림 구독 상태 확인
+            User receiver = userRepository.findById(receiverId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + receiverId));
+            
+            if (!receiver.isNotificationSubscribed()) {
+                log.info("User {} has disabled notifications, skipping FCM send", receiverId);
+                return notification;
+            }
+            
+            // 3. FCM 토큰 조회
             List<String> tokens = fcmTokenService.getActiveTokensByUserId(receiverId);
             
             if (tokens.isEmpty()) {
@@ -54,7 +66,7 @@ public class NotificationService {
                 return notification;
             }
             
-            // 3. FCM 푸시 알림 전송
+            // 4. FCM 푸시 알림 전송
             firebaseService.sendMulticast(
                 tokens,
                 title,
@@ -176,7 +188,16 @@ public class NotificationService {
             notification = notificationRepository.save(notification);
             log.info("Call notification saved to database with ID: {}", notification.getId());
             
-            // 2. FCM 토큰 조회
+            // 2. 사용자의 알림 구독 상태 확인
+            User receiver = userRepository.findById(receiverId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + receiverId));
+            
+            if (!receiver.isNotificationSubscribed()) {
+                log.info("User {} has disabled notifications, skipping call FCM send", receiverId);
+                return notification;
+            }
+            
+            // 3. FCM 토큰 조회
             List<String> tokens = fcmTokenService.getActiveTokensByUserId(receiverId);
             
             if (tokens.isEmpty()) {
@@ -184,7 +205,7 @@ public class NotificationService {
                 return notification;
             }
             
-            // 3. 통화 정보를 포함한 FCM 푸시 알림 전송
+            // 4. 통화 정보를 포함한 FCM 푸시 알림 전송
             firebaseService.sendCallNotificationWithDetails(
                 tokens,
                 title,

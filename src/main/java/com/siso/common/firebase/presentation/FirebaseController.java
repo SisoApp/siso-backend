@@ -4,6 +4,8 @@ import com.siso.common.firebase.application.FirebaseService;
 import com.siso.common.firebase.application.FcmTokenService;
 import com.siso.common.firebase.dto.FirebaseMessageRequestDto;
 import com.siso.common.firebase.dto.FcmTokenRequestDto;
+import com.siso.user.domain.model.User;
+import com.siso.user.domain.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class FirebaseController {
 
     private final FirebaseService firebaseService;
     private final FcmTokenService fcmTokenService;
+    private final UserRepository userRepository;
 
     /**
      * FCM 토큰을 등록하거나 업데이트합니다.
@@ -89,12 +92,22 @@ public class FirebaseController {
     @Operation(summary = "메시지 전송", description = "특정 사용자에게 푸시 알림을 전송합니다.")
     public ResponseEntity<String> sendMessage(@RequestBody FirebaseMessageRequestDto requestDto) {
         try {
+            Long userId = Long.valueOf(requestDto.getUserId());
+            
+            // 사용자의 알림 구독 상태 확인
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("유저의 아이디를 찾을수 없습니다: " + userId));
+            
+            if (!user.isNotificationSubscribed()) {
+                return ResponseEntity.badRequest().body("유저가 알림을 차단하였습니다: " + requestDto.getUserId());
+            }
+            
             // userId로 활성화된 FCM 토큰들을 조회
-            List<String> tokens = fcmTokenService.getActiveTokensByUserId(Long.valueOf(requestDto.getUserId()));
+            List<String> tokens = fcmTokenService.getActiveTokensByUserId(userId);
             
             // 활성화된 토큰이 없는 경우 에러 응답
             if (tokens.isEmpty()) {
-                return ResponseEntity.badRequest().body("No active FCM tokens found for user: " + requestDto.getUserId());
+                return ResponseEntity.badRequest().body("유효한 FCM 토큰이 없습니다: " + requestDto.getUserId());
             }
 
             // FCM을 통해 멀티캐스트 메시지 전송
