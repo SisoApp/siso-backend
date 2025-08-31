@@ -58,7 +58,7 @@ public class TokenService {
 
         // 5. 응답 구조
         Map<String, Object> response = new HashMap<>();
-//        response.put("accessToken", newAccessToken);
+        response.put("accessToken", newAccessToken);
         response.put("token", tokenResponse); // tokenResponse는 TokenResponseDto → 새 RefreshToken + RegistrationStatus
         response.put("user", UserResponseDto.from(user));
 

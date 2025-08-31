@@ -44,3 +44,8 @@ management:
       probes:
         enabled: true
       show-details: never
+
+logging:
+  level:
+    root: INFO        # 전체 로그 레벨
+    com.siso: DEBUG    # 특정 패키지 로그 레벨
