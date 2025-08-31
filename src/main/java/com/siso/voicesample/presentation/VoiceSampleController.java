@@ -146,7 +146,7 @@ public class VoiceSampleController {
         return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
 
-    // ===================== 테스트용 API =====================
+    // ===================== 테스트용 API ===================== //
 
     /**
      * 테스트용 음성 파일 업로드 API (userId path variable)
@@ -172,62 +172,62 @@ public class VoiceSampleController {
         return ResponseEntity.ok(response);
     }
 
-    // ===================== 음성 뷰어 API =====================
-
-    /**
-     * 음성 뷰어 API (다운로드 완전 방지)
-     *
-     * 음성 ID를 통해 안전하게 음성을 재생할 수 있습니다.
-     * 사용자는 실제 파일명이나 경로를 알 필요 없이 voiceId만으로 음성을 들을 수 있습니다.
-     * 다운로드는 절대 불가능하고 브라우저에서 재생만 가능합니다.
-     *
-     * @param voiceId 재생할 음성 샘플 ID
-     * @return 음성 리소스 (재생용)
-     *
-     * GET /api/voice-samples/play/{voiceId}
-     */
-    @GetMapping("/play/{voiceId}")
-    public ResponseEntity<Resource> playVoice(@PathVariable(name = "voiceId") Long voiceId) {
-        try {
-            // 음성 샘플 ID로 음성 정보 조회
-            VoiceSampleResponseDto voiceInfo = voiceSampleService.getVoiceSample(voiceId);
-
-            // 실제 파일명 추출 (URL에서 파일명 부분만)
-            String filename = voiceMediaTypeProperties.extractFilenameFromUrl(voiceInfo.getUrl());
-            if (filename == null) {
-                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
-            }
-
-            // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
-            Path filePath = Paths.get("uploads/voice-samples").resolve(voiceInfo.getUserId().toString()).resolve(filename).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-
-            // 파일 존재 여부 및 읽기 가능 여부 확인
-            if (resource.exists() && resource.isReadable()) {
-                // Infrastructure Properties를 활용한 MediaType 결정
-                MediaType contentType = voiceMediaTypeProperties.determineContentType(filename);
-
-                return ResponseEntity.ok()
-                        // 다운로드 완전 방지 헤더들 (이미지보다 더 강화)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline") // 파일명 없이 인라인 재생
-                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate, private") // 캐시 완전 방지
-                        .header(HttpHeaders.PRAGMA, "no-cache") // HTTP/1.0 캐시 방지
-                        .header(HttpHeaders.EXPIRES, "0") // 만료 시간 0
-                        .header("X-Content-Type-Options", "nosniff") // MIME 스니핑 방지
-                        .header("X-Frame-Options", "DENY") // 프레임 내 표시 방지
-                        .header("X-Download-Options", "noopen") // IE 다운로드 방지
-                        .header("Content-Security-Policy", "default-src 'none'; media-src 'self'") // CSP 적용 (audio 전용)
-                        .header("Accept-Ranges", "none") // Range 요청 비활성화 (다운로드 방지 강화)
-                        .contentType(contentType)
-                        .body(resource);
-            } else {
-                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_NOT_FOUND);
-            }
-        } catch (ExpectedException e) {
-            // 비즈니스 예외는 그대로 전파
-            throw e;
-        } catch (MalformedURLException e) {
-            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
-        }
-    }
+//    // ===================== 음성 뷰어 API =====================
+//
+//    /**
+//     * 음성 뷰어 API (다운로드 완전 방지)
+//     *
+//     * 음성 ID를 통해 안전하게 음성을 재생할 수 있습니다.
+//     * 사용자는 실제 파일명이나 경로를 알 필요 없이 voiceId만으로 음성을 들을 수 있습니다.
+//     * 다운로드는 절대 불가능하고 브라우저에서 재생만 가능합니다.
+//     *
+//     * @param voiceId 재생할 음성 샘플 ID
+//     * @return 음성 리소스 (재생용)
+//     *
+//     * GET /api/voice-samples/play/{voiceId}
+//     */
+//    @GetMapping("/play/{voiceId}")
+//    public ResponseEntity<Resource> playVoice(@PathVariable(name = "voiceId") Long voiceId) {
+//        try {
+//            // 음성 샘플 ID로 음성 정보 조회
+//            VoiceSampleResponseDto voiceInfo = voiceSampleService.getVoiceSample(voiceId);
+//
+//            // 실제 파일명 추출 (URL에서 파일명 부분만)
+//            String filename = voiceMediaTypeProperties.extractFilenameFromUrl(voiceInfo.getUrl());
+//            if (filename == null) {
+//                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
+//            }
+//
+//            // 사용자별 파일 경로 생성 및 정규화 (보안상 중요)
+//            Path filePath = Paths.get("uploads/voice-samples").resolve(voiceInfo.getUserId().toString()).resolve(filename).normalize();
+//            Resource resource = new UrlResource(filePath.toUri());
+//
+//            // 파일 존재 여부 및 읽기 가능 여부 확인
+//            if (resource.exists() && resource.isReadable()) {
+//                // Infrastructure Properties를 활용한 MediaType 결정
+//                MediaType contentType = voiceMediaTypeProperties.determineContentType(filename);
+//
+//                return ResponseEntity.ok()
+//                        // 다운로드 완전 방지 헤더들 (이미지보다 더 강화)
+//                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline") // 파일명 없이 인라인 재생
+//                        .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate, private") // 캐시 완전 방지
+//                        .header(HttpHeaders.PRAGMA, "no-cache") // HTTP/1.0 캐시 방지
+//                        .header(HttpHeaders.EXPIRES, "0") // 만료 시간 0
+//                        .header("X-Content-Type-Options", "nosniff") // MIME 스니핑 방지
+//                        .header("X-Frame-Options", "DENY") // 프레임 내 표시 방지
+//                        .header("X-Download-Options", "noopen") // IE 다운로드 방지
+//                        .header("Content-Security-Policy", "default-src 'none'; media-src 'self'") // CSP 적용 (audio 전용)
+//                        .header("Accept-Ranges", "none") // Range 요청 비활성화 (다운로드 방지 강화)
+//                        .contentType(contentType)
+//                        .body(resource);
+//            } else {
+//                throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_NOT_FOUND);
+//            }
+//        } catch (ExpectedException e) {
+//            // 비즈니스 예외는 그대로 전파
+//            throw e;
+//        } catch (MalformedURLException e) {
+//            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
+//        }
+//    }
 }
