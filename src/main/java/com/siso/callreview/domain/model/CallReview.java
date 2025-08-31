@@ -12,10 +12,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.parameters.P;
 
 @Entity
-@Table(
-        name = "call_reviews",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"evaluator", "target"})
-)
+@Table(name = "call_reviews")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CallReview extends BaseTime {
