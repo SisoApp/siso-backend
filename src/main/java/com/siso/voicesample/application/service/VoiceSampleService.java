@@ -11,6 +11,11 @@ import com.siso.voicesample.infrastructure.properties.VoiceSampleProperties;
 import com.siso.common.util.UserValidationUtil;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.common.S3Config.VoiceS3UploadUtil;
+import com.siso.common.S3Config.VoiceS3DeleteUtil;
+import com.siso.common.S3Config.VoiceS3KeyUtil;
+import com.siso.common.S3Config.VoiceS3PresignedUrlUtil;
+import com.siso.common.S3Config.VoiceCountValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,14 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.mpatric.mp3agic.Mp3File;
@@ -65,6 +64,13 @@ public class VoiceSampleService {
     /** 음성 샘플 관련 설정 프로퍼티 */
     private final VoiceSampleProperties voiceSampleProperties;
     private final UserRepository userRepository;
+    
+    // S3 유틸리티 클래스들
+    private final VoiceS3UploadUtil voiceS3UploadUtil;
+    private final VoiceS3DeleteUtil voiceS3DeleteUtil;
+    private final VoiceS3KeyUtil voiceS3KeyUtil;
+    private final VoiceS3PresignedUrlUtil voiceS3PresignedUrlUtil;
+    private final VoiceCountValidationUtil voiceCountValidationUtil;
 
     // ===================== 공개 API 메서드들 =====================
 
@@ -96,14 +102,11 @@ public class VoiceSampleService {
         // 사용자 존재 여부 확인
         userValidationUtil.validateUserExists(userId);
 
-        // 사용자별 음성 샘플 개수 제한 확인 (최대 1개)
-        long currentVoiceSampleCount = voiceSampleRepository.countByUserId(userId);
-        if (currentVoiceSampleCount >= voiceSampleProperties.getMaxVoiceSamplesPerUser()) {
-            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_MAX_COUNT_EXCEEDED);
-        }
+        // 음성 샘플 개수 제한 검증 (사용자당 최대 1개)
+        voiceCountValidationUtil.validateVoiceCountLimit(userId);
 
-        // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
-        VoiceFileProcessResult result = processAudioFile(file, userId);
+        // S3 파일 처리: 검증 → 업로드 → duration 추출
+        VoiceFileProcessResult result = processAudioFileToS3(file, userId);
 
         log.info("음성 파일 길이: {}초", result.getDuration());
 
@@ -184,11 +187,12 @@ public class VoiceSampleService {
         Integer newDuration = existingVoiceSample.getDuration();
 
         if (file != null && !file.isEmpty()) {
-            // 기존 파일 삭제 (실패해도 계속 진행) - 사용자별 폴더
-            deleteAudioFile(existingVoiceSample.getUrl(), userId);
+            // 기존 S3 파일 삭제
+            String oldKey = voiceS3KeyUtil.extractKey(existingVoiceSample.getUrl());
+            voiceS3DeleteUtil.safeDeleteS3(oldKey);
 
-            // 통합 파일 처리: 검증 → 저장 → duration 추출 (사용자별 폴더)
-            VoiceFileProcessResult result = processAudioFile(file, userId);
+            // S3 파일 처리: 검증 → 업로드 → duration 추출
+            VoiceFileProcessResult result = processAudioFileToS3(file, userId);
 
             newFileUrl = result.getFileUrl();
             newFileSize = result.getFileSize();
@@ -228,8 +232,9 @@ public class VoiceSampleService {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
 
-        // 파일 삭제 (실패해도 DB 삭제는 진행) - 사용자별 폴더
-        deleteAudioFile(voiceSample.getUrl(), voiceSample.getUser().getId());
+        // S3 파일 삭제
+        String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
+        voiceS3DeleteUtil.safeDeleteS3(key);
 
         // 데이터베이스에서 레코드 삭제
         voiceSampleRepository.delete(voiceSample);
@@ -239,11 +244,11 @@ public class VoiceSampleService {
     // ===================== 내부 헬퍼 메서드들 =====================
 
     /**
-     * 통합 파일 처리 메서드
+     * S3 음성 파일 처리 메서드
      *
      * 음성 파일의 전체 처리 과정을 하나의 메서드에서 담당:
      * 1. 파일 검증 (빈 파일, 파일명, 확장자, 크기)
-     * 2. 고유 파일명 생성 및 파일 저장
+     * 2. 고유 파일명 생성 및 S3 업로드
      * 3. Duration 자동 추출
      * 4. 결과 반환 (URL, duration, fileSize)
      *
@@ -251,9 +256,9 @@ public class VoiceSampleService {
      * @param userId 사용자 ID (폴더 구조에 사용)
      * @return 파일 처리 결과 (URL, duration, fileSize)
      * @throws IllegalArgumentException 파일 검증 실패 시
-     * @throws RuntimeException 파일 저장 실패 시
+     * @throws RuntimeException 파일 업로드 실패 시
      */
-    private VoiceFileProcessResult processAudioFile(MultipartFile file, Long userId) {
+    private VoiceFileProcessResult processAudioFileToS3(MultipartFile file, Long userId) {
         try {
             // === 1. 파일 검증 ===
             if (file.isEmpty()) {
@@ -279,40 +284,30 @@ public class VoiceSampleService {
                 throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_TOO_LARGE);
             }
 
-            // === 2. 파일 저장 ===
-            // 사용자별 업로드 디렉토리 생성
-            Path userUploadPath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(userId.toString());
-            if (!Files.exists(userUploadPath)) {
-                Files.createDirectories(userUploadPath);
-            }
+            // === 2. S3 업로드 ===
+            // 고유 파일명 생성
+            String serverFileName = voiceS3KeyUtil.generateUuidName(originalFileName);
+            String key = voiceS3KeyUtil.buildKey(userId, serverFileName);
+            String contentType = Optional.ofNullable(file.getContentType()).orElse("audio/mpeg");
 
-            // 고유 파일명 생성 (타임스탬프 + UUID + 확장자)
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String uniqueFileName = timestamp + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-
-            // 사용자별 폴더에 파일 저장
-            Path filePath = userUploadPath.resolve(uniqueFileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            // S3에 업로드
+            voiceS3UploadUtil.putObject(key, file, contentType);
 
             // === 3. Duration 자동 추출 ===
-            Integer duration = extractDurationFromFile(filePath);
+            Integer duration = extractDurationFromFile(file);
 
             // === 3.5. Duration 제한 검증 (20초) ===
             if (duration > voiceSampleProperties.getMaxDuration()) {
-                // 파일 삭제 후 예외 발생
-                try {
-                    Files.deleteIfExists(filePath);
-                } catch (IOException deleteException) {
-                    log.warn("임시 파일 삭제 실패: {}", deleteException.getMessage());
-                }
+                // S3 파일 삭제 후 예외 발생
+                voiceS3DeleteUtil.safeDeleteS3(key);
                 throw new ExpectedException(ErrorCode.VOICE_SAMPLE_FILE_TOO_LONG);
             }
 
             // === 4. 결과 반환 ===
-            String fileUrl = voiceSampleProperties.getBaseUrl() + "/api/voice-samples/files/" + uniqueFileName;
+            String fileUrl = voiceS3UploadUtil.generateS3Url(key);
             return VoiceFileProcessResult.of(fileUrl, duration, (int) file.getSize());
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("파일 처리 중 오류 발생: {}", e.getMessage());
             throw new ExpectedException(ErrorCode.VOICE_SAMPLE_UPLOAD_FAILED);
         }
@@ -327,88 +322,116 @@ public class VoiceSampleService {
      * 3. 파일 크기 기반 추정 - 최후의 수단, 대략적인 값
      * 4. 기본값 6초 - 모든 방법 실패 시
      *
-     * @param filePath 분석할 음성 파일 경로
+     * @param file 분석할 음성 파일
      * @return 추출된 duration (초 단위), 최소 1초
      */
-    private Integer extractDurationFromFile(Path filePath) {
+    private Integer extractDurationFromFile(MultipartFile file) {
+        java.io.File tempFile = null;
         try {
+            // MultipartFile을 임시 파일로 저장
+            tempFile = java.io.File.createTempFile("temp", ".audio");
+            file.transferTo(tempFile);
+            
             // === 1차 시도: JAVE 라이브러리 (FFmpeg 기반) ===
-            MultimediaObject multimediaObject = new MultimediaObject(filePath.toFile());
-            MultimediaInfo info = multimediaObject.getInfo();
-            long durationInMillis = info.getDuration();
-            int durationInSeconds = (int) (durationInMillis / 1000);
-
-            log.info("JAVE로 duration 추출 성공: {}초 (파일: {})", durationInSeconds, filePath.getFileName());
-            return Math.max(1, durationInSeconds);
-
-        } catch (Exception e) {
-            log.warn("JAVE 라이브러리 실패, 대체 방법 시도: {}", e.getMessage());
-
             try {
-                String fileName = filePath.getFileName().toString().toLowerCase();
+                MultimediaObject multimediaObject = new MultimediaObject(tempFile);
+                MultimediaInfo info = multimediaObject.getInfo();
+                long durationInMillis = info.getDuration();
+                int durationInSeconds = (int) (durationInMillis / 1000);
 
-                // === 2차 시도: MP3AGIC 라이브러리 (MP3 전용) ===
-                if (fileName.endsWith(".mp3")) {
-                    Mp3File mp3file = new Mp3File(filePath.toString());
+                log.info("JAVE로 duration 추출 성공: {}초 (파일: {})", durationInSeconds, file.getOriginalFilename());
+                return Math.max(1, durationInSeconds);
+            } catch (Exception e) {
+                log.warn("JAVE 라이브러리 실패, 대체 방법 시도: {}", e.getMessage());
+            }
+
+            // === 2차 시도: MP3AGIC 라이브러리 (MP3 전용) ===
+            String fileName = file.getOriginalFilename().toLowerCase();
+            if (fileName.endsWith(".mp3")) {
+                try {
+                    Mp3File mp3file = new Mp3File(tempFile.getAbsolutePath());
                     int durationInSeconds = (int) mp3file.getLengthInSeconds();
 
                     log.info("MP3AGIC으로 duration 추출 성공: {}초", durationInSeconds);
                     return Math.max(1, durationInSeconds);
+                } catch (Exception e) {
+                    log.warn("MP3AGIC 라이브러리 실패: {}", e.getMessage());
                 }
+            }
 
-                // === 3차 시도: 파일 크기 기반 추정 ===
-                long fileSize = filePath.toFile().length();
-                int estimatedDuration;
+            // === 3차 시도: 파일 크기 기반 추정 ===
+            long fileSize = file.getSize();
+            int estimatedDuration;
 
-                if (fileName.endsWith(".m4a") || fileName.endsWith(".aac")) {
-                    // M4A/AAC: 256kbps 가정
-                    estimatedDuration = (int) (fileSize / 32000);
-                } else if (fileName.endsWith(".wav")) {
-                    // WAV: 44.1kHz, 16bit, stereo 무압축 가정
-                    estimatedDuration = (int) (fileSize / 176400);
-                } else {
-                    // 기타 형식: 128kbps 가정
-                    estimatedDuration = (int) (fileSize / 16000);
-                }
+            if (fileName.endsWith(".m4a") || fileName.endsWith(".aac")) {
+                // M4A/AAC: 256kbps 가정
+                estimatedDuration = (int) (fileSize / 32000);
+            } else if (fileName.endsWith(".wav")) {
+                // WAV: 44.1kHz, 16bit, stereo 무압축 가정
+                estimatedDuration = (int) (fileSize / 176400);
+            } else {
+                // 기타 형식: 128kbps 가정
+                estimatedDuration = (int) (fileSize / 16000);
+            }
 
-                log.info("파일 크기 기반 duration 추정: {}초 (크기: {} bytes)", estimatedDuration, fileSize);
-                return Math.max(1, estimatedDuration);
+            log.info("파일 크기 기반 duration 추정: {}초 (크기: {} bytes)", estimatedDuration, fileSize);
+            return Math.max(1, estimatedDuration);
 
-            } catch (Exception fallbackException) {
-                // === 4차 시도: 기본값 ===
-                log.warn("모든 duration 추출 방법 실패: {}, 기본값 6초 사용", fallbackException.getMessage());
-                return 6; // 일반적인 음성 샘플 길이
+        } catch (Exception e) {
+            // === 4차 시도: 기본값 ===
+            log.warn("모든 duration 추출 방법 실패: {}, 기본값 6초 사용", e.getMessage());
+            return 6; // 일반적인 음성 샘플 길이
+        } finally {
+            // 임시 파일 정리
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
             }
         }
     }
 
-    /**
-     * 음성 파일 삭제
-     *
-     * URL에서 파일명을 추출하여 파일 시스템에서 삭제
-     * 실패해도 예외를 던지지 않고 경고 로그만 남김
-     *
-     * @param fileUrl 삭제할 파일의 URL (예: http://localhost:8080/api/voice-samples/files/20250101_120000_abcd1234.mp3)
-     * @param userId 사용자 ID (폴더 구조에 사용)
-     */
-    private void deleteAudioFile(String fileUrl, Long userId) {
-        try {
-            if (fileUrl != null && fileUrl.contains("/files/")) {
-                // URL에서 파일명 추출
-                String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-                // 사용자별 폴더 경로 생성
-                Path filePath = Paths.get(voiceSampleProperties.getUploadDir()).resolve(userId.toString()).resolve(fileName);
+    // ===================== Presigned URL 관련 메서드들 =====================
 
-                // 파일 존재 시 삭제
-                boolean deleted = Files.deleteIfExists(filePath);
-                if (deleted) {
-                    log.info("파일 삭제 성공: {}", fileName);
-                } else {
-                    log.warn("파일이 존재하지 않음: {}", fileName);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("파일 삭제 실패: {}", e.getMessage());
-        }
+    /**
+     * 음성 샘플 Presigned GET URL 생성
+     * 클라이언트가 임시로 음성 파일에 접근할 수 있는 URL을 생성합니다.
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 10분간 유효한 presigned URL
+     */
+    public String getVoicePresignedUrl(Long voiceId, Long userId) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(voiceId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(voiceSample.getUser().getId(), userId);
+        
+        String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
+        String presignedUrl = voiceS3PresignedUrlUtil.generatePresignedGetUrl(key);
+        
+        log.info("음성 샘플 Presigned URL 생성 - voiceId: {}, userId: {}", voiceId, userId);
+        return presignedUrl;
+    }
+
+    /**
+     * 음성 샘플 단기 재생용 Presigned GET URL 생성 (3분 유효)
+     * 빠른 미리보기나 짧은 재생에 사용
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 3분간 유효한 presigned URL
+     */
+    public String getVoiceShortPlayPresignedUrl(Long voiceId, Long userId) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(voiceId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(voiceSample.getUser().getId(), userId);
+        
+        String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
+        String presignedUrl = voiceS3PresignedUrlUtil.generateShortPlayPresignedGetUrl(key);
+        
+        log.info("음성 샘플 단기 재생 Presigned URL 생성 - voiceId: {}, userId: {}", voiceId, userId);
+        return presignedUrl;
     }
 }

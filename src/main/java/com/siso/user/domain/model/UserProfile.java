@@ -47,7 +47,7 @@ public class UserProfile {
     @Enumerated(EnumType.STRING)
     @Column(name = "sex", nullable = true)
     private Sex sex;
-  
+
     @Enumerated(EnumType.STRING)
     @Column(name = "preference_sex", nullable = true)
     private PreferenceSex preferenceSex;
@@ -99,7 +99,7 @@ public class UserProfile {
         this.preferenceSex = dto.getPreferenceSex();
         this.meetings = dto.getMeetings();
     }
-    
+
     public void setProfileImage(Image profileImage) {
         this.profileImage = profileImage;
     }
