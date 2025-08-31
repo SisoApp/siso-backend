@@ -21,12 +21,12 @@ spring:
     max-images-per-user: 5
 
   # 배포용 AWS S3 설정 (로컬에서는 application-local.yml의 설정 사용)
-  # cloud:
-  #   aws:
-  #     region:
-  #       static: ap-northeast-2
-  #     s3:
-  #       bucket: siso-deploy
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      s3:
+        bucket: siso-deploy
 
 server:
   address: 0.0.0.0

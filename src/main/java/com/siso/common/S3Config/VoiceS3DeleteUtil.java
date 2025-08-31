@@ -18,14 +18,14 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 public class VoiceS3DeleteUtil {
 
 
-    //배포용
-    // @Value("${cloud.aws.s3.bucket}")
-    // private String bucket;
+//    배포용
+     @Value("${cloud.aws.s3.bucket}")
+     private String bucket;
 
-    //로컬
-    @Value("${aws.s3.bucket}")
-    private String bucket;
-//
+//    //로컬
+//    @Value("${aws.s3.bucket}")
+//    private String bucket;
+//    //
 
     private final S3Client s3Client;
 
