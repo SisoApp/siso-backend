@@ -73,4 +73,13 @@ public class UserProfileController {
         List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
         return ResponseEntity.ok(images);
     }
+
+    // 상대방 프로필 조회
+    @GetMapping("/user/{targetUserId}")
+    public ResponseEntity<UserProfileResponseDto> getOtherUserProfile(
+            @CurrentUser User user,
+            @PathVariable(name = "targetUserId") Long targetUserId) {
+        UserProfileResponseDto profile = userProfileService.getOtherUserProfile(user, targetUserId);
+        return ResponseEntity.ok(profile);
+    }
 }
