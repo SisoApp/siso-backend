@@ -8,12 +8,14 @@ import com.siso.chat.dto.response.ChatRoomResponseDto;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
+import com.siso.user.domain.model.UserProfile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,10 +40,25 @@ public class ChatRoomService {
                                     && lastMessage.getId() > m.getLastReadMessageId() ? 1 : 0)
                             .sum();
 
+                    // 첫 번째 이미지 경로 가져오기
+                    String profileImagePath = Optional.ofNullable(otherMember)
+                            .map(ChatRoomMember::getUser)
+                            .map(User::getImages)
+                            .filter(images -> !images.isEmpty())
+                            .map(images -> images.get(0).getPath())
+                            .orElse("");
+
+                    // 닉네임도 안전 처리
+                    String nickname = Optional.ofNullable(otherMember)
+                            .map(ChatRoomMember::getUser)
+                            .map(User::getUserProfile)
+                            .map(UserProfile::getNickname)
+                            .orElse("익명");
+
                     return new ChatRoomResponseDto(
                             chatRoom.getId(),
-                            otherMember != null ? otherMember.getUser().getUserProfile().getNickname() : "",
-                            otherMember != null ? otherMember.getUser().getUserProfile().getProfileImage() : null,
+                            nickname,
+                            profileImagePath,
                             chatRoom.getChatRoomMembers().size(),
                             lastMessage != null ? lastMessage.getContent() : "",
                             lastMessage != null ? lastMessage.getCreatedAt() : null,

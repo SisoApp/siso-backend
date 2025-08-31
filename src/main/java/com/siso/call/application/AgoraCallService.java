@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -157,10 +158,11 @@ public class AgoraCallService {
             // 발신자와 수신자가 다른 경우에만 알림 전송 (본인 제외)
             if (!caller.getId().equals(receiverId)) {
                 // 발신자 프로필 이미지 가져오기
-                String callerImage = caller.getUserProfile() != null && caller.getUserProfile().getProfileImage() != null
-                    ? caller.getUserProfile().getProfileImage().getPath()
-                    : "";
-                
+                String callerImage = Optional.ofNullable(caller.getImages())
+                        .filter(images -> !images.isEmpty())
+                        .map(images -> images.get(0).getPath())
+                        .orElse("");
+
                 notificationService.sendCallNotification(
                     receiverId,
                     caller.getId(),
