@@ -8,6 +8,7 @@ import com.siso.voicesample.application.service.VoiceSampleService;
 import com.siso.voicesample.infrastructure.properties.VoiceMediaTypeProperties;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -126,13 +127,49 @@ public class VoiceSampleController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 음성 샘플 삭제 API
+     * 
+     * @param voiceId 삭제할 음성 샘플 ID
+     * @param user 현재 사용자
+     * @return 삭제 완료 응답
+     * 
+     * DELETE /api/voice-samples/{voiceId}
+     */
     @DeleteMapping("/{voiceId}")
-    public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "voiceId") Long voiceId) {
-        // log.info("음성 샘플 삭제 요청 - ID: {}", voiceId);
+    public ResponseEntity<Void> deleteVoiceSample(@PathVariable(name = "voiceId") Long voiceId,
+                                                 @CurrentUser User user) {
+        // log.info("음성 샘플 삭제 요청 - ID: {}, 사용자: {}", voiceId, user.getId());
         
         // 음성 샘플 및 관련 파일 삭제
         voiceSampleService.deleteVoiceSample(voiceId);
         return ResponseEntity.noContent().build(); // 204 No Content 응답
+    }
+
+    // ===================== 테스트용 API =====================
+
+    /**
+     * 테스트용 음성 파일 업로드 API (userId path variable)
+     * 
+     * @param file 업로드할 음성 파일
+     * @param userId 사용자 ID (path variable)
+     * @return 업로드된 음성 샘플 정보
+     * 
+     * POST /api/voice-samples/upload/{userId}
+     * Content-Type: multipart/form-data
+     * - file: 음성 파일
+     */
+    @Operation(summary = "테스트용 보이스 업로드")
+    @PostMapping(value = "/upload/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<VoiceSampleResponseDto> uploadVoiceSampleForTest(@RequestPart("file") MultipartFile file,
+                                                                          @PathVariable Long userId) {
+        // VoiceSampleRequestDto 생성
+        VoiceSampleRequestDto request = new VoiceSampleRequestDto();
+        request.setUserId(userId);
+
+        // 파일 업로드 및 데이터베이스 저장
+        VoiceSampleResponseDto response = voiceSampleService.uploadVoiceSample(file, request);
+        return ResponseEntity.ok(response);
     }
 
     // ===================== 음성 뷰어 API =====================
