@@ -35,18 +35,6 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ImageService {
 
-    /*
-    로컬
-     */
-    @Value("${aws.s3.bucket}")
-    private String bucket;
-    /*
-     */
-
-
-    // @Value("${cloud.aws.s3.bucket}")
-    // private String bucket;
-
     // === 의존성 주입 ===
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;

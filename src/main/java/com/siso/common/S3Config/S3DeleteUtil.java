@@ -17,8 +17,14 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 @RequiredArgsConstructor
 public class S3DeleteUtil {
 
+    //로컬용
     @Value("${aws.s3.bucket}")
     private String bucket;
+    //
+
+    //배포용
+    // @Value("${cloud.aws.s3.bucket}")
+    // private String bucket;
 
     private final S3Client s3Client;
 

@@ -44,6 +44,9 @@ public class AmazonS3Config {
         여기까지
          */
 
+
+
+    // 배포용
 //    @Bean
 //    public S3Client s3Client() {
 //        return S3Client.builder()
