@@ -61,7 +61,7 @@ public enum ErrorCode {
     IMAGE_EMPTY(HttpStatus.NOT_FOUND, "이미지가 비어 있습니다"),
     IMAGE_UPLOAD_PERSIST_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"이미지를 업로드했지만 저장소에 저장되지 않았습니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "I004 이미지 업로드에 실패했습니다."),
-    IMAGE_MAX_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "사용자당 최대 이미지 개수를 초과했습니다."),
+    IMAGE_MAX_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "사용자당 최대 이미지 개수(5개)를 초과했습니다. 기존 이미지를 삭제 후 다시 시도해주세요."),
     IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 이미지에 접근할 권한이 없습니다."),
     INVALID_IMAGE_FILE(HttpStatus.FORBIDDEN, "유효하지 않는 파일 입니다."),
     

@@ -20,12 +20,13 @@ spring:
     use_s3: ${IMAGE_USE_S3:true}         # 운영:true, 로컬은 필요시 false
     max-images-per-user: 5
 
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
-      s3:
-        bucket: siso-deploy
+  # 배포용 AWS S3 설정 (로컬에서는 application-local.yml의 설정 사용)
+  # cloud:
+  #   aws:
+  #     region:
+  #       static: ap-northeast-2
+  #     s3:
+  #       bucket: siso-deploy
 
 server:
   address: 0.0.0.0

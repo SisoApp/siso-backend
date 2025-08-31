@@ -10,19 +10,20 @@ import com.siso.user.domain.repository.UserRepository;
 import com.siso.common.util.UserValidationUtil;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.common.S3Config.S3UploadUtil;
+import com.siso.common.S3Config.S3DeleteUtil;
+import com.siso.common.S3Config.S3KeyUtil;
+import com.siso.common.S3Config.ImageCountValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -34,17 +35,29 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ImageService {
 
-    @Value("${cloud.aws.s3.bucket}")
+    /*
+    로컬
+     */
+    @Value("${aws.s3.bucket}")
     private String bucket;
+    /*
+     */
+
+
+    // @Value("${cloud.aws.s3.bucket}")
+    // private String bucket;
 
     // === 의존성 주입 ===
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;
     private final UserValidationUtil userValidationUtil;
     private final ImageProperties imageProperties; // maxImagesPerUser 등 사용
-    private final S3Client s3Client;
-
-    private static final String PREFIX = "images/"; // S3 폴더 prefix
+    
+    // S3 유틸리티 클래스들
+    private final S3UploadUtil s3UploadUtil;
+    private final S3DeleteUtil s3DeleteUtil;
+    private final S3KeyUtil s3KeyUtil;
+    private final ImageCountValidationUtil imageCountValidationUtil;
 
     // ===================== 공개 API 메서드들 =====================
 
@@ -63,31 +76,26 @@ public class ImageService {
         if (files == null || files.isEmpty()) {
             throw new ExpectedException(ErrorCode.IMAGE_EMPTY);
         }
-        validateImageCountLimit(userId, files.size());
+        imageCountValidationUtil.validateImageCountLimit(userId, files.size());
 
         List<ImageResponseDto> uploaded = new ArrayList<>();
         for (MultipartFile file : files) {
-            validateFileNotEmpty(file);
+            if (file == null || file.isEmpty()) {
+                throw new ExpectedException(ErrorCode.IMAGE_EMPTY);
+            }
 
             String originalName = Optional.ofNullable(file.getOriginalFilename()).orElse("file");
-            String serverFileName = uuidName(originalName);
-            String key = buildKey(null, serverFileName);
+            String serverFileName = s3KeyUtil.generateUuidName(originalName);
+            String key = s3KeyUtil.buildKey(userId, serverFileName);
             String contentType = Optional.ofNullable(file.getContentType()).orElse("application/octet-stream");
 
-//            putObject(key, file, contentType);
+            s3UploadUtil.putObject(key, file, contentType);
 
-            user.addImage(s3Url(key), serverFileName, originalName);
+            user.addImage(s3UploadUtil.generateS3Url(key), serverFileName, originalName);
 
             Image saved = imageRepository.findByServerImageName(serverFileName)
                     .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_UPLOAD_PERSIST_FAIL));
-            saved.setPath(s3Url(key));
-
-//            uploaded.add(ImageResponseDto.fromEntity(saved));
-
-            // 명시적으로 저장
-//            Image image = new Image(user, s3Url(key), serverFileName, originalName);
-//            Image saved = imageRepository.save(image);
-
+            saved.setPath(s3UploadUtil.generateS3Url(key));
 
             uploaded.add(ImageResponseDto.fromEntity(saved));
         }
@@ -125,18 +133,18 @@ public class ImageService {
         }
 
         // 기존 S3 삭제
-        String oldKey = extractKey(existing.getPath());
-        safeDeleteS3(oldKey);
+        String oldKey = s3KeyUtil.extractKey(existing.getPath());
+        s3DeleteUtil.safeDeleteS3(oldKey);
 
         // 새 업로드
         String originalName = Optional.ofNullable(file.getOriginalFilename()).orElse("file");
-        String serverFileName = uuidName(originalName);
-        String newKey = buildKey(/*withUser*/ false ? userId : null, serverFileName);
+        String serverFileName = s3KeyUtil.generateUuidName(originalName);
+        String newKey = s3KeyUtil.buildKey(userId, serverFileName);
         String contentType = Optional.ofNullable(file.getContentType()).orElse("application/octet-stream");
 
-//        putObject(newKey, file, contentType);
+        s3UploadUtil.putObject(newKey, file, contentType);
 
-        existing.updateImage(s3Url(newKey), serverFileName, originalName);
+        existing.updateImage(s3UploadUtil.generateS3Url(newKey), serverFileName, originalName);
         log.info("이미지 파일 교체 완료 - id: {}, oldKey: {}, newKey: {}", id, oldKey, newKey);
         return ImageResponseDto.fromEntity(existing);
     }
@@ -147,95 +155,10 @@ public class ImageService {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
 
-        String key = extractKey(image.getPath());
-        safeDeleteS3(key);
+        String key = s3KeyUtil.extractKey(image.getPath());
+        s3DeleteUtil.safeDeleteS3(key);
 
         imageRepository.delete(image);
         log.info("이미지 삭제 완료 - ID: {}, key: {}", id, key);
-    }
-
-    // ===================== 내부 유틸 =====================
-
-    private void validateFileNotEmpty(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new ExpectedException(ErrorCode.IMAGE_EMPTY);
-        }
-    }
-
-    private void validateImageCountLimit(Long userId, int willUploadCount) {
-        long current = imageRepository.countByUserId(userId);
-        int max = imageProperties.getMaxImagesPerUser();
-        if (current + willUploadCount > max) {
-            throw new ExpectedException(ErrorCode.IMAGE_MAX_COUNT_EXCEEDED);
-        }
-    }
-
-    private String uuidName(String originalName) {
-        String safe = Optional.ofNullable(originalName).orElse("file").replaceAll("[^a-zA-Z0-9._-]", "_");
-        return UUID.randomUUID() + "-" + safe;
-    }
-
-    /** userId 하위로 폴더를 나누고 싶다면 withUser=true로 바꿔 사용 */
-    private String buildKey(Long userId, String serverFileName) {
-        if (userId != null) {
-            return PREFIX + userId + "/" + serverFileName;
-        }
-        return PREFIX + serverFileName;
-    }
-
-//    private void putObject(String key, MultipartFile file, String contentType) {
-//        try {
-//            s3Client.putObject(
-//                    PutObjectRequest.builder()
-//                            .bucket(bucket)
-//                            .key(key)
-//                            .contentType(contentType)
-//                            .build(),
-//                    // 대용량이면 fromInputStream(...) 사용
-//                    RequestBody.fromBytes(file.getBytes())
-//            );
-//
-//        try {
-//            s3Client.putObject(
-//                    PutObjectRequest.builder()
-//                            .bucket(bucket)
-//                            .key(key)
-//                            .contentType(contentType)
-//                            .build(),
-//                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
-//            );
-//        } catch (SdkClientException sce) {
-//            log.error("S3 업로드 실패 - AWS 자격 증명 오류 - key: {}, message: {}", key, sce.getMessage(), sce);
-//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "AWS 자격 증명 오류로 이미지를 업로드할 수 없습니다.");
-//        } catch (IOException ioe) {
-//            log.error("S3 업로드 실패 - 파일 읽기 오류 - key: {}, message: {}", key, ioe.getMessage(), ioe);
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미지 파일을 읽는 데 실패했습니다.");
-//        } catch (Exception e) {
-//            log.error("S3 업로드 실패 - 기타 오류 - key: {}, message: {}", key, e.getMessage(), e);
-//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드 중 알 수 없는 오류가 발생했습니다.");
-//        }
-//    }
-
-    private void safeDeleteS3(String key) {
-        if (key == null || key.isBlank()) return;
-        try {
-            s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
-        } catch (Exception e) {
-            log.warn("S3 삭제 실패(무시) - key: {}", key, e);
-        }
-    }
-
-    private String extractKey(String keyOrUrl) {
-        if (keyOrUrl == null) return null;
-        // 이미 key라면 그대로 리턴
-        if (!keyOrUrl.startsWith("http")) return keyOrUrl;
-        // https://{bucket}.s3.{region}.amazonaws.com/{key}
-        int idx = keyOrUrl.indexOf(".amazonaws.com/");
-        if (idx == -1) return keyOrUrl; // 예상치 못한 포맷이면 원본 반환
-        return keyOrUrl.substring(idx + ".amazonaws.com/".length());
-    }
-
-    private String s3Url(String key) {
-        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/" + key;
     }
 }

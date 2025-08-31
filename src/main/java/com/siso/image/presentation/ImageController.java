@@ -154,12 +154,18 @@ public class ImageController {
                                                  @PathVariable Long userId) {
         ImageRequestDto request = new ImageRequestDto(userId);
 
-        // 파일 검증
+        // 1) 파일 입력 검증
         if (files == null || files.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드한 파일이 없습니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
         }
 
-        // 각 파일 검증
+        // 2) 파일 개수 제한 확인 (최대 5개)
+        if (files.size() > imageProperties.getMaxImagesPerUser()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "한 번에 최대 " + imageProperties.getMaxImagesPerUser() + "개까지 업로드할 수 있습니다.");
+        }
+
+        // 3) 각 파일 검증
         for (MultipartFile file : files) {
             if (file == null || file.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "빈 파일이 포함되어 있습니다.");
@@ -167,7 +173,7 @@ public class ImageController {
             validateFile(file);
         }
 
-        // 다중 파일 업로드 처리
+        // 4) 다중 파일 업로드 처리
         List<ImageResponseDto> responses = imageService.uploadMultipleImages(files, request);
         return ResponseEntity.ok(responses);
     }
