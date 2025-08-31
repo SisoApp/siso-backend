@@ -128,6 +128,20 @@ public class UserProfileService {
                 .toList();
     }
 
+    /**
+     * 상대방 프로필 조회
+     */
+    public UserProfileResponseDto getOtherUserProfile(User currentUser, Long targetUserId) {
+        // 본인 프로필 조회 시도 방지
+        if (currentUser.getId().equals(targetUserId)) {
+            throw new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND);
+        }
+
+        UserProfile profile = userProfileRepository.findByUserId(targetUserId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
+        return toDto(profile);
+    }
+
     // Entity -> DTO
     private UserProfileResponseDto toDto(UserProfile profile) {
 
