@@ -107,7 +107,7 @@ public class ImageController {
     /**
      * 사용자별 이미지 목록 조회 API
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/me")
     public ResponseEntity<List<ImageResponseDto>> getImagesByUserId(@CurrentUser User user) {
 
         List<ImageResponseDto> response = imageService.getImagesByUserId(user.getId());

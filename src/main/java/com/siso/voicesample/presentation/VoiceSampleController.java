@@ -90,7 +90,7 @@ public class VoiceSampleController {
      *
      * GET /api/voice-samples/user/{userId}
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/me")
     public ResponseEntity<List<VoiceSampleResponseDto>> getVoiceSamplesByUserId(@CurrentUser User user) {
         // log.info("사용자 음성 샘플 목록 조회 요청 - 사용자: {}", userId);
 
