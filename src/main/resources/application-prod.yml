@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://13.124.11.3:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000}
+    username: ${DB_USERNAME:siso}
+    password: ${DB_PASSWORD:1234}
+
+  jpa:
+    hibernate:
+      ddl-auto: create     # ⚠️ 첫 실행만 create, 이후 반드시 update/none 으로 변경
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+    show-sql: true
+    open-in-view: false
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID:96171e749ecdb7417189ae5b534534d0}
+  redirect-uri: ${KAKAO_REDIRECT_URI:https://13.124.11.3:8080/api/auth/kakao/callback}
+
+app:
+  voice-sample:
+    upload-dir: ${VOICE_UPLOAD_DIR:s3://siso-bucket/voice-samples}
+    base-url: ${VOICE_BASE_URL:https://siso-bucket.s3.ap-northeast-2.amazonaws.com/voice-samples}
+  image:
+    upload-dir: ${IMAGE_UPLOAD_DIR:s3://siso-bucket/images}
+    base-url: ${IMAGE_BASE_URL:https://siso-bucket.s3.ap-northeast-2.amazonaws.com/images}
+
+agora:
+  appId: ${AGORA_APP_ID:a914eda873c04f09a72ee7bd3e522300}
+  appCertificate: ${AGORA_APP_CERTIFICATE:8fe69592f65b4bc6ae550a5299eb7c36}
+
+firebase:
+  project-id: siso-e6ef2
+  database-url: https://siso-e6ef2-default-rtdb.firebaseio.com
+  service-account: ${FIREBASE_SERVICE_ACCOUNT:file:/run/secrets/firebase-adminsdk.json}
