@@ -1,0 +1,8 @@
+services:
+  app:
+    secrets:
+      - source: firebase-adminsdk
+        target: /run/secrets/firebase-adminsdk.json
+secrets:
+  firebase-adminsdk:
+    file: /home/ec2-user/secrets/firebase-adminsdk.json

@@ -8,12 +8,12 @@ services:
       - --max_connections=200
     environment:
       TZ: ${TZ:-Asia/Seoul}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${MARIADB_DATABASE}
-      MARIADB_USER: ${MARIADB_USER}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: 1234
+      MARIADB_DATABASE: sisoappdb
+      MARIADB_USER: siso
+      MARIADB_PASSWORD: 1234
     volumes:
-      - dbdata:/var/lib/mysql
+      - siso-backend_dbdata:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${MARIADB_USER} -p${MARIADB_PASSWORD} || exit 1"]
       interval: 10s
@@ -36,23 +36,24 @@ services:
       mariadb:
         condition: service_healthy
 
+    secrets:
+      - firebase-adminsdk
+
     environment:
       TZ: ${TZ:-Asia/Seoul}
 
-      # Spring profiles / secret import
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      # ==== 요청하신 고정값 적용 ====
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
+      SPRING_DATASOURCE_USERNAME: siso
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
+      # ============================
+
+      # 비밀 설정 import (없으면 무시)
       SPRING_CONFIG_IMPORT: ${SPRING_CONFIG_IMPORT:-optional:application-secret.yml}
 
-      # DB 연결 (하드코딩 금지)
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/${MARIADB_DATABASE}?characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: ${MARIADB_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MARIADB_PASSWORD}
-      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MariaDBDialect
-
-      # 운영 기본은 none, 최초 1회만 update로
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-none}
-
-      # OAuth2 (필요 시 .env의 간단 키를 Spring 키로 매핑)
+      # OAuth2 (있으면 .env 로 값 주입)
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
@@ -64,7 +65,7 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KAKAO_USER_INFO_URI: https://kapi.kakao.com/v2/user/me
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KAKAO_USER_NAME_ATTRIBUTE: id
 
-      # JWT
+      # JWT (있으면 .env 로)
       JWT_SECRET: ${JWT_SECRET}
 
     # 앱이 완전히 뜬 뒤에만 healthy
@@ -80,4 +81,8 @@ services:
     restart: unless-stopped
 
 volumes:
-  dbdata:
+  siso-backend_dbdata: {}
+
+secrets:
+  firebase-adminsdk:
+    file: /home/ec2-user/secrets/firebase-adminsdk.json
