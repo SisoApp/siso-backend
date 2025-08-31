@@ -20,7 +20,6 @@ public class UserProfileRequestDto {
     private String location;
     private Sex sex;
     private PreferenceSex preferenceSex;
-//    private Long profileImageId;
     private Mbti mbti;
     
     @Size(min = 3, max = 7, message = "Meeting은 최소 3개 이상, 최대 7개 이하로 선택해야 합니다.")

@@ -32,7 +32,7 @@ public enum Interest {
     TABLE_TENNIS("탁구", InterestCategory.HOBBIES_LEISURE),
     FLOWER("꽃꽃이", InterestCategory.HOBBIES_LEISURE),
     DRIVE("드라이브", InterestCategory.HOBBIES_LEISURE),
-    
+
     // 여가 취미 (Daily Life & Socializing)
     READING("독서", InterestCategory.DAILY_LIFE_SOCIALIZING),
     BAKING("베이킹", InterestCategory.DAILY_LIFE_SOCIALIZING),

@@ -101,8 +101,7 @@ public class FirebaseService {
                 .putData("callId", callId)
                 .putData("agoraChannel", channelName)        // channelName → agoraChannel로 변경
                 .putData("agoraToken", agoraToken)
-                .putData("callerName", callerNickname)       // callerNickname → callerName으로 변경
-                .putData("callerImage", callerImage)         // 실제 이미지 URL 전달
+                .putData("callerName", callerNickname)       // callerNickname → callerName으로 변경        // 실제 이미지 URL 전달
                 .putData("timestamp", String.valueOf(System.currentTimeMillis()))
                 .build();
 
