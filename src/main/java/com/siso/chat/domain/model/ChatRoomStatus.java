@@ -10,9 +10,9 @@ public enum ChatRoomStatus {
     LIMITED("채팅 5회 제한, 전화 불가"),
     MATCHED("채팅 무제한, 전화 가능");
 
-    private String chatStatus;
+    private String chatRoomStatus;
 
     ChatRoomStatus(String chatStatus) {
-        this.chatStatus = chatStatus;
+        this.chatRoomStatus = chatStatus;
     }
 }

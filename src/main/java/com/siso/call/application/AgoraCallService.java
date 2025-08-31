@@ -48,13 +48,22 @@ public class AgoraCallService {
     /**
      * 통화 요청
      */
+    // 전화중 상대 요청 안됨
     public CallInfoDto requestCall(User caller, CallRequestDto request) {
         Long receiverId = request.getReceiverId();
         User receiver = findById(receiverId);
 
+        // receiver가 이미 통화 중(IN_CALL)인지 체크
+        if (receiver.getPresenceStatus() == PresenceStatus.IN_CALL) {
+            throw new ExpectedException(ErrorCode.USER_IN_CALL);
+        }
+
         // Agora 채널 생성
         String channelName = agoraChannelNameService.generateChannelName(caller.getId(), receiverId);
         String token = agoraTokenService.generateToken(channelName, caller.getId());
+
+        // 최초 통화 여부 판단
+        boolean firstCall = callRepository.findFirstByCallerIdAndReceiverIdOrderByStartTimeAsc(caller.getId(), receiverId).isEmpty();
 
         Call call = Call.builder()
                 .caller(caller)
@@ -70,7 +79,7 @@ public class AgoraCallService {
         // 수신자에게 통화 알림 전송
         sendCallNotificationToReceiver(call, caller, receiverId);
 
-        return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId);
+        return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId, firstCall);
     }
 
     /**
@@ -103,47 +112,36 @@ public class AgoraCallService {
      * 통화 종료 → 이어가기 선택 시 채팅방 생성
      */
     public CallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
+        // 1. 통화 정보 조회
         Call call = getCall(callInfoDto.getId());
         User caller = findById(callInfoDto.getCallerId());
         User receiver = findById(callInfoDto.getReceiverId());
 
-        // 최초 통화인지 확인
-        boolean isFirstCallLimited = true;
-        if (continueRelationship) {
-            // 이어가기 요청이면 ChatRoom 생성 또는 조회
-            ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
-                    .orElseGet(() -> {
-                        // ChatRoom 없으면 새로 생성
-                        ChatRoom newChatRoom = new ChatRoom(call, ChatRoomStatus.LIMITED);
-                        newChatRoom.linkCall(call); // Call과 연결
-                        return chatRoomRepository.save(newChatRoom);
-                    });
-            List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoomId(chatRoom.getId());
-            ChatRoomMember chatRoomMember = members.isEmpty()
-                    ? chatRoomMemberRepository.save(new ChatRoomMember(chatRoom, caller, null))
-                    : members.get(0);
-            chatRoomMemberRepository.save(chatRoomMember);
-
-//            chatRoom.addChatRoomMember(caller, null);
-//            caller.addChatRoomLimit(chatRoom, 0);
-//
-//            chatRoom.addChatRoomMember(receiver, null);
-//            receiver.addChatRoomLimit(chatRoom, 0);
-//
-//            userRepository.save(caller);
-//            userRepository.save(receiver);
-
-            // 채팅 제한 해제
-            chatRoomService.unlockChatRoom(chatRoom);
-            call.updateCallStatus(CallStatus.ENDED); // 전화 무제한
-            isFirstCallLimited = false; // 이어가기 후 제한 해제
-        }
-
-        // 종료 처리
-        call.endCall(isFirstCallLimited);
+        // 2. 통화 종료 상태 업데이트
+        call.endCall();
+        call.updateCallStatus(CallStatus.ENDED);
         callRepository.save(call);
 
-        return buildResponse(call, true);
+        // 3. 최초 통화 + continueRelationship 처리
+        if (callInfoDto.isFirstCall() && continueRelationship) {
+            // ChatRoom 생성 또는 기존 조회
+            ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
+                    .orElseGet(() -> chatRoomRepository.saveAndFlush(
+                            new ChatRoom(call, ChatRoomStatus.LIMITED)
+                    ));
+
+            // ChatRoomMember 생성 및 저장
+            ChatRoomMember callerMember = ChatRoomMember.of(caller, chatRoom);
+            ChatRoomMember receiverMember = ChatRoomMember.of(receiver, chatRoom);
+            chatRoomMemberRepository.saveAll(List.of(callerMember, receiverMember));
+
+            // 메시지 제한 5회 초기화 (LIMITED 상태)
+            callerMember.resetMessageCount();
+            receiverMember.resetMessageCount();
+        }
+
+        // 4. DTO 반환
+        return buildResponse(call, continueRelationship);
     }
 
     /**

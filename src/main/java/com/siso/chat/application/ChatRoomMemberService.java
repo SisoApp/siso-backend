@@ -3,8 +3,10 @@ package com.siso.chat.application;
 import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.chat.domain.repository.ChatRoomMemberRepository;
 import com.siso.chat.dto.request.ChatReadRequestDto;
+import com.siso.chat.dto.response.ChatRoomMemberResponseDto;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,15 +19,21 @@ import java.util.List;
 public class ChatRoomMemberService {
     private final ChatRoomMemberRepository chatRoomMemberRepository;
 
-    public void markAsRead(ChatReadRequestDto requestDto) {
-        ChatRoomMember member = chatRoomMemberRepository.findByChatRoomIdAndUserId(requestDto.getChatRoomId(), requestDto.getUserId())
+    public void markAsRead(ChatReadRequestDto requestDto, User user) {
+        ChatRoomMember member = chatRoomMemberRepository.findMemberByChatRoomIdAndUserId(
+                        requestDto.getChatRoomId(),
+                        user.getId()  // @CurrentUser로 주입된 user 사용
+                )
                 .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
 
         member.updateLastReadMessageId(requestDto.getLastReadMessageId());
         chatRoomMemberRepository.save(member);
     }
 
-    public List<ChatRoomMember> getMembers(Long chatRoomId) {
-        return chatRoomMemberRepository.findByChatRoomId(chatRoomId);
+    public List<ChatRoomMemberResponseDto> getMembers(Long chatRoomId) {
+        return chatRoomMemberRepository.findByChatRoomId(chatRoomId)
+                .stream()
+                .map(ChatRoomMemberResponseDto::fromEntity)
+                .toList();
     }
 }
