@@ -13,6 +13,7 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.common.S3Config.S3UploadUtil;
 import com.siso.common.S3Config.S3DeleteUtil;
 import com.siso.common.S3Config.S3KeyUtil;
+import com.siso.common.S3Config.S3PresignedUrlUtil;
 import com.siso.common.S3Config.ImageCountValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class ImageService {
     private final S3UploadUtil s3UploadUtil;
     private final S3DeleteUtil s3DeleteUtil;
     private final S3KeyUtil s3KeyUtil;
+    private final S3PresignedUrlUtil s3PresignedUrlUtil;
     private final ImageCountValidationUtil imageCountValidationUtil;
 
     // ===================== 공개 API 메서드들 =====================
@@ -148,5 +150,73 @@ public class ImageService {
 
         imageRepository.delete(image);
         log.info("이미지 삭제 완료 - ID: {}, key: {}", id, key);
+    }
+
+    // ===================== Presigned URL 관련 메서드들 =====================
+
+    /**
+     * 이미지 Presigned GET URL 생성
+     * 클라이언트가 임시로 이미지에 접근할 수 있는 URL을 생성합니다.
+     * 
+     * @param imageId 이미지 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 15분간 유효한 presigned URL
+     */
+    public String getImagePresignedUrl(Long imageId, Long userId) {
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(image.getUser().getId(), userId);
+        
+        String key = s3KeyUtil.extractKey(image.getPath());
+        String presignedUrl = s3PresignedUrlUtil.generatePresignedGetUrl(key);
+        
+        log.info("이미지 Presigned URL 생성 - imageId: {}, userId: {}", imageId, userId);
+        return presignedUrl;
+    }
+
+    /**
+     * 이미지 단기 Presigned GET URL 생성 (5분 유효)
+     * 보안이 중요한 이미지나 빠른 미리보기용
+     * 
+     * @param imageId 이미지 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 5분간 유효한 presigned URL
+     */
+    public String getImageShortTermPresignedUrl(Long imageId, Long userId) {
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(image.getUser().getId(), userId);
+        
+        String key = s3KeyUtil.extractKey(image.getPath());
+        String presignedUrl = s3PresignedUrlUtil.generateShortTermPresignedGetUrl(key);
+        
+        log.info("이미지 단기 Presigned URL 생성 - imageId: {}, userId: {}", imageId, userId);
+        return presignedUrl;
+    }
+
+    /**
+     * 이미지 장기 Presigned GET URL 생성 (1시간 유효)
+     * 공개 갤러리나 캐시가 필요한 이미지용
+     * 
+     * @param imageId 이미지 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 1시간간 유효한 presigned URL
+     */
+    public String getImageLongTermPresignedUrl(Long imageId, Long userId) {
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(image.getUser().getId(), userId);
+        
+        String key = s3KeyUtil.extractKey(image.getPath());
+        String presignedUrl = s3PresignedUrlUtil.generateLongTermPresignedGetUrl(key);
+        
+        log.info("이미지 장기 Presigned URL 생성 - imageId: {}, userId: {}", imageId, userId);
+        return presignedUrl;
     }
 }

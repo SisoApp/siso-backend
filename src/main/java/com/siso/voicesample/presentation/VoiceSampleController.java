@@ -230,4 +230,64 @@ public class VoiceSampleController {
 //            throw new ExpectedException(ErrorCode.VOICE_SAMPLE_INVALID_PATH);
 //        }
 //    }
+
+    // ===================== Presigned URL API =====================
+
+    /**
+     * 음성 샘플 Presigned GET URL 생성 API
+     * 
+     * 클라이언트가 임시로 음성 파일에 접근할 수 있는 URL을 생성합니다.
+     * 10분간 유효한 URL을 반환합니다.
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param user 현재 인증된 사용자
+     * @return presigned URL
+     */
+    @Operation(summary = "음성 샘플 Presigned URL 생성", description = "10분간 유효한 음성 파일 접근 URL 생성")
+    @GetMapping("/{voiceId}/presigned-url")
+    public ResponseEntity<String> getVoicePresignedUrl(@PathVariable(name = "voiceId") Long voiceId,
+                                                       @CurrentUser User user) {
+        if (user == null) {
+            throw new ExpectedException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        String presignedUrl = voiceSampleService.getVoicePresignedUrl(voiceId, user.getId());
+        return ResponseEntity.ok(presignedUrl);
+    }
+
+    /**
+     * 음성 샘플 단기 재생용 Presigned GET URL 생성 API
+     * 
+     * 빠른 미리보기나 짧은 재생용으로 3분간 유효한 URL을 생성합니다.
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param user 현재 인증된 사용자
+     * @return 단기 재생용 presigned URL
+     */
+    @Operation(summary = "음성 샘플 단기 재생용 Presigned URL 생성", description = "3분간 유효한 음성 파일 접근 URL 생성")
+    @GetMapping("/{voiceId}/presigned-url/short-play")
+    public ResponseEntity<String> getVoiceShortPlayPresignedUrl(@PathVariable(name = "voiceId") Long voiceId,
+                                                                @CurrentUser User user) {
+        if (user == null) {
+            throw new ExpectedException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        String presignedUrl = voiceSampleService.getVoiceShortPlayPresignedUrl(voiceId, user.getId());
+        return ResponseEntity.ok(presignedUrl);
+    }
+
+    /**
+     * 테스트용 음성 샘플 Presigned URL 생성 API (userId path variable)
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param userId 사용자 ID
+     * @return presigned URL
+     */
+    @Operation(summary = "테스트용 음성 샘플 Presigned URL 생성")
+    @GetMapping("/{voiceId}/presigned-url/test/{userId}")
+    public ResponseEntity<String> getVoicePresignedUrlForTest(@PathVariable(name = "voiceId") Long voiceId,
+                                                              @PathVariable Long userId) {
+        String presignedUrl = voiceSampleService.getVoicePresignedUrl(voiceId, userId);
+        return ResponseEntity.ok(presignedUrl);
+    }
 }

@@ -14,6 +14,7 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.common.S3Config.VoiceS3UploadUtil;
 import com.siso.common.S3Config.VoiceS3DeleteUtil;
 import com.siso.common.S3Config.VoiceS3KeyUtil;
+import com.siso.common.S3Config.VoiceS3PresignedUrlUtil;
 import com.siso.common.S3Config.VoiceCountValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,7 @@ public class VoiceSampleService {
     private final VoiceS3UploadUtil voiceS3UploadUtil;
     private final VoiceS3DeleteUtil voiceS3DeleteUtil;
     private final VoiceS3KeyUtil voiceS3KeyUtil;
+    private final VoiceS3PresignedUrlUtil voiceS3PresignedUrlUtil;
     private final VoiceCountValidationUtil voiceCountValidationUtil;
 
     // ===================== 공개 API 메서드들 =====================
@@ -385,5 +387,51 @@ public class VoiceSampleService {
                 tempFile.delete();
             }
         }
+    }
+
+    // ===================== Presigned URL 관련 메서드들 =====================
+
+    /**
+     * 음성 샘플 Presigned GET URL 생성
+     * 클라이언트가 임시로 음성 파일에 접근할 수 있는 URL을 생성합니다.
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 10분간 유효한 presigned URL
+     */
+    public String getVoicePresignedUrl(Long voiceId, Long userId) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(voiceId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(voiceSample.getUser().getId(), userId);
+        
+        String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
+        String presignedUrl = voiceS3PresignedUrlUtil.generatePresignedGetUrl(key);
+        
+        log.info("음성 샘플 Presigned URL 생성 - voiceId: {}, userId: {}", voiceId, userId);
+        return presignedUrl;
+    }
+
+    /**
+     * 음성 샘플 단기 재생용 Presigned GET URL 생성 (3분 유효)
+     * 빠른 미리보기나 짧은 재생에 사용
+     * 
+     * @param voiceId 음성 샘플 ID
+     * @param userId 요청한 사용자 ID (소유권 검증용)
+     * @return 3분간 유효한 presigned URL
+     */
+    public String getVoiceShortPlayPresignedUrl(Long voiceId, Long userId) {
+        VoiceSample voiceSample = voiceSampleRepository.findById(voiceId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
+        
+        // 사용자 소유권 검증
+        userValidationUtil.validateUserOwnership(voiceSample.getUser().getId(), userId);
+        
+        String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
+        String presignedUrl = voiceS3PresignedUrlUtil.generateShortPlayPresignedGetUrl(key);
+        
+        log.info("음성 샘플 단기 재생 Presigned URL 생성 - voiceId: {}, userId: {}", voiceId, userId);
+        return presignedUrl;
     }
 }
