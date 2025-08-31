@@ -35,7 +35,7 @@ public class UserProfileController {
     }
 
     // 사용자 기준 프로필 조회
-    @GetMapping("/user/{userId}")
+    @GetMapping("/me")
     public ResponseEntity<UserProfileResponseDto> getProfileByUser(@CurrentUser User user) {
         UserProfileResponseDto profile = userProfileService.getUserProfileByUserId(user.getId());
         return ResponseEntity.ok(profile);

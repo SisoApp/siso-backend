@@ -6,6 +6,5 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChatMessageRequestDto {
     private Long chatRoomId;
-//    private Long senderId;
     private String content;
 }

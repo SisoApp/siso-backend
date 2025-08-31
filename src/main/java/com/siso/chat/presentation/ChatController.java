@@ -58,13 +58,6 @@ public class ChatController {
         return SisoResponse.success(messages);
     }
 
-    // 채팅방 멤버 조회
-    @GetMapping("/rooms/{chatRoomId}/members")
-    public SisoResponse<List<ChatRoomMemberResponseDto>> getMembers(@PathVariable Long chatRoomId) {
-        List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(chatRoomId);
-        return SisoResponse.success(members);
-    }
-
     // 사용자의 채팅방 조회
     @GetMapping("/rooms")
     public SisoResponse<List<ChatRoomResponseDto>> getChatRooms(@CurrentUser User user) {
@@ -88,7 +81,7 @@ public class ChatController {
         return SisoResponse.success(null);
     }
 
-    // 마지막 읽은 메시지 업데이트
+    // 사용자가 채팅방에서 메시지를 읽었음을 표시
     @PostMapping("/read")
     public SisoResponse<Void> markAsRead(@CurrentUser User user,
                                          @Valid @RequestBody ChatReadRequestDto requestDto) {
@@ -96,7 +89,14 @@ public class ChatController {
         return SisoResponse.success(null);
     }
 
-    // 메시지 제한 조회
+    // 채팅방 멤버 조회
+    @GetMapping("/rooms/{chatRoomId}/members")
+    public SisoResponse<List<ChatRoomMemberResponseDto>> getMembers(@PathVariable Long chatRoomId) {
+        List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(chatRoomId);
+        return SisoResponse.success(members);
+    }
+
+    // 사용자가 채팅방에서 메시지를 얼마나 보낼 수 있는지 제한 정보를 조회
     @GetMapping("/rooms/limits")
     public SisoResponse<ChatRoomLimitResponseDto> getChatRoomLimit(@CurrentUser User user,
                                                                    @RequestParam(name = "chatRoomId") Long chatRoomId) {

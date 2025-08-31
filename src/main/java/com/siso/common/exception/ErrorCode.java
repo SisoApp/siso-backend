@@ -10,7 +10,7 @@ public enum ErrorCode {
     // 사용자
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
     USER_NOT_FOUND_OR_DELETED(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없거나 삭제된 계정입니다."),
-    UNAUTHROIZED(HttpStatus.UNAUTHORIZED, "인증되지 않는 사용자"),
+    UNAUTHROIZED(HttpStatus.UNAUTHORIZED, "인증되지 않는 사용자입니다."),
 
     // 사용자 프로필
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."),
@@ -62,10 +62,10 @@ public enum ErrorCode {
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
     IMAGE_EMPTY(HttpStatus.NOT_FOUND, "이미지가 비어 있습니다"),
     IMAGE_UPLOAD_PERSIST_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"이미지를 업로드했지만 저장소에 저장되지 않았습니다."),
-    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "I004 이미지 업로드에 실패했습니다."),
     IMAGE_MAX_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "사용자당 최대 이미지 개수를 초과했습니다."),
     IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 이미지에 접근할 권한이 없습니다."),
-    INVALID_IMAGE_FILE(HttpStatus.FORBIDDEN, "유효하지 않는 파일 입니다."),
+//    IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "I004 이미지 업로드에 실패했습니다."),
+//    INVALID_IMAGE_FILE(HttpStatus.FORBIDDEN, "유효하지 않는 파일 입니다."),
     
     // 음성 샘플
     VOICE_SAMPLE_NOT_FOUND(HttpStatus.NOT_FOUND, "음성 샘플을 찾을 수 없습니다."),

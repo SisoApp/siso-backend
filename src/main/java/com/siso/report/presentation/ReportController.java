@@ -49,5 +49,4 @@ public class ReportController {
         reportService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
 }

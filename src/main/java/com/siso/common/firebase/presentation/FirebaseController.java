@@ -6,6 +6,7 @@ import com.siso.common.firebase.dto.FirebaseMessageRequestDto;
 import com.siso.common.firebase.dto.FcmTokenRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class FirebaseController {
      */
     @PostMapping("/token")
     @Operation(summary = "FCM 토큰 등록", description = "사용자의 FCM 토큰을 등록합니다.")
-    public ResponseEntity<String> registerToken(@RequestBody FcmTokenRequestDto requestDto) {
+    public ResponseEntity<String> registerToken(@Valid @RequestBody FcmTokenRequestDto requestDto) {
         try {
             // FCM 토큰 저장 또는 업데이트
             fcmTokenService.saveOrUpdateToken(
@@ -66,7 +67,7 @@ public class FirebaseController {
      */
     @DeleteMapping("/token")
     @Operation(summary = "FCM 토큰 해제", description = "사용자의 FCM 토큰을 비활성화합니다.")
-    public ResponseEntity<String> unregisterToken(@RequestBody FcmTokenRequestDto requestDto) {
+    public ResponseEntity<String> unregisterToken(@Valid @RequestBody FcmTokenRequestDto requestDto) {
         try {
             // FCM 토큰 비활성화
             fcmTokenService.deactivateToken(requestDto.getUserId(), requestDto.getToken());
@@ -87,7 +88,7 @@ public class FirebaseController {
      */
     @PostMapping("/sendMessage")
     @Operation(summary = "메시지 전송", description = "특정 사용자에게 푸시 알림을 전송합니다.")
-    public ResponseEntity<String> sendMessage(@RequestBody FirebaseMessageRequestDto requestDto) {
+    public ResponseEntity<String> sendMessage(@Valid @RequestBody FirebaseMessageRequestDto requestDto) {
         try {
             // userId로 활성화된 FCM 토큰들을 조회
             List<String> tokens = fcmTokenService.getActiveTokensByUserId(Long.valueOf(requestDto.getUserId()));

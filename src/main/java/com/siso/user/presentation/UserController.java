@@ -6,6 +6,7 @@ import com.siso.user.application.UserService;
 import com.siso.user.domain.model.User;
 import com.siso.user.dto.request.NotificationRequestDto;
 import com.siso.user.dto.response.UserResponseDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +29,7 @@ public class UserController {
     // 알림 동의 수정
     @PatchMapping("/notification")
     public SisoResponse<Void> updateNotificationSubscribed(@CurrentUser User user,
-                                                           @RequestBody NotificationRequestDto notificationRequestDto) {
+                                                           @Valid @RequestBody NotificationRequestDto notificationRequestDto) {
         userService.updateNotificationSubscribed(user, notificationRequestDto.isSubscribed());
         return SisoResponse.success(null);
     }
