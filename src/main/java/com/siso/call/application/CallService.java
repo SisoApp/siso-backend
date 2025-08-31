@@ -31,7 +31,7 @@ public class CallService {
                 .toList();
     }
 
-    // Call → CallResponseDto 변환
+    // Call → AgoraCallResponseDto 변환
     private CallResponseDto toResponseDto(Call call) {
         return new CallResponseDto(
                 true,

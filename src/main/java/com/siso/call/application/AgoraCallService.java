@@ -5,7 +5,8 @@ import com.siso.call.domain.model.CallStatus;
 import com.siso.call.domain.repository.CallRepository;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.CallInfoDto;
-import com.siso.call.dto.response.CallResponseDto;
+import com.siso.call.dto.response.AgoraCallResponseDto;
+import com.siso.call.dto.response.UserProfileDto;
 import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
 import com.siso.chat.domain.model.ChatRoomMember;
@@ -86,7 +87,7 @@ public class AgoraCallService {
     /**
      * 통화 수락
      */
-    public CallResponseDto acceptCall(CallInfoDto callInfoDto) {
+    public AgoraCallResponseDto acceptCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
         call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
         call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
@@ -100,7 +101,7 @@ public class AgoraCallService {
     /**
      * 통화 거절
      */
-    public CallResponseDto denyCall(CallInfoDto callInfoDto) {
+    public AgoraCallResponseDto denyCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
         call.updateCallStatus(CallStatus.DENY); // 통화 거절
         call.endCall();
@@ -112,7 +113,7 @@ public class AgoraCallService {
     /**
      * 통화 종료 → 이어가기 선택 시 채팅방 생성
      */
-    public CallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
+    public AgoraCallResponseDto endCall(CallInfoDto callInfoDto, boolean continueRelationship) {
         // 1. 통화 정보 조회
         Call call = getCall(callInfoDto.getId());
         User caller = findById(callInfoDto.getCallerId());
@@ -191,15 +192,17 @@ public class AgoraCallService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.CALL_NOT_FOUND));
     }
 
-    private CallResponseDto buildResponse(Call call, boolean accepted) {
-        return new CallResponseDto(
+    private AgoraCallResponseDto buildResponse(Call call, boolean accepted) {
+        return new AgoraCallResponseDto(
                 accepted,
                 call.getAgoraToken(),
                 call.getAgoraChannelName(),
                 call.getCaller().getId(),
                 call.getReceiver().getId(),
                 call.getCallStatus(),
-                call.getDuration()
+                call.getDuration(),
+                UserProfileDto.from(call.getCaller()),   // 발신자 프로필
+                UserProfileDto.from(call.getReceiver())  // 수신자 프로필
         );
     }
 }
