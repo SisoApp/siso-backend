@@ -8,6 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EditMessageRequestDto {
     private Long messageId;
-//    private Long senderId;
     private String newContent;
 }

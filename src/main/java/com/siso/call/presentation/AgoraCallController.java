@@ -19,9 +19,8 @@ public class AgoraCallController {
 
     // 1. 통화 요청
     @PostMapping("/request")
-    public SisoResponse<CallInfoDto> requestCall(@RequestParam(name = "userId") Long userId,
-                                                 @Valid @RequestBody CallRequestDto requestDto) throws Exception {
-        User caller = agoraCallService.findById(userId);
+    public SisoResponse<CallInfoDto> requestCall(@CurrentUser User caller,
+                                                 @Valid @RequestBody CallRequestDto requestDto) {
         CallInfoDto callInfo = agoraCallService.requestCall(caller, requestDto);
         return SisoResponse.success(callInfo);
     }

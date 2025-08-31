@@ -11,6 +11,7 @@ import com.siso.user.domain.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +45,7 @@ public class NotificationController {
     @Operation(summary = "알림 생성", description = "새로운 알림을 생성하고 FCM을 통해 전송합니다.")
     public SisoResponse<NotificationResponseDto> createNotification(
             @CurrentUser User user,
-            @RequestBody NotificationCreateRequestDto requestDto) {
+            @Valid @RequestBody NotificationCreateRequestDto requestDto) {
         String senderNickname = user.getUserProfile() != null ? 
             user.getUserProfile().getNickname() : "익명";
         

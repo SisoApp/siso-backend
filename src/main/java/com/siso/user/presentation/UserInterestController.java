@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/{userId}/interests")
+@RequestMapping("/api/interests")
 public class UserInterestController {
     private final UserInterestService userInterestService;
 

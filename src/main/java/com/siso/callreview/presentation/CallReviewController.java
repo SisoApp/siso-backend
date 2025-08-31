@@ -9,7 +9,6 @@ import com.siso.user.application.UserService;
 import com.siso.user.domain.model.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,7 +45,7 @@ public class CallReviewController {
 
     // 상대방이 받은 평가 목록 조회
     @GetMapping("/other/{userId}")
-    public SisoResponse<List<CallReviewResponseDto>> getReviewsOfOtherUser(@RequestParam Long userId) {
+    public SisoResponse<List<CallReviewResponseDto>> getReviewsOfOtherUser(@PathVariable Long userId) {
         User otherUser = userService.getUserById(userId);
         List<CallReviewResponseDto> reviews = callReviewService.getReviewsOfOtherUser(otherUser);
         return SisoResponse.success(reviews);
