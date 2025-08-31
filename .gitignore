@@ -47,7 +47,8 @@ logs/
 src/main/resources/application-secret.yml
 src/main/resources/application-local.yml
 src/main/resources/docker-compose.yml
-
+docker-compose.yml
+docker-compose.override.yml
 # SSL certificate
 keystore.p12
 .env
