@@ -7,7 +7,6 @@ import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.response.AgoraCallResponseDto;
 import com.siso.call.dto.response.UserProfileDto;
-import com.siso.chat.application.ChatRoomService;
 import com.siso.chat.domain.model.ChatRoom;
 import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.chat.domain.model.ChatRoomStatus;
@@ -36,7 +35,6 @@ public class AgoraCallService {
     private final CallRepository callRepository;
     private final AgoraTokenService agoraTokenService;
     private final AgoraChannelNameService agoraChannelNameService;
-    private final ChatRoomService chatRoomService;
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final NotificationService notificationService;
@@ -64,9 +62,6 @@ public class AgoraCallService {
         String channelName = agoraChannelNameService.generateChannelName(caller.getId(), receiverId);
         String token = agoraTokenService.generateToken(channelName, caller.getId());
 
-        // 최초 통화 여부 판단
-        boolean firstCall = callRepository.findFirstByCallerIdAndReceiverIdOrderByStartTimeAsc(caller.getId(), receiverId).isEmpty();
-
         Call call = Call.builder()
                 .caller(caller)
                 .receiver(receiver)
@@ -81,7 +76,7 @@ public class AgoraCallService {
         // 수신자에게 통화 알림 전송
         sendCallNotificationToReceiver(call, caller, receiverId);
 
-        return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId, firstCall);
+        return new CallInfoDto(call.getId(), channelName, token, caller.getId(), receiverId);
     }
 
     /**
@@ -89,16 +84,11 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto acceptCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.ACCEPT);
+        call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
+        call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
+        call.getReceiver().updatePresenceStatus(PresenceStatus.IN_CALL);    // 사용자 상태 통화 중으로 변경
+        call.startCall();
         callRepository.save(call);
-
-        // 발신자에게 "수락됨" 알림 전송
-        notificationService.sendCallAcceptedNotification(
-                call.getCaller().getId(),
-                call.getId(),
-                call.getAgoraChannelName(),
-                call.getAgoraToken()
-        );
 
         return buildResponse(call, true);
     }
@@ -108,15 +98,9 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto denyCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.DENY);
+        call.updateCallStatus(CallStatus.DENY); // 통화 거절
         call.endCall();
         callRepository.save(call);
-
-        // 발신자에게 "거절됨" 알림 보내기
-        notificationService.sendCallDeniedNotification(
-                call.getCaller().getId(),
-                call.getId()
-        );
 
         return buildResponse(call, false);
     }
@@ -135,8 +119,11 @@ public class AgoraCallService {
         call.updateCallStatus(CallStatus.ENDED);
         callRepository.save(call);
 
+        // caller 와 receiver 사이에 채팅방 존재 여부 확인
+        boolean chatRoomExists = chatRoomRepository.existsByMembers(caller, receiver);
+
         // 3. 최초 통화 + continueRelationship 처리
-        if (callInfoDto.isFirstCall() && continueRelationship) {
+        if (!chatRoomExists && continueRelationship) {
             // ChatRoom 생성 또는 기존 조회
             ChatRoom chatRoom = chatRoomRepository.findByCallId(call.getId())
                     .orElseGet(() -> chatRoomRepository.saveAndFlush(
@@ -163,10 +150,10 @@ public class AgoraCallService {
     private void sendCallNotificationToReceiver(Call call, User caller, Long receiverId) {
         try {
             // 발신자 닉네임 가져오기
-            String callerNickname = caller.getUserProfile() != null 
-                ? caller.getUserProfile().getNickname() 
-                : "익명";
-            
+            String callerNickname = caller.getUserProfile() != null
+                    ? caller.getUserProfile().getNickname()
+                    : "익명";
+
             // 발신자와 수신자가 다른 경우에만 알림 전송 (본인 제외)
             if (!caller.getId().equals(receiverId)) {
                 // 발신자 프로필 이미지 가져오기
@@ -176,15 +163,15 @@ public class AgoraCallService {
                         .orElse("");
 
                 notificationService.sendCallNotification(
-                    receiverId,
-                    caller.getId(),
-                    callerNickname,
-                    call.getId(),
-                    call.getAgoraChannelName(),
-                    call.getAgoraToken(),
-                    callerImage
+                        receiverId,
+                        caller.getId(),
+                        callerNickname,
+                        call.getId(),
+                        call.getAgoraChannelName(),
+                        call.getAgoraToken(),
+                        callerImage
                 );
-                log.info("Call notification with details sent to user: {} from caller: {}, callId: {}", 
+                log.info("Call notification with details sent to user: {} from caller: {}, callId: {}",
                         receiverId, caller.getId(), call.getId());
             } else {
                 log.warn("Attempted to send call notification to self: {}", caller.getId());
