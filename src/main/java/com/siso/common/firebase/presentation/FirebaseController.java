@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Firebase Cloud Messaging REST API 컨트롤러
@@ -37,10 +38,10 @@ public class FirebaseController {
 
     /**
      * FCM 토큰을 등록하거나 업데이트합니다.
-     * 
+     * <p>
      * 클라이언트 앱에서 FCM 토큰을 획득한 후 이 API를 호출하여 서버에 등록해야 합니다.
      * 동일한 사용자의 동일한 토큰이 이미 존재하는 경우 활성화 상태로 유지됩니다.
-     * 
+     *
      * @param requestDto FCM 토큰 등록 요청 데이터 (userId, token 포함)
      * @return 등록 성공/실패 메시지
      */
@@ -50,8 +51,8 @@ public class FirebaseController {
         try {
             // FCM 토큰 저장 또는 업데이트
             fcmTokenService.saveOrUpdateToken(
-                requestDto.getUserId(),
-                requestDto.getToken()
+                    requestDto.getUserId(),
+                    requestDto.getToken()
             );
             return ResponseEntity.ok("Token registered successfully");
         } catch (Exception e) {
@@ -61,10 +62,10 @@ public class FirebaseController {
 
     /**
      * FCM 토큰을 비활성화합니다.
-     * 
+     * <p>
      * 사용자가 로그아웃하거나 앱을 삭제할 때 호출되어야 합니다.
      * 토큰을 완전히 삭제하지 않고 비활성화 상태로 변경하여 더 이상 알림을 받지 않게 됩니다.
-     * 
+     *
      * @param requestDto FCM 토큰 해제 요청 데이터 (userId, token 포함)
      * @return 해제 성공/실패 메시지
      */
@@ -82,10 +83,10 @@ public class FirebaseController {
 
     /**
      * 특정 사용자에게 푸시 알림을 전송합니다.
-     * 
+     * <p>
      * 해당 사용자의 모든 활성화된 디바이스(FCM 토큰)에 푸시 알림을 전송합니다.
      * 사용자가 여러 디바이스를 사용하는 경우 모든 디바이스에 알림이 전송됩니다.
-     * 
+     *
      * @param requestDto 메시지 전송 요청 데이터 (userId, title, body 포함)
      * @return 전송 성공/실패 메시지 및 전송된 디바이스 수
      */
@@ -94,32 +95,39 @@ public class FirebaseController {
     public ResponseEntity<String> sendMessage(@Valid @RequestBody FirebaseMessageRequestDto requestDto) {
         try {
             Long userId = Long.valueOf(requestDto.getUserId());
-            
+
             // 사용자의 알림 구독 상태 확인
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("유저의 아이디를 찾을수 없습니다: " + userId));
-            
+
             if (!user.isNotificationSubscribed()) {
                 return ResponseEntity.badRequest().body("유저가 알림을 차단하였습니다: " + requestDto.getUserId());
             }
-            
-            // userId로 활성화된 FCM 토큰들을 조회
+
+            // userId로 활성화된 FCM 토큰 조회
             List<String> tokens = fcmTokenService.getActiveTokensByUserId(userId);
-            
-            // 활성화된 토큰이 없는 경우 에러 응답
             if (tokens.isEmpty()) {
                 return ResponseEntity.badRequest().body("유효한 FCM 토큰이 없습니다: " + requestDto.getUserId());
             }
 
-            // FCM을 통해 멀티캐스트 메시지 전송
-            firebaseService.sendMulticast(
-                tokens,
-                requestDto.getTitle(),
-                requestDto.getBody(),
-                "", // URL - 딥링크가 필요한 경우 추가
-                "MESSAGE", // 알림 타입
-                System.currentTimeMillis() + "" // 알림 고유 ID
+            // URL/extraData는 선택값일 수 있으므로 null-safe
+            String url = (requestDto.getUrl() == null || requestDto.getUrl().isBlank())
+                    ? null
+                    : requestDto.getUrl();
+
+            Map<String, String> extraData = requestDto.getExtraData(); // 없으면 null 가능
+
+            // FirebaseService의 새로운 시그니처에 맞춰 전송
+            firebaseService.sendNotification(
+                    tokens,
+                    requestDto.getTitle(),
+                    requestDto.getBody(),
+                    "MESSAGE",                           // type
+                    String.valueOf(System.currentTimeMillis()), // notificationId (임시 고유값)
+                    url,
+                    extraData
             );
+
             return ResponseEntity.ok("Message sent successfully to " + tokens.size() + " devices");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Failed to send message: " + e.getMessage());

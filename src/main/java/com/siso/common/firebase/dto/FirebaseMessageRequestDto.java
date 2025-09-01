@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * Firebase 메시지 전송 요청 데이터 전송 객체 (DTO)
  * 
@@ -39,4 +41,11 @@ public class FirebaseMessageRequestDto{
      */
     @Schema(description = "메시지 내용", example = "김철수님과 매칭되었습니다.")
     private String body;
+
+    @Schema(description = "경로")
+    private String url;
+
+    @Schema(description = "읽음 상태")
+    private Map<String, String> extraData;
+
 }
