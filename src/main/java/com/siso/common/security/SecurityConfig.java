@@ -53,6 +53,8 @@ public class SecurityConfig {
                                         "/api/images/**",
                                         "/api/reports/**",
                                         "/api/profiles/**",
+                                        "/api/filter/**",
+                                        "/api/fcm/**",
                                         "/api/voice-samples/**",
                                         "/api/call-reviews/**",
                                         "/api/notifications/**",
