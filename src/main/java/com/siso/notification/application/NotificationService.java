@@ -15,24 +15,31 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
-    
+
     private final NotificationRepository notificationRepository;
     private final FirebaseService firebaseService;
     private final FcmTokenService fcmTokenService;
     private final UserRepository userRepository;
-    
+
     /**
      * 알림을 생성하고 FCM을 통해 푸시 알림을 전송합니다.
      */
     @Transactional
-    public Notification createAndSendNotification(Long receiverId, Long senderId, String senderNickname,
-                                                String title, String message, String url, NotificationType type) {
+    public Notification createAndSendNotification(Long receiverId,
+                                                  Long senderId,
+                                                  String senderNickname,
+                                                  String title,
+                                                  String message,
+                                                  String url,
+                                                  NotificationType type,
+                                                  Map<String, String> extraData) {
         try {
             // 1. 데이터베이스에 알림 저장
             Notification notification = Notification.builder()
@@ -45,49 +52,48 @@ public class NotificationService {
                     .type(type)
                     .isRead(false)
                     .build();
-            
+
             notification = notificationRepository.save(notification);
             log.info("Notification saved to database with ID: {}", notification.getId());
-            
+
             // 2. 사용자의 알림 구독 상태 확인
             User receiver = userRepository.findById(receiverId)
                     .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + receiverId));
-            
+
             if (!receiver.isNotificationSubscribed()) {
                 log.info("User {} has disabled notifications, skipping FCM send", receiverId);
                 return notification;
             }
-            
+
             // 3. FCM 토큰 조회
             List<String> tokens = fcmTokenService.getActiveTokensByUserId(receiverId);
-            
             if (tokens.isEmpty()) {
                 log.warn("No active FCM tokens found for user: {}", receiverId);
                 return notification;
             }
-            
-            // 4. FCM 푸시 알림 전송
-            firebaseService.sendMulticast(
-                tokens,
-                title,
-                message,
-                url,
-                type.name(),
-                String.valueOf(notification.getId())
+
+            // 4. FCM 푸시 알림 전송 (통화/메시지/매칭 모두 동일 메소드 사용)
+            firebaseService.sendNotification(
+                    tokens,
+                    title,
+                    message,
+                    type.name(),
+                    String.valueOf(notification.getId()),
+                    url,
+                    extraData
             );
-            
+
             log.info("Notification sent successfully to user: {} with {} tokens", receiverId, tokens.size());
             return notification;
-            
+
         } catch (Exception e) {
             log.error("Failed to send notification to user: {}", receiverId, e);
             throw e;
         }
     }
-    
-    /**
-     * 특정 사용자의 모든 알림을 조회합니다.
-     */
+
+    // ========================= 조회/읽음 처리 =========================
+
     @Transactional(readOnly = true)
     public List<NotificationResponseDto> getNotificationsByUserId(Long userId) {
         List<Notification> notifications = notificationRepository.findByReceiverIdOrderByCreatedAtDesc(userId);
@@ -95,10 +101,7 @@ public class NotificationService {
                 .map(NotificationResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
-    
-    /**
-     * 특정 사용자의 읽지 않은 알림을 조회합니다.
-     */
+
     @Transactional(readOnly = true)
     public List<NotificationResponseDto> getUnreadNotificationsByUserId(Long userId) {
         List<Notification> notifications = notificationRepository.findByReceiverIdAndIsReadFalseOrderByCreatedAtDesc(userId);
@@ -106,10 +109,7 @@ public class NotificationService {
                 .map(NotificationResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
-    
-    /**
-     * 특정 사용자의 읽지 않은 알림 개수를 조회합니다.
-     */
+
     @Transactional(readOnly = true)
     public UnreadCountResponseDto getUnreadCount(Long userId) {
         long count = notificationRepository.countUnreadByReceiverId(userId);
@@ -117,10 +117,7 @@ public class NotificationService {
                 .unreadCount(count)
                 .build();
     }
-    
-    /**
-     * 특정 알림을 읽음 처리합니다.
-     */
+
     @Transactional
     public void markAsRead(Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
@@ -129,101 +126,97 @@ public class NotificationService {
         notificationRepository.save(notification);
         log.info("Notification marked as read: {}", notificationId);
     }
-    
-    /**
-     * 특정 사용자의 모든 알림을 읽음 처리합니다.
-     */
+
     @Transactional
     public void markAllAsRead(Long userId) {
         notificationRepository.markAllAsReadByReceiverId(userId);
         log.info("All notifications marked as read for user: {}", userId);
     }
-    
-    /**
-     * 매칭 알림을 전송합니다.
-     */
+
+    // ========================= 알림 전송 편의 메소드 =========================
+
     public Notification sendMatchingNotification(Long receiverId, Long senderId, String senderNickname) {
         String title = "새로운 매칭!";
         String message = senderNickname + "님과 매칭되었습니다.";
-        String url = "/matching/" + senderId; // 매칭 상세 페이지 URL
-        
-        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url, NotificationType.MATCHING);
+        String url = "/matching/" + senderId;
+
+        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url,
+                NotificationType.MATCHING, null);
     }
-    
-        /**
-     * 메시지 알림을 전송합니다.
-     */
+
     public Notification sendMessageNotification(Long receiverId, Long senderId, String senderNickname, String messageContent) {
         String title = senderNickname + "님의 메시지";
         String message = messageContent.length() > 50 ? messageContent.substring(0, 50) + "..." : messageContent;
-        String url = "/chat/" + senderId; // 채팅 페이지 URL
+        String url = "/chat/" + senderId;
 
-        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url, NotificationType.MESSAGE);
+        Map<String, String> extraData = Map.of(
+                "senderId", String.valueOf(senderId),
+                "chatRoomId", String.valueOf(senderId) // 1:1 채팅에서는 senderId를 채팅방 ID로 사용
+        );
+
+        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url,
+                NotificationType.MESSAGE, extraData);
+    }
+
+    public Notification sendCallNotification(Long receiverId, Long senderId, String senderNickname,
+                                             Long callId, String channelName, String agoraToken, String callerImage) {
+        String title = "통화 요청";
+        String message = senderNickname + "님이 통화를 요청했습니다.";
+        String url = "/call/" + callId;
+
+        Map<String, String> extraData = Map.of(
+                "callId", String.valueOf(callId),
+                "agoraChannel", channelName,
+                "agoraToken", agoraToken,
+                "callerId", String.valueOf(senderId),
+                "callerName", senderNickname,
+                "callerImage", callerImage,
+                "timestamp", String.valueOf(System.currentTimeMillis())
+        );
+
+        return createAndSendNotification(receiverId, senderId, senderNickname, title, message, url,
+                NotificationType.CALL, extraData);
+    }
+
+    // ========================= 수락/거절 알림 =========================
+
+    /**
+     * 발신자에게 수신자가 통화를 수락했음을 알림
+     */
+    public Notification sendCallAcceptedNotification(Long receiverId, Long callId,
+                                                     String channelName, String agoraToken) {
+        String title = "통화 수락";
+        String message = "상대방이 통화를 수락했습니다.";
+        String url = "/call/" + callId;
+
+        Map<String, String> extraData = Map.of(
+                "callId", String.valueOf(callId),
+                "agoraChannel", channelName,
+                "agoraToken", agoraToken,
+                "status", "ACCEPT",
+                "timestamp", String.valueOf(System.currentTimeMillis())
+        );
+
+        // senderNickname은 null 또는 "시스템" 등으로 처리
+        return createAndSendNotification(receiverId, null, "시스템", title, message, url,
+                NotificationType.CALL, extraData);
     }
 
     /**
-     * 통화 알림을 전송합니다.
-     * 클라이언트가 바로 통화에 참여할 수 있도록 필요한 모든 정보를 포함합니다.
+     * 발신자에게 수신자가 통화를 거절했음을 알림
      */
-    @Transactional
-    public Notification sendCallNotification(Long receiverId, Long senderId, String senderNickname,
-                                             Long callId, String channelName, String agoraToken, String callerImage) {
-        try {
-            // 1. 데이터베이스에 알림 저장
-            String title = "통화 요청";
-            String message = senderNickname + "님이 통화를 요청했습니다.";
-            String url = "/call/" + callId;
-            
-            Notification notification = Notification.builder()
-                    .receiverId(receiverId)
-                    .senderId(senderId)
-                    .senderNickname(senderNickname)
-                    .title(title)
-                    .message(message)
-                    .url(url)
-                    .type(NotificationType.CALL)
-                    .isRead(false)
-                    .build();
-            
-            notification = notificationRepository.save(notification);
-            log.info("Call notification saved to database with ID: {}", notification.getId());
-            
-            // 2. 사용자의 알림 구독 상태 확인
-            User receiver = userRepository.findById(receiverId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + receiverId));
-            
-            if (!receiver.isNotificationSubscribed()) {
-                log.info("User {} has disabled notifications, skipping call FCM send", receiverId);
-                return notification;
-            }
-            
-            // 3. FCM 토큰 조회
-            List<String> tokens = fcmTokenService.getActiveTokensByUserId(receiverId);
-            
-            if (tokens.isEmpty()) {
-                log.warn("No active FCM tokens found for user: {}", receiverId);
-                return notification;
-            }
-            
-            // 4. 통화 정보를 포함한 FCM 푸시 알림 전송
-            firebaseService.sendCallNotificationWithDetails(
-                tokens,
-                title,
-                message,
-                String.valueOf(callId),
-                channelName,
-                agoraToken,
-                String.valueOf(senderId),
-                senderNickname,
-                callerImage
-            );
-            
-            log.info("Call notification with details sent successfully to user: {} with {} tokens", receiverId, tokens.size());
-            return notification;
-            
-        } catch (Exception e) {
-            log.error("Failed to send call notification with details to user: {}", receiverId, e);
-            throw e;
-        }
+    public Notification sendCallDeniedNotification(Long receiverId, Long callId) {
+        String title = "통화 거절";
+        String message = "상대방이 통화를 거절했습니다.";
+        String url = "/call/" + callId;
+
+        Map<String, String> extraData = Map.of(
+                "callId", String.valueOf(callId),
+                "status", "DENY",
+                "timestamp", String.valueOf(System.currentTimeMillis())
+        );
+
+        return createAndSendNotification(receiverId, null, "시스템", title, message, url,
+                NotificationType.CALL, extraData);
     }
 }

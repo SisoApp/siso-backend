@@ -56,7 +56,8 @@ public class NotificationController {
                 requestDto.getTitle(),
                 requestDto.getMessage(),
                 requestDto.getUrl(),
-                requestDto.getType()
+                requestDto.getType(),
+                null // extraData가 필요 없으므로 null 전달
         );
         return SisoResponse.success(NotificationResponseDto.fromEntity(notification));
     }

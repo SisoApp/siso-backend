@@ -89,11 +89,16 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto acceptCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
-        call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
-        call.getReceiver().updatePresenceStatus(PresenceStatus.IN_CALL);    // 사용자 상태 통화 중으로 변경
-        call.startCall();
+        call.updateCallStatus(CallStatus.ACCEPT);
         callRepository.save(call);
+
+        // 발신자에게 "수락됨" 알림 전송
+        notificationService.sendCallAcceptedNotification(
+                call.getCaller().getId(),
+                call.getId(),
+                call.getAgoraChannelName(),
+                call.getAgoraToken()
+        );
 
         return buildResponse(call, true);
     }
@@ -103,9 +108,15 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto denyCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.DENY); // 통화 거절
+        call.updateCallStatus(CallStatus.DENY);
         call.endCall();
         callRepository.save(call);
+
+        // 발신자에게 "거절됨" 알림 보내기
+        notificationService.sendCallDeniedNotification(
+                call.getCaller().getId(),
+                call.getId()
+        );
 
         return buildResponse(call, false);
     }
