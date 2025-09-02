@@ -60,7 +60,7 @@ public class AgoraCallService {
 
         // Agora 채널 생성
         String channelName = agoraChannelNameService.generateChannelName(caller.getId(), receiverId);
-        String token = agoraTokenService.generateToken(channelName, caller.getId());
+        String token = agoraTokenService.generateToken(channelName);
 
         Call call = Call.builder()
                 .caller(caller)
