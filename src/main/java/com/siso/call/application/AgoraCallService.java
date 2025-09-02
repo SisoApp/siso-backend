@@ -80,15 +80,51 @@ public class AgoraCallService {
     }
 
     /**
+     * 발신자가 수신자가 받기 전에 통화를 취소
+     */
+    public AgoraCallResponseDto cancelCall(Long callId, Long callerId) {
+        Call call = getCall(callId);
+
+        // 요청 상태가 아니면 취소 불가
+        if (call.getCallStatus() != CallStatus.REQUESTED) {
+            throw new ExpectedException(ErrorCode.INVALID_CALL_STATE);
+        }
+
+        // 본인만 취소 가능
+        if (!call.getCaller().getId().equals(callerId)) {
+            throw new ExpectedException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 상태 업데이트
+        call.updateCallStatus(CallStatus.CANCELED);
+        call.endCall();
+        callRepository.save(call);
+
+        // 수신자에게 취소 알림 보내기
+        notificationService.sendCallCanceledNotification(
+                call.getReceiver().getId(),
+                callerId,
+                call.getId()
+        );
+
+        return buildResponse(call, false);
+    }
+
+    /**
      * 통화 수락
      */
     public AgoraCallResponseDto acceptCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.ACCEPT); // 통화 수락
-        call.getCaller().updatePresenceStatus(PresenceStatus.IN_CALL);      // 사용자 상태 통화 중으로 변경
-        call.getReceiver().updatePresenceStatus(PresenceStatus.IN_CALL);    // 사용자 상태 통화 중으로 변경
-        call.startCall();
+        call.updateCallStatus(CallStatus.ACCEPT);
         callRepository.save(call);
+
+        // 발신자에게 "수락됨" 알림 전송
+        notificationService.sendCallAcceptedNotification(
+                call.getCaller().getId(),
+                call.getId(),
+                call.getAgoraChannelName(),
+                call.getAgoraToken()
+        );
 
         return buildResponse(call, true);
     }
@@ -98,9 +134,15 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto denyCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.DENY); // 통화 거절
+        call.updateCallStatus(CallStatus.DENY);
         call.endCall();
         callRepository.save(call);
+
+        // 발신자에게 "거절됨" 알림 보내기
+        notificationService.sendCallDeniedNotification(
+                call.getCaller().getId(),
+                call.getId()
+        );
 
         return buildResponse(call, false);
     }

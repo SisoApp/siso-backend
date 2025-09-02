@@ -34,6 +34,7 @@ public enum ErrorCode {
     // 통화
     CALL_NOT_FOUND(HttpStatus.NOT_FOUND, "통화 정보가 없습니다."),
     USER_IN_CALL(HttpStatus.FORBIDDEN, "사용자가 이미 통화 중입니다."),
+    INVALID_CALL_STATE(HttpStatus.BAD_REQUEST, "현재 상태에서는 통화 요청을 처리할 수 없습니다."),
 
     // 채팅방
     CHATROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
