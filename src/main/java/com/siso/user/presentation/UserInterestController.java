@@ -39,7 +39,7 @@ public class UserInterestController {
                 .map(UserInterestRequestDto::getInterest)
                 .collect(Collectors.toList());
 
-        userInterestService.selectUserInterest(user, interests);
+        userInterestService.selectUserInterest(user.getId(), interests);
         return SisoResponse.success(null);
     }
 
@@ -51,7 +51,7 @@ public class UserInterestController {
                 .map(UserInterestRequestDto::getInterest) // enum 그대로 꺼내옴
                 .collect(Collectors.toList());
 
-        userInterestService.updateUserInterest(user, interests);
+        userInterestService.updateUserInterest(user.getId(), interests);
         return SisoResponse.success(null);
     }
 }

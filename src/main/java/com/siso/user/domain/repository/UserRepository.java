@@ -33,4 +33,11 @@ public interface UserRepository extends Repository<User, Long> {
     Optional<User> findByEmail(@Param("email")String email);
 
     Optional<User> findByRefreshToken(String refreshToken);
+
+    @Query("""
+        select u from User u
+        left join fetch u.userInterests ui
+        where u.id = :id
+    """)
+    Optional<User> findByIdWithInterests(@Param("id") Long id);
 }
