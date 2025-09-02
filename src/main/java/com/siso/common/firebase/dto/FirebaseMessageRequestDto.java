@@ -9,10 +9,10 @@ import java.util.Map;
 
 /**
  * Firebase 메시지 전송 요청 데이터 전송 객체 (DTO)
- * 
+ *
  * 특정 사용자에게 FCM 푸시 알림을 전송할 때 사용되는 요청 데이터를 담습니다.
  * REST API의 Request Body로 사용됩니다.
- * 
+ *
  * @author SISO Team
  * @since 1.0
  */

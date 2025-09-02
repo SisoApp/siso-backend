@@ -18,11 +18,11 @@ import java.util.Map;
 
 /**
  * Firebase Cloud Messaging REST API 컨트롤러
- * 
+ *
  * FCM 토큰 관리와 푸시 알림 전송을 위한 REST API 엔드포인트를 제공합니다.
  * 클라이언트 앱(Android/iOS)에서 FCM 토큰을 등록/해제하고,
  * 서버에서 특정 사용자에게 푸시 알림을 전송할 수 있습니다.
- * 
+ *
  * @author SISO Team
  * @since 1.0
  */

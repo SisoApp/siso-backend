@@ -10,10 +10,10 @@ import java.util.Map;
 
 /**
  * Firebase Cloud Messaging (FCM) 서비스 클래스
- * 
+ *
  * FCM을 통해 Android/iOS 디바이스에 푸시 알림을 전송하는 기능을 제공합니다.
  * 여러 디바이스에 동시에 알림을 전송할 수 있는 멀티캐스트 메시징을 지원합니다.
- * 
+ *
  * @author SISO Team
  * @since 1.0
  */
@@ -68,14 +68,14 @@ public class FirebaseService {
      * 클라이언트가 바로 통화에 참여할 수 있도록 필요한 모든 정보를 포함합니다.
      */
     public void sendCallNotificationWithDetails(Collection<String> tokens,
-                                               String title,
-                                               String body,
-                                               String callId,
-                                               String channelName,
-                                               String agoraToken,
-                                               String callerId,
-                                               String callerNickname,
-                                               String callerImage) {
+                                                String title,
+                                                String body,
+                                                String callId,
+                                                String channelName,
+                                                String agoraToken,
+                                                String callerId,
+                                                String callerNickname,
+                                                String callerImage) {
         if (tokens == null || tokens.isEmpty()) {
             log.warn("No FCM tokens provided for call notification");
             return;
@@ -102,7 +102,7 @@ public class FirebaseService {
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
             log.info("Call notification with details sent: success={}, failure={}", response.getSuccessCount(), response.getFailureCount());
-            
+
             if (response.getFailureCount() > 0) {
                 log.warn("FCM send failed for {} tokens", response.getFailureCount());
             }

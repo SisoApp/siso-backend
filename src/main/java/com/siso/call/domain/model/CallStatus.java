@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public enum CallStatus {
-    REQUESTED("통화 요청"),
+    REQUESTED("요청"),
+    CANCELED("취소"),
     ACCEPT("승낙"),
     DENY("거절"),
-    ENDED("통화 종료");
+    ENDED("종료");
 
     private String callStatus;
 

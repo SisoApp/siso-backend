@@ -178,7 +178,34 @@ public class NotificationService {
                 NotificationType.CALL, extraData);
     }
 
-    // ========================= 수락/거절 알림 =========================
+    // ========================= 취소/수락/거절 알림 =========================
+
+    /**
+     * 수신자에게 발신자가 통화를 취소했음을 알림
+     */
+    public Notification sendCallCanceledNotification(Long receiverId, Long callerId, Long callId) {
+        String title = "통화 취소";
+        String message = "상대방이 통화를 취소했습니다.";
+        String url = "/call/" + callId;
+
+        Map<String, String> extraData = Map.of(
+                "callId", String.valueOf(callId),
+                "callerId", String.valueOf(callerId),
+                "status", "CANCELED",
+                "timestamp", String.valueOf(System.currentTimeMillis())
+        );
+
+        return createAndSendNotification(
+                receiverId,
+                callerId,
+                "시스템",
+                title,
+                message,
+                url,
+                NotificationType.CALL,
+                extraData
+        );
+    }
 
     /**
      * 발신자에게 수신자가 통화를 수락했음을 알림
