@@ -25,19 +25,18 @@ public class AgoraTokenService {
     }
 
     // Token 발급
-    public String generateToken(String channelName, Long userId) {
-        log.debug("Generating token with appId={}, appCertificate set={}, channelName={}, uid={}",
+    public String generateToken(String channelName) {
+        log.debug("Generating token with appId={}, appCertificate set={}, channelName={}",
                 appId,
                 appCertificate != null && !appCertificate.isEmpty(),
-                channelName,
-                userId);
+                channelName);
 
         RtcTokenBuilder2 tokenBuilder = new RtcTokenBuilder2();
         String token = tokenBuilder.buildTokenWithUid(
                 appId,
                 appCertificate,
                 channelName,
-                userId.intValue(),
+                0,
                 RtcTokenBuilder2.Role.ROLE_PUBLISHER,
                 TOKEN_EXPIRATION,
                 TOKEN_EXPIRATION
