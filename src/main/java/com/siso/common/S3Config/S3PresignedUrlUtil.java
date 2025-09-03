@@ -26,8 +26,8 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class S3PresignedUrlUtil {
 
-//    @Value("${aws.s3.bucket}") // 로컬용
-    @Value("${cloud.aws.s3.bucket}") // 배포용
+    @Value("${aws.s3.bucket}") // 로컬용
+//    @Value("${cloud.aws.s3.bucket}") // 배포용
     private String bucket;
 
     private final S3Client s3Client;
@@ -36,10 +36,10 @@ public class S3PresignedUrlUtil {
      * 이미지 파일용 Presigned GET URL 생성
      * 
      * @param key S3 객체 키
-     * @return presigned GET URL (15분 유효)
+     * @return presigned GET URL (5분 유효)
      */
     public String generatePresignedGetUrl(String key) {
-        return generatePresignedGetUrl(key, Duration.ofMinutes(15));
+        return generatePresignedGetUrl(key, Duration.ofMinutes(5));
     }
 
     /**

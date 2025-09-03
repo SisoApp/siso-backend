@@ -30,20 +30,22 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * ImageService — S3 업로드/교체/삭제까지 일원화 + Presigned URL 자동 관리
- * 클라이언트 API 호출 최소화를 위한 서버 사이드 URL 관리
+ * ImageTestService — 테스트용 이미지 서비스
+ * 
+ * 테스트 환경에서 사용할 수 있는 이미지 관련 기능을 제공합니다.
+ * @CurrentUser 없이 userId를 직접 받아서 처리합니다.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ImageService {
+public class ImageTestService {
 
     // === 의존성 주입 ===
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;
     private final UserValidationUtil userValidationUtil;
-    private final ImageProperties imageProperties; // maxImagesPerUser 등 사용
+    private final ImageProperties imageProperties;
     
     // S3 유틸리티 클래스들
     private final S3UploadUtil s3UploadUtil;
@@ -53,17 +55,25 @@ public class ImageService {
     private final ImageCountValidationUtil imageCountValidationUtil;
     private final PresignedUrlManagementUtil presignedUrlManagementUtil;
 
-    // ===================== 공개 API 메서드들 =====================
+    // ===================== 테스트용 API 메서드들 =====================
+
+    /**
+     * 간단한 테스트용 메서드 (의존성 문제 확인용)
+     */
+    public String testSimple() {
+        log.info("=== ImageTestService.testSimple() 호출됨 ===");
+        return "ImageTestService 정상 작동!";
+    }
 
     public User findById(Long userId) {
+        log.info("=== ImageTestService.findById() 호출됨 - userId: {} ===", userId);
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
 
-    /** 다중 이미지 업로드 (S3) + Presigned URL 자동 생성 */
+    /** 테스트용 다중 이미지 업로드 (S3) + Presigned URL 자동 생성 */
     @Transactional
-    public List<ImageResponseDto> uploadMultipleImages(List<MultipartFile> files, ImageRequestDto request) {
-        Long userId = request.getUserId();
+    public List<ImageResponseDto> uploadMultipleImagesForTest(List<MultipartFile> files, Long userId) {
         User user = findById(userId);
 
         userValidationUtil.validateUserExists(userId);
@@ -96,19 +106,19 @@ public class ImageService {
 
             uploaded.add(ImageResponseDto.fromEntity(saved));
         }
-        log.info("다중 이미지 업로드 완료 - 사용자: {}, 업로드된 파일 수: {}", userId, uploaded.size());
+        log.info("테스트용 다중 이미지 업로드 완료 - 사용자: {}, 업로드된 파일 수: {}", userId, uploaded.size());
         return uploaded;
     }
 
-    /** 특정 사용자의 이미지 목록 조회 (Presigned URL 포함) */
-    public List<ImageResponseDto> getImagesByUserId(Long userId) {
+    /** 테스트용 특정 사용자의 이미지 목록 조회 (Presigned URL 포함) */
+    public List<ImageResponseDto> getImagesByUserIdForTest(Long userId) {
         List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
         
         return images.stream()
                 .map(image -> {
                     // Presigned URL이 없거나 만료된 경우 자동으로 새로 생성
                     if (!image.isPresignedUrlValid()) {
-                        log.info("만료된 Presigned URL 자동 갱신 - imageId: {}", image.getId());
+                        log.info("테스트용 만료된 Presigned URL 자동 갱신 - imageId: {}", image.getId());
                         presignedUrlManagementUtil.generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
                     }
                     return ImageResponseDto.fromEntity(image);
@@ -116,8 +126,8 @@ public class ImageService {
                 .collect(Collectors.toList());
     }
 
-    /** 특정 사용자의 이미지 목록 조회 (Presigned URL만 포함, 경량화) */
-    public List<ImageResponseDto> getImagesByUserIdLightweight(Long userId) {
+    /** 테스트용 특정 사용자의 이미지 목록 조회 (Presigned URL만 포함, 경량화) */
+    public List<ImageResponseDto> getImagesByUserIdLightweightForTest(Long userId) {
         List<Image> images = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
         
         return images.stream()
@@ -140,8 +150,8 @@ public class ImageService {
                 .collect(Collectors.toList());
     }
 
-    /** 이미지 단일 조회 (Presigned URL 포함) */
-    public ImageResponseDto getImage(Long id) {
+    /** 테스트용 이미지 단일 조회 (Presigned URL 포함) */
+    public ImageResponseDto getImageForTest(Long id) {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
         
@@ -153,10 +163,9 @@ public class ImageService {
         return ImageResponseDto.fromEntity(image);
     }
 
-    /** 이미지 수정 (S3 파일 교체) + Presigned URL 재생성 */
+    /** 테스트용 이미지 수정 (S3 파일 교체) + Presigned URL 재생성 */
     @Transactional
-    public ImageResponseDto updateImage(Long id, MultipartFile file, ImageRequestDto request) {
-        Long userId = request.getUserId();
+    public ImageResponseDto updateImageForTest(Long id, MultipartFile file, Long userId) {
         Image existing = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
 
@@ -182,13 +191,13 @@ public class ImageService {
         // Presigned URL 재생성
         presignedUrlManagementUtil.generateAndSavePresignedUrl(existing, PresignedUrlType.DEFAULT);
         
-        log.info("이미지 파일 교체 완료 - id: {}, oldKey: {}, newKey: {}", id, oldKey, newKey);
+        log.info("테스트용 이미지 파일 교체 완료 - id: {}, oldKey: {}, newKey: {}", id, oldKey, newKey);
         return ImageResponseDto.fromEntity(existing);
     }
 
-    /** 이미지 삭제 (S3 + DB) */
+    /** 테스트용 이미지 삭제 (S3 + DB) */
     @Transactional
-    public void deleteImage(Long id) {
+    public void deleteImageForTest(Long id) {
         Image image = imageRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.IMAGE_NOT_FOUND));
 
@@ -196,27 +205,57 @@ public class ImageService {
         s3DeleteUtil.safeDeleteS3(key);
 
         imageRepository.delete(image);
-        log.info("이미지 삭제 완료 - ID: {}, key: {}", id, key);
+        log.info("테스트용 이미지 삭제 완료 - ID: {}, key: {}", id, key);
     }
 
-    // ===================== Presigned URL 자동 관리 메서드들 =====================
 
     /**
-     * 만료된 Presigned URL들을 일괄 갱신
-     */
-    @Transactional
-    public void refreshExpiredPresignedUrls() {
-        presignedUrlManagementUtil.refreshExpiredPresignedUrls();
-    }
-
-    /**
-     * 특정 사용자의 만료된 Presigned URL들을 일괄 갱신
+     * 테스트용 특정 사용자의 만료된 Presigned URL들을 일괄 갱신
      * 
      * @param userId Presigned URL을 갱신할 사용자 ID
      * @return 갱신된 이미지 수
      */
     @Transactional
-    public int refreshExpiredPresignedUrlsByUserId(Long userId) {
-        return presignedUrlManagementUtil.refreshExpiredPresignedUrlsByUserId(userId);
+    public int refreshExpiredPresignedUrlsByUserIdForTest(Long userId) {
+        return presignedUrlManagementUtil.refreshExpiredPresignedUrlsByUserIdForTest(userId);
+    }
+
+    /**
+     * Presigned URL 상태 확인 (디버깅용)
+     * 
+     * @param userId 확인할 사용자 ID
+     * @return Presigned URL 상태 정보 문자열
+     */
+    public String checkPresignedUrlStatus(Long userId) {
+        log.info("=== Presigned URL 상태 확인 시작 - userId: {} ===", userId);
+        try {
+            List<Image> userImages = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
+            StringBuilder statusInfo = new StringBuilder();
+            statusInfo.append("=== 사용자 ").append(userId).append("의 Presigned URL 상태 ===\n");
+            statusInfo.append("현재 시간: ").append(LocalDateTime.now()).append("\n");
+            statusInfo.append("이미지 개수: ").append(userImages.size()).append("\n\n");
+
+            for (Image image : userImages) {
+                LocalDateTime now = LocalDateTime.now();
+                boolean isValid = image.isPresignedUrlValid();
+
+                statusInfo.append("이미지 ID: ").append(image.getId()).append("\n");
+                statusInfo.append("  - Presigned URL: ").append(image.getPresignedUrl() != null ? "있음" : "없음").append("\n");
+                statusInfo.append("  - 만료 시간: ").append(image.getPresignedUrlExpiresAt()).append("\n");
+                statusInfo.append("  - 현재 시간: ").append(now).append("\n");
+                statusInfo.append("  - 유효 여부: ").append(isValid ? "유효" : "만료").append("\n");
+
+                if (image.getPresignedUrlExpiresAt() != null) {
+                    long minutesUntilExpiry = java.time.Duration.between(now, image.getPresignedUrlExpiresAt()).toMinutes();
+                    statusInfo.append("  - 만료까지 남은 시간: ").append(minutesUntilExpiry).append("분\n");
+                }
+                statusInfo.append("\n");
+            }
+            log.info("Presigned URL 상태 확인 완료");
+            return statusInfo.toString();
+        } catch (Exception e) {
+            log.error("Presigned URL 상태 확인 중 오류 발생: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 }

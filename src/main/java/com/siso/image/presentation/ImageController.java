@@ -115,10 +115,22 @@ public class ImageController {
     }
 
     /**
+     * 사용자별 이미지 목록 조회 API (경량화)
+     * 
+     * Presigned URL만 포함하여 반환합니다. 매칭 시스템에서 사용하기 적합합니다.
+     * Presigned URL이 만료된 경우 자동으로 새로 생성됩니다.
+     */
+    @GetMapping("/me/lightweight")
+    public ResponseEntity<List<ImageResponseDto>> getImagesByUserIdLightweight(@CurrentUser User user) {
+        List<ImageResponseDto> response = imageService.getImagesByUserIdLightweight(user.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * 이미지 단일 조회 API
      */
     @GetMapping("/{imageId}")
-    public ResponseEntity<ImageResponseDto> getImage(@PathVariable(name = "imageId") Long imageId) {
+    public ResponseEntity<ImageResponseDto> getImage(@CurrentUser User user, @PathVariable(name = "imageId") Long imageId) {
 
         ImageResponseDto response = imageService.getImage(imageId);
         return ResponseEntity.ok(response);
@@ -147,115 +159,24 @@ public class ImageController {
         return ResponseEntity.noContent().build();
     }
 
-    // 테스트용 이미지 업로드 API (userId path variable)
-    @Operation(summary = "테스트용 다중 이미지 업로드")
-    @PostMapping(value = "/upload/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadImagesForTest(@RequestPart(value = "files") List<MultipartFile> files,
-                                                 @PathVariable Long userId) {
-        ImageRequestDto request = new ImageRequestDto(userId);
-
-        // 1) 파일 입력 검증
-        if (files == null || files.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "업로드할 파일이 없습니다.");
-        }
-
-        // 2) 파일 개수 제한 확인 (최대 5개)
-        if (files.size() > imageProperties.getMaxImagesPerUser()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "한 번에 최대 " + imageProperties.getMaxImagesPerUser() + "개까지 업로드할 수 있습니다.");
-        }
-
-        // 3) 각 파일 검증
-        for (MultipartFile file : files) {
-            if (file == null || file.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "빈 파일이 포함되어 있습니다.");
-            }
-            validateFile(file);
-        }
-
-        // 4) 다중 파일 업로드 처리
-        List<ImageResponseDto> responses = imageService.uploadMultipleImages(files, request);
-        return ResponseEntity.ok(responses);
-    }
-
-    // ===================== Presigned URL API =====================
+    // ===================== Presigned URL 관리 API =====================
 
     /**
-     * 이미지 Presigned GET URL 생성 API
+     * 만료된 Presigned URL 일괄 갱신 API
      * 
-     * 클라이언트가 임시로 이미지에 접근할 수 있는 URL을 생성합니다.
-     * 15분간 유효한 URL을 반환합니다.
-     * 
-     * @param imageId 이미지 ID
-     * @param user 현재 인증된 사용자
-     * @return presigned URL
+     * 현재 로그인한 사용자의 만료된 Presigned URL들을 갱신합니다.
+     * 인증된 사용자만 호출할 수 있습니다.
      */
-    @Operation(summary = "이미지 Presigned URL 생성", description = "15분간 유효한 이미지 접근 URL 생성")
-    @GetMapping("/{imageId}/presigned-url")
-    public ResponseEntity<String> getImagePresignedUrl(@PathVariable(name = "imageId") Long imageId,
-                                                       @CurrentUser User user) {
+    @PostMapping("/refresh-expired-urls")
+    public ResponseEntity<String> refreshExpiredPresignedUrls(@CurrentUser User user) {
+        // 인증 체크
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
         }
-
-        String presignedUrl = imageService.getImagePresignedUrl(imageId, user.getId());
-        return ResponseEntity.ok(presignedUrl);
-    }
-
-    /**
-     * 이미지 단기 Presigned GET URL 생성 API
-     * 
-     * 보안이 중요한 이미지나 빠른 미리보기용으로 5분간 유효한 URL을 생성합니다.
-     * 
-     * @param imageId 이미지 ID
-     * @param user 현재 인증된 사용자
-     * @return 단기 presigned URL
-     */
-    @Operation(summary = "이미지 단기 Presigned URL 생성", description = "5분간 유효한 이미지 접근 URL 생성")
-    @GetMapping("/{imageId}/presigned-url/short")
-    public ResponseEntity<String> getImageShortTermPresignedUrl(@PathVariable(name = "imageId") Long imageId,
-                                                                @CurrentUser User user) {
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        }
-
-        String presignedUrl = imageService.getImageShortTermPresignedUrl(imageId, user.getId());
-        return ResponseEntity.ok(presignedUrl);
-    }
-
-    /**
-     * 이미지 장기 Presigned GET URL 생성 API
-     * 
-     * 공개 갤러리나 캐시가 필요한 이미지용으로 1시간간 유효한 URL을 생성합니다.
-     * 
-     * @param imageId 이미지 ID
-     * @param user 현재 인증된 사용자
-     * @return 장기 presigned URL
-     */
-    @Operation(summary = "이미지 장기 Presigned URL 생성", description = "1시간간 유효한 이미지 접근 URL 생성")
-    @GetMapping("/{imageId}/presigned-url/long")
-    public ResponseEntity<String> getImageLongTermPresignedUrl(@PathVariable(name = "imageId") Long imageId,
-                                                               @CurrentUser User user) {
-        if (user == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        }
-
-        String presignedUrl = imageService.getImageLongTermPresignedUrl(imageId, user.getId());
-        return ResponseEntity.ok(presignedUrl);
-    }
-
-    /**
-     * 테스트용 이미지 Presigned URL 생성 API (userId path variable)
-     * 
-     * @param imageId 이미지 ID
-     * @param userId 사용자 ID
-     * @return presigned URL
-     */
-    @Operation(summary = "테스트용 이미지 Presigned URL 생성")
-    @GetMapping("/{imageId}/presigned-url/test/{userId}")
-    public ResponseEntity<String> getImagePresignedUrlForTest(@PathVariable(name = "imageId") Long imageId,
-                                                              @PathVariable Long userId) {
-        String presignedUrl = imageService.getImagePresignedUrl(imageId, userId);
-        return ResponseEntity.ok(presignedUrl);
+        
+        // 현재 로그인한 사용자의 만료된 Presigned URL들을 갱신
+        int refreshedCount = imageService.refreshExpiredPresignedUrlsByUserId(user.getId());
+        
+        return ResponseEntity.ok(String.format("사용자 %d의 만료된 Presigned URL %d개가 갱신되었습니다.", user.getId(), refreshedCount));
     }
 }
