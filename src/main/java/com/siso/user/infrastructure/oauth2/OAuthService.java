@@ -1,5 +1,6 @@
 package com.siso.user.infrastructure.oauth2;
 
+import com.siso.chat.infrastructure.OnlineUserRegistry;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.application.UserProfileService;
@@ -22,6 +23,7 @@ public class OAuthService {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final OAuthProviderClientFactory clientFactory; // Kakao/Apple REST 호출용
+    private final OnlineUserRegistry onlineUserRegistry;
 
     public TokenResponseDto loginWithProvider(String providerName, String codeOrAccessToken) {
         Map<String, Object> attributes = clientFactory.getClient(providerName).getUserAttributes(codeOrAccessToken);
@@ -42,6 +44,9 @@ public class OAuthService {
 
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
+
+        // 실시간 온라인 판단용 등록
+        onlineUserRegistry.addOnlineUser(String.valueOf(user.getId()));
 
         boolean hasProfile = userProfileService.existsByUserId(user.getId());
         return new TokenResponseDto(jwtAccessToken, jwtRefreshToken, user.getRegistrationStatus(), hasProfile);

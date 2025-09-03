@@ -36,4 +36,12 @@ public class ChatRoomMemberService {
                 .map(ChatRoomMemberResponseDto::fromEntity)
                 .toList();
     }
+
+    // 1대1 채팅에서 상대방 멤버 조회
+    public ChatRoomMember getOtherMember(Long chatRoomId, Long myUserId) {
+        return chatRoomMemberRepository.findByChatRoomId(chatRoomId).stream()
+                .filter(member -> !member.getUser().getId().equals(myUserId))
+                .findFirst()
+                .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
+    }
 }

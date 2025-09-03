@@ -2,7 +2,9 @@ package com.siso.user.infrastructure.jwt;
 
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
+import com.siso.user.domain.model.User;
 import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.infrastructure.authentication.AccountAdapter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -114,10 +116,10 @@ public class JwtTokenUtil {
     }
 
     /**
-     * 토큰 검증 후 userId 반환
+     * 토큰 검증 후 user 반환
      * 유효하지 않으면 예외 발생
      */
-    public Long validateAndGetUserId(String token) {
+    public User validateAndGetUserId(String token) {
         // 토큰에서 이메일 가져오기
         String email = Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY_OBJECT)
@@ -128,7 +130,14 @@ public class JwtTokenUtil {
 
         // 이메일로 User 조회 후 userId 반환
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND))
-                .getId();
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    /**
+     * UserDetails 래핑
+     */
+    public AccountAdapter getAccountFromToken(String token) {
+        User user = validateAndGetUserId(token);
+        return new AccountAdapter(user);
     }
 }

@@ -5,8 +5,6 @@ import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "chat_room_members")
 @Getter

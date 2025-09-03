@@ -27,13 +27,15 @@ public class ChatController {
     private final ChatRoomLimitService chatRoomLimitService;
     private final ChatRoomMemberService chatRoomMemberService;
 
-    // 메시지 전송
-    @PostMapping("/messages")
-    public SisoResponse<ChatMessageResponseDto> sendMessage(@CurrentUser User user,
-                                                            @Valid @RequestBody ChatMessageRequestDto requestDto) {
-        ChatMessageResponseDto response = chatMessageService.sendMessage(requestDto, user);
-        return SisoResponse.success(response);
-    }
+    // ----------------- 메세지 관리 -----------------
+
+//    // 메시지 전송
+//    @PostMapping("/messages")
+//    public SisoResponse<ChatMessageResponseDto> sendMessage(@CurrentUser User user,
+//                                                            @Valid @RequestBody ChatMessageRequestDto requestDto) {
+//        ChatMessageResponseDto response = chatMessageService.sendMessage(requestDto, user);
+//        return SisoResponse.success(response);
+//    }
 
     // 메시지 수정
     @PatchMapping("/messages")
@@ -58,6 +60,8 @@ public class ChatController {
         return SisoResponse.success(messages);
     }
 
+    // ----------------- 채팅방 관리 -----------------
+
     // 사용자의 채팅방 조회
     @GetMapping("/rooms")
     public SisoResponse<List<ChatRoomResponseDto>> getChatRooms(@CurrentUser User user) {
@@ -81,13 +85,15 @@ public class ChatController {
         return SisoResponse.success(null);
     }
 
-    // 사용자가 채팅방에서 메시지를 읽었음을 표시
-    @PostMapping("/read")
-    public SisoResponse<Void> markAsRead(@CurrentUser User user,
-                                         @Valid @RequestBody ChatReadRequestDto requestDto) {
-        chatRoomMemberService.markAsRead(requestDto, user);
-        return SisoResponse.success(null);
-    }
+//    // 사용자가 채팅방에서 메시지를 읽었음을 표시
+//    @PostMapping("/read")
+//    public SisoResponse<Void> markAsRead(@CurrentUser User user,
+//                                         @Valid @RequestBody ChatReadRequestDto requestDto) {
+//        chatRoomMemberService.markAsRead(requestDto, user);
+//        return SisoResponse.success(null);
+//    }
+
+    // ----------------- 채팅방 멤버 / 제한 -----------------
 
     // 채팅방 멤버 조회
     @GetMapping("/rooms/{chatRoomId}/members")
