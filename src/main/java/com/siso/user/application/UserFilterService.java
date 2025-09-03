@@ -11,6 +11,7 @@ import com.siso.user.dto.response.UserInterestResponseDto;
 import com.siso.user.dto.response.FilteredUserResponseDto;
 import com.siso.image.domain.repository.ImageRepository;
 import com.siso.image.dto.response.ImageResponseDto;
+import com.siso.image.application.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +20,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.siso.user.dto.response.MatchingProfileResponseDto;
 
+/**
+ * 사용자 필터링 및 매칭 서비스
+ * 
+ * Presigned URL을 활용한 효율적인 이미지 처리로
+ * 클라이언트 API 호출을 최소화합니다.
+ */
 @Service
 @RequiredArgsConstructor
 public class UserFilterService {
     private final UserProfileRepository userProfileRepository;
     private final UserInterestRepository userInterestRepository;
     private final ImageRepository imageRepository;
+    private final ImageService imageService; // Presigned URL 자동 관리용
 
     @Transactional(readOnly = true)
     public List<FilteredUserResponseDto> getFilteredUsers(User user) {
@@ -53,11 +61,8 @@ public class UserFilterService {
                             .map(interest -> new UserInterestResponseDto(interest.getInterest()))
                             .collect(Collectors.toList());
 
-                    // 각 프로필의 이미지 조회
-                    List<ImageResponseDto> profileImages = imageRepository.findByUserIdOrderByCreatedAtAsc(profile.getUser().getId())
-                            .stream()
-                            .map(ImageResponseDto::fromEntity) // fromEntity 메서드 사용
-                            .collect(Collectors.toList());
+                    // 각 프로필의 이미지 조회 (Presigned URL 자동 생성 포함)
+                    List<ImageResponseDto> profileImages = imageService.getImagesByUserId(profile.getUser().getId());
 
                     // 공통 관심사 개수 계산
                     List<UserInterest> myInterests = userInterestRepository.findByUserId(userId);
@@ -87,6 +92,8 @@ public class UserFilterService {
 
     /**
      * 매칭용 프로필 조회 (무한 스크롤 지원)
+     * 
+     * Presigned URL을 활용하여 이미지를 효율적으로 처리합니다.
      * 
      * @param user 현재 사용자
      * @param count 조회할 프로필 개수
@@ -121,10 +128,11 @@ public class UserFilterService {
                             .map(interest -> interest.getInterest().name())
                             .collect(Collectors.toList());
 
-                    // 각 프로필의 이미지 URL 조회
-                    List<String> imageUrls = imageRepository.findByUserIdOrderByCreatedAtAsc(profile.getUser().getId())
-                            .stream()
-                            .map(image -> image.getPath())
+                    // 각 프로필의 이미지 Presigned URL 조회 (경량화된 버전)
+                    List<ImageResponseDto> imageResponses = imageService.getImagesByUserIdLightweight(profile.getUser().getId());
+                    List<String> imageUrls = imageResponses.stream()
+                            .map(ImageResponseDto::getPresignedUrl)
+                            .filter(url -> url != null) // 유효한 Presigned URL만 필터링
                             .collect(Collectors.toList());
 
                     return MatchingProfileResponseDto.fromUserProfile(profile, interestNames, imageUrls);

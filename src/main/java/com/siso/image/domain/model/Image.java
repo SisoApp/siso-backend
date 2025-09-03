@@ -5,11 +5,14 @@ import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  * 이미지 엔티티
  * 
  * 한 유저당 최대 5개까지 이미지 저장 가능
  * 이미지 업로드, 수정, 삭제 기능 제공
+ * Presigned URL을 서버에서 관리하여 클라이언트 API 호출 최소화
  */
 @Entity
 @Table(name = "images")
@@ -26,13 +29,24 @@ public class Image extends BaseTime {
     private User user;
 
     @Column(name = "path", length = 255)
-    private String path; // 이미지 파일 경로
+    private String path; // S3 원본 경로
 
     @Column(name = "server_image_name", length = 255, nullable = false)
     private String serverImageName; // 서버에 저장된 파일명
 
     @Column(name = "original_name", length = 255, nullable = false)
     private String originalName; // 원본 파일명
+
+    // === Presigned URL 관리 필드들 ===
+    @Column(name = "presigned_url", length = 500)
+    private String presignedUrl; // 현재 유효한 Presigned URL
+    
+    @Column(name = "presigned_url_expires_at")
+    private LocalDateTime presignedUrlExpiresAt; // Presigned URL 만료 시간
+    
+    @Column(name = "presigned_url_type", length = 20)
+    @Enumerated(EnumType.STRING)
+    private PresignedUrlType presignedUrlType; // Presigned URL 타입 (SHORT, MEDIUM, LONG)
 
     @Builder
     public Image(User user, String path, String serverImageName, String originalName) {
@@ -46,5 +60,27 @@ public class Image extends BaseTime {
         this.path = path;
         this.serverImageName = serverImageName;
         this.originalName = originalName;
+        // 이미지가 변경되면 Presigned URL도 초기화
+        this.presignedUrl = null;
+        this.presignedUrlExpiresAt = null;
+        this.presignedUrlType = null;
+    }
+
+    /**
+     * Presigned URL 업데이트
+     */
+    public void updatePresignedUrl(String presignedUrl, LocalDateTime expiresAt, PresignedUrlType type) {
+        this.presignedUrl = presignedUrl;
+        this.presignedUrlExpiresAt = expiresAt;
+        this.presignedUrlType = type;
+    }
+
+    /**
+     * Presigned URL이 유효한지 확인
+     */
+    public boolean isPresignedUrlValid() {
+        return presignedUrl != null && 
+               presignedUrlExpiresAt != null && 
+               LocalDateTime.now().isBefore(presignedUrlExpiresAt);
     }
 }

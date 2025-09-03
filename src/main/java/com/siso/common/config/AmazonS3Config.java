@@ -20,42 +20,43 @@ public class AmazonS3Config {
     /*
     로컬
     */
-//    @Value("${aws.s3.access-key}")
-//    private String accessKey;
-//
-//    @Value("${aws.s3.secret-key}")
-//    private String secretKey;
-//
-//    @Value("${aws.s3.region}")
-//    private String region;
-//
-//    @Bean
-//    public S3Client s3Client() {
-//        return S3Client.builder()
-//                .region(Region.of(region))
-//                .credentialsProvider(
-//                        StaticCredentialsProvider.create(
-//                                AwsBasicCredentials.create(accessKey, secretKey)
-//                        )
-//                )
-//                .build();
-//    }
+    @Value("${aws.s3.access-key}")
+    private String accessKey;
+
+    @Value("${aws.s3.secret-key}")
+    private String secretKey;
+
+    @Value("${aws.s3.region}")
+    private String region;
+
+    @Bean
+    public S3Client s3Client() {
+        return S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKey, secretKey)
+                        )
+                )
+                .build();
+    }
+}
 //        /*
 //        여기까지
 //         */
 
 
 
-//     배포용
-    @Bean
-    public S3Client s3Client() {
-        return S3Client.builder()
-                .region(Region.AP_NORTHEAST_2)
-                .credentialsProvider(DefaultCredentialsProvider.create()) // 여기서 키가 필요하다고 함
-                .httpClient(UrlConnectionHttpClient.builder().build())
-                .overrideConfiguration(ClientOverrideConfiguration.builder()
-                        .build()
-                )
-                .build();
-    }
-}
+////     배포용
+//    @Bean
+//    public S3Client s3Client() {
+//        return S3Client.builder()
+//                .region(Region.AP_NORTHEAST_2)
+//                .credentialsProvider(DefaultCredentialsProvider.create()) // 여기서 키가 필요하다고 함
+//                .httpClient(UrlConnectionHttpClient.builder().build())
+//                .overrideConfiguration(ClientOverrideConfiguration.builder()
+//                        .build()
+//                )
+//                .build();
+//    }
+//}

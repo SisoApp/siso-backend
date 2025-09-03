@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * 이미지 응답 DTO
+ * Presigned URL 정보를 포함하여 클라이언트 API 호출 최소화
  */
 @Data
 @NoArgsConstructor
@@ -18,9 +19,16 @@ import java.time.LocalDateTime;
 public class ImageResponseDto {
     private Long id;
     private Long userId;
-    private String path; // 이미지 접근 URL
+    private String path; // S3 원본 경로
     private String serverImageName; // 서버 파일명
     private String originalName; // 원본 파일명
+    
+    // === Presigned URL 정보 ===
+    private String presignedUrl; // 현재 유효한 Presigned URL
+    private LocalDateTime presignedUrlExpiresAt; // Presigned URL 만료 시간
+    private String presignedUrlType; // Presigned URL 타입
+    private boolean presignedUrlValid; // Presigned URL 유효성 여부
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -34,6 +42,10 @@ public class ImageResponseDto {
                 .path(image.getPath())
                 .serverImageName(image.getServerImageName())
                 .originalName(image.getOriginalName())
+                .presignedUrl(image.getPresignedUrl())
+                .presignedUrlExpiresAt(image.getPresignedUrlExpiresAt())
+                .presignedUrlType(image.getPresignedUrlType() != null ? image.getPresignedUrlType().name() : null)
+                .presignedUrlValid(image.isPresignedUrlValid())
                 .createdAt(image.getCreatedAt())
                 .updatedAt(image.getUpdatedAt())
                 .build();
