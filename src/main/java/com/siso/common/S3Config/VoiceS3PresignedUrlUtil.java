@@ -26,8 +26,8 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class VoiceS3PresignedUrlUtil {
 
-    @Value("${aws.s3.bucket}") // 로컬용
-//    @Value("${cloud.aws.s3.bucket}") // 배포용
+//    @Value("${aws.s3.bucket}") // 로컬용
+    @Value("${cloud.aws.s3.bucket}") // 배포용
     private String bucket;
 
     private final S3Client s3Client;
