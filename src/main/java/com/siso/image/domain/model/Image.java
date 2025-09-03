@@ -77,10 +77,47 @@ public class Image extends BaseTime {
 
     /**
      * Presigned URL이 유효한지 확인
+     * 
+     * 현재 시간과 만료 시간을 비교하여 정확한 만료 여부를 판단합니다.
+     * 밀리초 단위까지 고려하여 정확한 시간 비교를 수행합니다.
+     * 
+     * 보안을 위해 만료 1분 전부터는 유효하지 않은 것으로 처리합니다.
      */
     public boolean isPresignedUrlValid() {
-        return presignedUrl != null && 
-               presignedUrlExpiresAt != null && 
-               LocalDateTime.now().isBefore(presignedUrlExpiresAt);
+        if (presignedUrl == null || presignedUrlExpiresAt == null) {
+            return false;
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        // 보안을 위해 만료 1분 전부터는 유효하지 않은 것으로 처리
+        LocalDateTime safetyMargin = presignedUrlExpiresAt.minusMinutes(1);
+        boolean isValid = now.isBefore(safetyMargin);
+        
+        // 디버깅을 위한 로그 (필요시 주석 해제)
+        // System.out.println("=== Presigned URL 유효성 체크 ===");
+        // System.out.println("현재 시간: " + now);
+        // System.out.println("만료 시간: " + presignedUrlExpiresAt);
+        // System.out.println("안전 마진: " + safetyMargin);
+        // System.out.println("유효 여부: " + isValid);
+        
+        return isValid;
+    }
+
+    /**
+     * Presigned URL 접근 가능 여부 확인
+     * 
+     * @return 접근 가능하면 true, 만료되었으면 false
+     */
+    public boolean canAccessWithPresignedUrl() {
+        return isPresignedUrlValid();
+    }
+
+    /**
+     * 만료된 Presigned URL인지 확인
+     * 
+     * @return 만료되었으면 true, 유효하면 false
+     */
+    public boolean isPresignedUrlExpired() {
+        return !isPresignedUrlValid();
     }
 }

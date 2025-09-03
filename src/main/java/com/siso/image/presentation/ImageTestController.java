@@ -197,6 +197,27 @@ public class ImageTestController {
     }
 
     /**
+     * Presigned URL 상태 확인 (디버깅용)
+     * 
+     * @param userId 사용자 ID
+     * @return Presigned URL 상태 정보
+     */
+    @Operation(summary = "Presigned URL 상태 확인 (디버깅용)")
+    @GetMapping("/check-presigned-url-status/{userId}")
+    public ResponseEntity<String> checkPresignedUrlStatus(@PathVariable Long userId) {
+        log.info("=== Presigned URL 상태 확인 API 호출됨 ===");
+        log.info("userId: {}", userId);
+        
+        try {
+            String statusInfo = imageTestService.checkPresignedUrlStatus(userId);
+            return ResponseEntity.ok(statusInfo);
+        } catch (Exception e) {
+            log.error("Presigned URL 상태 확인 중 오류 발생: {}", e.getMessage(), e);
+            return ResponseEntity.status(500).body("오류: " + e.getMessage());
+        }
+    }
+
+    /**
      * 테스트용 특정 사용자의 만료된 Presigned URL 일괄 갱신
      * 
      * @param userId Presigned URL을 갱신할 사용자 ID

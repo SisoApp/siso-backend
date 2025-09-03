@@ -34,18 +34,25 @@ public class ImageResponseDto {
     
     /**
      * Image 엔티티를 DTO로 변환
+     * 
+     * 만료된 Presigned URL은 null로 설정하여 클라이언트가 사용할 수 없도록 합니다.
+     * 클라이언트는 presignedUrlValid 필드를 확인하여 URL 사용 가능 여부를 판단할 수 있습니다.
      */
     public static ImageResponseDto fromEntity(Image image) {
+        // Presigned URL 유효성 확인
+        boolean isUrlValid = image.isPresignedUrlValid();
+        
         return ImageResponseDto.builder()
                 .id(image.getId())
                 .userId(image.getUser().getId())
                 .path(image.getPath())
                 .serverImageName(image.getServerImageName())
                 .originalName(image.getOriginalName())
-                .presignedUrl(image.getPresignedUrl())
-                .presignedUrlExpiresAt(image.getPresignedUrlExpiresAt())
-                .presignedUrlType(image.getPresignedUrlType() != null ? image.getPresignedUrlType().name() : null)
-                .presignedUrlValid(image.isPresignedUrlValid())
+                .presignedUrl(isUrlValid ? image.getPresignedUrl() : null)  // 만료된 경우 null
+                .presignedUrlExpiresAt(isUrlValid ? image.getPresignedUrlExpiresAt() : null)  // 만료된 경우 null
+                .presignedUrlType(isUrlValid && image.getPresignedUrlType() != null ? 
+                        image.getPresignedUrlType().name() : null)  // 만료된 경우 null
+                .presignedUrlValid(isUrlValid)  // 실제 유효성 여부
                 .createdAt(image.getCreatedAt())
                 .updatedAt(image.getUpdatedAt())
                 .build();

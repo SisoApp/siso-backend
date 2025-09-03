@@ -16,6 +16,7 @@ import com.siso.common.S3Config.S3DeleteUtil;
 import com.siso.common.S3Config.S3KeyUtil;
 import com.siso.common.S3Config.S3PresignedUrlUtil;
 import com.siso.common.S3Config.ImageCountValidationUtil;
+import com.siso.common.S3Config.PresignedUrlManagementUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ public class ImageService {
     private final S3KeyUtil s3KeyUtil;
     private final S3PresignedUrlUtil s3PresignedUrlUtil;
     private final ImageCountValidationUtil imageCountValidationUtil;
+    private final PresignedUrlManagementUtil presignedUrlManagementUtil;
 
     // ===================== 공개 API 메서드들 =====================
 
@@ -90,7 +92,7 @@ public class ImageService {
             saved.setPath(s3UploadUtil.generateS3Url(key));
 
             // Presigned URL 자동 생성 및 저장
-            generateAndSavePresignedUrl(saved, PresignedUrlType.DEFAULT);
+            presignedUrlManagementUtil.generateAndSavePresignedUrl(saved, PresignedUrlType.DEFAULT);
 
             uploaded.add(ImageResponseDto.fromEntity(saved));
         }
@@ -106,7 +108,8 @@ public class ImageService {
                 .map(image -> {
                     // Presigned URL이 없거나 만료된 경우 자동으로 새로 생성
                     if (!image.isPresignedUrlValid()) {
-                        generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
+                        log.info("만료된 Presigned URL 자동 갱신 - imageId: {}", image.getId());
+                        presignedUrlManagementUtil.generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
                     }
                     return ImageResponseDto.fromEntity(image);
                 })
@@ -121,7 +124,7 @@ public class ImageService {
                 .map(image -> {
                     // Presigned URL이 없거나 만료된 경우 자동으로 새로 생성
                     if (!image.isPresignedUrlValid()) {
-                        generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
+                        presignedUrlManagementUtil.generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
                     }
                     
                     // 경량화된 DTO 생성 (기본 정보 + Presigned URL만)
@@ -144,7 +147,7 @@ public class ImageService {
         
         // Presigned URL이 없거나 만료된 경우 자동으로 새로 생성
         if (!image.isPresignedUrlValid()) {
-            generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
+            presignedUrlManagementUtil.generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
         }
         
         return ImageResponseDto.fromEntity(image);
@@ -177,7 +180,7 @@ public class ImageService {
         existing.updateImage(s3UploadUtil.generateS3Url(newKey), serverFileName, originalName);
         
         // Presigned URL 재생성
-        generateAndSavePresignedUrl(existing, PresignedUrlType.DEFAULT);
+        presignedUrlManagementUtil.generateAndSavePresignedUrl(existing, PresignedUrlType.DEFAULT);
         
         log.info("이미지 파일 교체 완료 - id: {}, oldKey: {}, newKey: {}", id, oldKey, newKey);
         return ImageResponseDto.fromEntity(existing);
@@ -199,45 +202,11 @@ public class ImageService {
     // ===================== Presigned URL 자동 관리 메서드들 =====================
 
     /**
-     * Presigned URL 자동 생성 및 저장
-     * 
-     * @param image 이미지 엔티티
-     * @param urlType Presigned URL 타입
-     */
-    @Transactional
-    public void generateAndSavePresignedUrl(Image image, PresignedUrlType urlType) {
-        try {
-            String key = s3KeyUtil.extractKey(image.getPath());
-            String presignedUrl = s3PresignedUrlUtil.generatePresignedGetUrl(key);
-            LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(5);
-            
-            image.updatePresignedUrl(presignedUrl, expiresAt, urlType);
-            imageRepository.save(image);
-            
-            log.info("Presigned URL 자동 생성 완료 - imageId: {}, type: {}, expiresAt: {}", 
-                    image.getId(), urlType, expiresAt);
-                    
-        } catch (Exception e) {
-            log.error("Presigned URL 자동 생성 실패 - imageId: {}, message: {}", 
-                    image.getId(), e.getMessage(), e);
-            // Presigned URL 생성 실패해도 이미지 조회는 가능하도록 예외를 던지지 않음
-        }
-    }
-
-    /**
      * 만료된 Presigned URL들을 일괄 갱신
      */
     @Transactional
     public void refreshExpiredPresignedUrls() {
-        List<Image> expiredImages = imageRepository.findAll().stream()
-                .filter(image -> !image.isPresignedUrlValid())
-                .collect(Collectors.toList());
-        
-        for (Image image : expiredImages) {
-            generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
-        }
-        
-        log.info("만료된 Presigned URL 일괄 갱신 완료 - 갱신된 이미지 수: {}", expiredImages.size());
+        presignedUrlManagementUtil.refreshExpiredPresignedUrls();
     }
 
     /**
@@ -248,17 +217,6 @@ public class ImageService {
      */
     @Transactional
     public int refreshExpiredPresignedUrlsByUserId(Long userId) {
-        List<Image> userImages = imageRepository.findByUserIdOrderByCreatedAtAsc(userId);
-        int refreshedCount = 0;
-        
-        for (Image image : userImages) {
-            if (!image.isPresignedUrlValid()) {
-                generateAndSavePresignedUrl(image, PresignedUrlType.DEFAULT);
-                refreshedCount++;
-            }
-        }
-        
-        log.info("사용자 {}의 만료된 Presigned URL 일괄 갱신 완료 - 갱신된 이미지 수: {}", userId, refreshedCount);
-        return refreshedCount;
+        return presignedUrlManagementUtil.refreshExpiredPresignedUrlsByUserId(userId);
     }
 }
