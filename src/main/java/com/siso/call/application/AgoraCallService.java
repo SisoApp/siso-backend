@@ -191,18 +191,43 @@ public class AgoraCallService {
      */
     private void sendCallNotificationToReceiver(Call call, User caller, Long receiverId) {
         try {
-            // 발신자 닉네임 가져오기
-            String callerNickname = caller.getUserProfile() != null
-                    ? caller.getUserProfile().getNickname()
-                    : "익명";
+            // 닉네임
 
-            // 발신자와 수신자가 다른 경우에만 알림 전송 (본인 제외)
+            // 자기 자신에게는 알림 X
             if (!caller.getId().equals(receiverId)) {
-                // 발신자 프로필 이미지 가져오기
-                String callerImage = Optional.ofNullable(caller.getImages())
-                        .filter(images -> !images.isEmpty())
-                        .map(images -> images.get(0).getPath())
-                        .orElse("");
+                // ✅ fetch join 으로 이미지/프로필 미리 로딩 (세션 밖 Lazy 방지)
+                User callerLoaded = userRepository.findByIdWithImagesAndProfile(caller.getId())
+                        .orElse(caller);
+
+                String callerNickname = Optional.ofNullable(callerLoaded.getUserProfile())
+                        .map(p -> p.getNickname())
+                        .orElse("익명");
+
+                // 프로필 이미지 (없으면 빈 문자열)
+                String callerImage = callerLoaded.getImages() == null ? "" :
+                        callerLoaded.getImages().stream()
+                                .findFirst()
+                                .map(img -> {
+                                    // 프로젝트 필드에 맞춰 URL 구성
+                                    // 1) url 필드가 있으면 그걸 사용
+                                    try {
+                                        var urlMethod = img.getClass().getMethod("getUrl");
+                                        Object urlVal = urlMethod.invoke(img);
+                                        if (urlVal != null && !urlVal.toString().isBlank()) {
+                                            return urlVal.toString();
+                                        }
+                                    } catch (Exception ignore) { /* getUrl 없는 경우 무시 */ }
+
+                                    // 2) 없으면 path + serverImageName 조합 (필드명 다르면 맞게 바꿔줘)
+                                    try {
+                                        var path = (String) img.getClass().getMethod("getPath").invoke(img);
+                                        var name = (String) img.getClass().getMethod("getServerImageName").invoke(img);
+                                        if (path != null && name != null) return path + "/" + name;
+                                        if (path != null) return path;
+                                    } catch (Exception ignore) {}
+                                    return "";
+                                })
+                                .orElse("");
 
                 notificationService.sendCallNotification(
                         receiverId,
@@ -213,13 +238,14 @@ public class AgoraCallService {
                         call.getAgoraToken(),
                         callerImage
                 );
+
                 log.info("Call notification with details sent to user: {} from caller: {}, callId: {}",
                         receiverId, caller.getId(), call.getId());
             } else {
                 log.warn("Attempted to send call notification to self: {}", caller.getId());
             }
         } catch (Exception e) {
-            // 알림 전송 실패가 통화 요청을 방해하지 않도록 예외를 잡음
+            // 알림 전송 실패가 통화 요청을 막지 않도록
             log.warn("Failed to send call notification to user {}: {}", receiverId, e.getMessage());
         }
     }
