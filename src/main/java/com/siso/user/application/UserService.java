@@ -1,5 +1,6 @@
 package com.siso.user.application;
 
+import com.siso.chat.infrastructure.OnlineUserRegistry;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.PresenceStatus;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final OnlineUserRegistry onlineUserRegistry;
+
 
     public User getUserById(Long userId) {
         return userRepository.findById(userId)
@@ -56,6 +59,9 @@ public class UserService {
         user.updateRefreshToken(null);
         user.updatePresenceStatus(PresenceStatus.OFFLINE);
         userRepository.save(user);
+
+        // 실시간 온라인 판단용 제거
+        onlineUserRegistry.removeOnlineUser(String.valueOf(user.getId()));
     }
 }
 

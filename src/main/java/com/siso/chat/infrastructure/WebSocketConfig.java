@@ -1,7 +1,5 @@
-package com.siso.common.config;
+package com.siso.chat.infrastructure;
 
-import com.siso.user.infrastructure.jwt.JwtChannelInterceptor;
-import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -12,23 +10,24 @@ import org.springframework.web.socket.config.annotation.*;
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtChannelInterceptor jwtChannelInterceptor;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws-stomp")
-                .setAllowedOriginPatterns("*");
-                // .withSockJS(); // 필요하면 Fallback
+                .setAllowedOriginPatterns("*")
+                .withSockJS(); // 필요하면 Fallback
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic", "/queue"); // 구독 prefix
         registry.setApplicationDestinationPrefixes("/app"); // 클라 -> 서버 보낼 때 prefix
+        registry.setUserDestinationPrefix("/user"); // 개인 메시지(1:1 메시지용) prefix
     }
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new JwtChannelInterceptor(jwtTokenUtil));
+        registration.interceptors(jwtChannelInterceptor);
     }
 }

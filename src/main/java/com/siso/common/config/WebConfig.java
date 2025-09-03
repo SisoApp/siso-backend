@@ -1,5 +1,6 @@
-package com.siso.common.web;
+package com.siso.common.config;
 
+import com.siso.common.web.CurrentUserArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
