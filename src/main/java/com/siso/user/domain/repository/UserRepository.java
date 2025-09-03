@@ -35,4 +35,13 @@ public interface UserRepository extends Repository<User, Long> {
     Optional<User> findByRefreshToken(String refreshToken);
 
     User getReferenceById(Long id);
+
+    @Query("""
+    select distinct u
+    from User u
+    left join fetch u.images
+    left join fetch u.userProfile
+    where u.id = :id and u.isBlock = false and u.isDeleted = false
+""")
+    Optional<User> findByIdWithImagesAndProfile(@Param("id") Long id);
 }

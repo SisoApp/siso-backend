@@ -22,38 +22,32 @@ services:
     restart: unless-stopped
 
   app:
-    # 서버에서 빌드할 때
     build: .
-    # (레지스트리 쓰면 아래로 교체)
-    # image: ghcr.io/<owner>/<image>:latest
-
     container_name: siso-app
     env_file: [.env]
     ports:
       - "8080:8080"
-
     depends_on:
       mariadb:
         condition: service_healthy
-
     secrets:
       - firebase-adminsdk
-
     environment:
       TZ: ${TZ:-Asia/Seoul}
 
-      # ==== 요청하신 고정값 적용 ====
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
       SPRING_DATASOURCE_USERNAME: siso
       SPRING_DATASOURCE_PASSWORD: 1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: create
-      # ============================
 
-      # 비밀 설정 import (없으면 무시)
+      # Agora 값 명시
+      AGORA_APP_ID: a914eda873c04f09a72ee7bd3e522300
+      AGORA_APP_CERTIFICATE: 8fe69592f65b4bc6ae550a5299eb7c36
+
       SPRING_CONFIG_IMPORT: ${SPRING_CONFIG_IMPORT:-optional:application-secret.yml}
 
-      # OAuth2 (있으면 .env 로 값 주입)
+      # OAuth2/JWT (필요 시 .env에서 주입)
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
@@ -64,19 +58,14 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KAKAO_TOKEN_URI: https://kauth.kakao.com/oauth/token
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KAKAO_USER_INFO_URI: https://kapi.kakao.com/v2/user/me
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KAKAO_USER_NAME_ATTRIBUTE: id
-
-      # JWT (있으면 .env 로)
       JWT_SECRET: ${JWT_SECRET}
 
-    # 앱이 완전히 뜬 뒤에만 healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 5s
       timeout: 2s
       retries: 30
       start_period: 20s
-
-    # 그레이스풀 종료로 다운타임 최소화
     stop_grace_period: 20s
     restart: unless-stopped
 

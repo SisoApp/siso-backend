@@ -158,6 +158,7 @@ public class NotificationService {
                 NotificationType.MESSAGE, extraData);
     }
 
+
     public Notification sendCallNotification(Long receiverId, Long senderId, String senderNickname,
                                              Long callId, String channelName, String agoraToken, String callerImage) {
         String title = "통화 요청";
