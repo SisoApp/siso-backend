@@ -39,9 +39,13 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
       SPRING_DATASOURCE_USERNAME: siso
       SPRING_DATASOURCE_PASSWORD: 1234
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create
 
-      # Agora 값 명시
+      # ❗️운영은 테이블 절대 초기화 금지
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      # schema.sql / data.sql 강제 실행 방지
+      SPRING_SQL_INIT_MODE: never
+
+      # Agora
       AGORA_APP_ID: a914eda873c04f09a72ee7bd3e522300
       AGORA_APP_CERTIFICATE: 8fe69592f65b4bc6ae550a5299eb7c36
 
