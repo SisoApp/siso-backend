@@ -51,8 +51,8 @@ public class User extends BaseTime {
     @Column(name = "refresh_token")
     private String refreshToken;
 
-    @Column(name = "notification_subscribed", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
-    private boolean notificationSubscribed = false;
+    @Column(name = "notification_subscribed", columnDefinition = "TINYINT(1) DEFAULT 1", nullable = false)
+    private boolean notificationSubscribed = true;
 
     @Column(name = "is_block", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean isBlock = false;

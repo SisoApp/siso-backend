@@ -4,6 +4,8 @@ import com.siso.common.domain.BaseTime;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.attoparser.dom.Text;
+import org.mariadb.jdbc.message.server.ColumnDefinitionPacket;
 
 import java.time.LocalDateTime;
 
@@ -38,13 +40,13 @@ public class Image extends BaseTime {
     private String originalName; // 원본 파일명
 
     // === Presigned URL 관리 필드들 ===
-    @Column(name = "presigned_url", length = 500)
+    @Column(name = "presigned_url", columnDefinition = "TEXT")
     private String presignedUrl; // 현재 유효한 Presigned URL
     
     @Column(name = "presigned_url_expires_at")
     private LocalDateTime presignedUrlExpiresAt; // Presigned URL 만료 시간
     
-    @Column(name = "presigned_url_type", length = 20)
+    @Column(name = "presigned_url_type")
     @Enumerated(EnumType.STRING)
     private PresignedUrlType presignedUrlType; // Presigned URL 타입 (SHORT, MEDIUM, LONG)
 
