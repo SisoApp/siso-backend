@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+cd /opt/siso
+docker compose down || true
+docker compose up -d --build
+
 APP_HOME="/opt/siso"
 COMPOSE_FILE="${APP_HOME}/docker-compose.yml"
 ENV_FILE="${APP_HOME}/.env"
@@ -26,3 +30,4 @@ echo "> Running containers:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 echo "> Deployment done"
+

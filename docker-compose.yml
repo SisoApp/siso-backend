@@ -24,7 +24,7 @@ services:
   app:
     # 루트(=/opt/siso) 기준으로 Dockerfile 사용
     build:
-      context: .
+      context: ./siso-backend
       dockerfile: Dockerfile
     container_name: siso-app
     # 루트에 있는 .env를 사용 (CodeDeploy로 /opt/siso에 배포됨)
