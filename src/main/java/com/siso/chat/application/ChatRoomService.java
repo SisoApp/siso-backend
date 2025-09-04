@@ -10,6 +10,7 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,12 +28,20 @@ public class ChatRoomService {
 
     public List<ChatRoomResponseDto> getChatRoomsForUser(User user) {
         Long userId = user.getId();
+        log.info("getChatRoomsForUser() called for userId={}", userId);
 
         return chatRoomRepository.findRoomsByUserId(userId)
                 .stream()
                 .map(chatRoom -> {
+                    log.info("Processing chatRoomId={}", chatRoom.getId());
+
                     ChatRoomMember otherMember = getOtherMember(chatRoom, userId);
+                    log.info("OtherMember for chatRoomId {} = {}", chatRoom.getId(),
+                            otherMember != null ? otherMember.getUser().getId() : "NULL");
+
                     ChatMessage lastMessage = getLastMessage(chatRoom);
+                    log.info("LastMessage for chatRoomId {} = {}", chatRoom.getId(),
+                            lastMessage != null ? lastMessage.getContent() : "NULL");
 
                     int unreadCount = chatRoom.getChatRoomMembers().stream()
                             .filter(m -> m.getUser().getId().equals(userId))
@@ -40,20 +50,24 @@ public class ChatRoomService {
                                     && lastMessage.getId() > m.getLastReadMessageId() ? 1 : 0)
                             .sum();
 
-                    // 첫 번째 이미지 경로 가져오기
+                    log.info("UnreadCount for chatRoomId {} = {}", chatRoom.getId(), unreadCount);
+
+                    // 첫 번째 이미지 경로
                     String profileImagePath = Optional.ofNullable(otherMember)
                             .map(ChatRoomMember::getUser)
                             .map(User::getImages)
                             .filter(images -> !images.isEmpty())
                             .map(images -> images.get(0).getPath())
                             .orElse("");
+                    log.info("ProfileImagePath for chatRoomId {} = {}", chatRoom.getId(), profileImagePath);
 
-                    // 닉네임도 안전 처리
+                    // 닉네임
                     String nickname = Optional.ofNullable(otherMember)
                             .map(ChatRoomMember::getUser)
                             .map(User::getUserProfile)
                             .map(UserProfile::getNickname)
                             .orElse("익명");
+                    log.info("Nickname for chatRoomId {} = {}", chatRoom.getId(), nickname);
 
                     return new ChatRoomResponseDto(
                             chatRoom.getId(),
