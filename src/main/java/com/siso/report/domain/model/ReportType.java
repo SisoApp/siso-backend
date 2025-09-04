@@ -20,4 +20,5 @@ public enum ReportType {
     public String getDescription() {
         return description;
     }
+
     }
