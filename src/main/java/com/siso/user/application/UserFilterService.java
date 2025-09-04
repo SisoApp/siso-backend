@@ -96,11 +96,12 @@ public class UserFilterService {
      * Presigned URL을 활용하여 이미지를 효율적으로 처리합니다.
      * 
      * @param user 현재 사용자
+     * @param page 페이지 번호 (0부터 시작)
      * @param count 조회할 프로필 개수
      * @return 매칭용 프로필 리스트
      */
     @Transactional(readOnly = true)
-    public List<MatchingProfileResponseDto> getMatchingProfiles(User user, int count) {
+    public List<MatchingProfileResponseDto> getMatchingProfiles(User user, int page, int count) {
         // 사용자와 사용자 프로필 조회
         Long userId = user.getId();
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
@@ -118,8 +119,10 @@ public class UserFilterService {
                 userProfile.getAge()
         );
 
-        // count만큼만 반환
+        // 페이지네이션 적용 (중복 방지)
+        int offset = page * count;
         return filteredProfiles.stream()
+                .skip(offset)
                 .limit(count)
                 .map(profile -> {
                     // 각 프로필의 관심사 조회
