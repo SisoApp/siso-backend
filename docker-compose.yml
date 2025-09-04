@@ -22,10 +22,12 @@ services:
     restart: unless-stopped
 
   app:
+    # 루트(=/opt/siso) 기준으로 Dockerfile 사용
     build:
       context: .
       dockerfile: Dockerfile
     container_name: siso-app
+    # 루트에 있는 .env를 사용 (CodeDeploy로 /opt/siso에 배포됨)
     env_file: [.env]
     ports:
       - "8080:8080"
@@ -37,23 +39,23 @@ services:
     environment:
       TZ: ${TZ:-Asia/Seoul}
 
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
-      SPRING_DATASOURCE_USERNAME: siso
-      SPRING_DATASOURCE_PASSWORD: 1234
+      # Spring profile & Datasource
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
-      # ❗️운영은 테이블 절대 초기화 금지
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
-      # schema.sql / data.sql 강제 실행 방지
+      # 운영에서는 초기화 금지
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-none}
       SPRING_SQL_INIT_MODE: never
 
       # Agora
-      AGORA_APP_ID: a914eda873c04f09a72ee7bd3e522300
-      AGORA_APP_CERTIFICATE: 8fe69592f65b4bc6ae550a5299eb7c36
+      AGORA_APP_ID: ${AGORA_APP_ID}
+      AGORA_APP_CERTIFICATE: ${AGORA_APP_CERTIFICATE}
 
       SPRING_CONFIG_IMPORT: ${SPRING_CONFIG_IMPORT:-optional:application-secret.yml}
 
-      # OAuth2/JWT (필요 시 .env에서 주입)
+      # Kakao OAuth2 / JWT
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
