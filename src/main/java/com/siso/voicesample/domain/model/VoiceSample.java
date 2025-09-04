@@ -40,7 +40,7 @@ public class VoiceSample extends BaseTime {
     public VoiceSample(User user, String url, Integer duration, Integer fileSize) {
         this.user = user;
         // 양방향 연관 관계 설정
-        user.linkVoiceSample(this);
+//        user.linkVoiceSample(this);
         this.url = url;
         this.duration = duration;
         this.fileSize = fileSize;

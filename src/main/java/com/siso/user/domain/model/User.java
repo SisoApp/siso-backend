@@ -219,4 +219,11 @@ public class User extends BaseTime {
     public void updateIsBlock(boolean isBlock) {
         this.isBlock = isBlock;
     }
+
+    public void setVoiceSample(VoiceSample voiceSample) {
+        this.voiceSample = voiceSample;
+        if (voiceSample != null) {
+            voiceSample.setUser(this); // 양방향 동기화 (VoiceSample에도 setter 필요)
+        }
+    }
 }

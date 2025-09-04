@@ -210,12 +210,19 @@ public class VoiceSampleTestService {
         VoiceSample voiceSample = voiceSampleRepository.findById(id)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.VOICE_SAMPLE_NOT_FOUND));
 
+        User user = voiceSample.getUser();
+        if (user != null) {
+            user.setVoiceSample(null);     // User -> VoiceSample 참조 해제
+        }
+        voiceSample.setUser(null);
+
         // S3 파일 삭제
         String key = voiceS3KeyUtil.extractKey(voiceSample.getUrl());
         voiceS3DeleteUtil.safeDeleteS3(key);
 
         // 데이터베이스에서 레코드 삭제
         voiceSampleRepository.delete(voiceSample);
+        voiceSampleRepository.flush();
         log.info("테스트용 음성 샘플 삭제 완료 - ID: {}", id);
     }
 
