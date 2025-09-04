@@ -2,19 +2,17 @@ version: 0.0
 os: linux
 
 files:
-  - source: /
+  - source: app.jar
     destination: /opt/siso
-file_exists_behavior: OVERWRITE   # ← 덮어쓰기 중요!
-
-permissions:
-  - object: /opt/siso
-    owner: ec2-user
-    group: ec2-user
-    mode: 755
-    type: [directory]
+  - source: Dockerfile
+    destination: /opt/siso
+  - source: docker-compose.yml
+    destination: /opt/siso
+  - source: scripts/
+    destination: /opt/siso/scripts
 
 hooks:
-  ApplicationStart:
+  AfterInstall:
     - location: scripts/deploy.sh
-      timeout: 300
+      timeout: 600
       runas: ec2-user
