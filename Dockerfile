@@ -8,3 +8,5 @@ COPY build/libs/*.jar /app/app.jar
 ENV JAVA_OPTS=""
 EXPOSE 8080
 ENTRYPOINT ["sh","-c","exec java $JAVA_OPTS -jar /app/app.jar"]
+
+# 자동 배포 Test
