@@ -46,4 +46,12 @@ public class AgoraCallController {
         AgoraCallResponseDto response = agoraCallService.endCall(callInfoDto, continueRelationship);
         return SisoResponse.success(response);
     }
+
+    // 5. 통화 취소
+    @PostMapping("/cancel")
+    public SisoResponse<AgoraCallResponseDto> cancelCall(@CurrentUser User user,
+                                                         @RequestParam Long callId) {
+        AgoraCallResponseDto response = agoraCallService.cancelCall(user, callId);
+        return SisoResponse.success(response);
+    }
 }

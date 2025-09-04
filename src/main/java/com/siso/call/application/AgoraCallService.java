@@ -82,7 +82,7 @@ public class AgoraCallService {
     /**
      * 발신자가 수신자가 받기 전에 통화를 취소
      */
-    public AgoraCallResponseDto cancelCall(Long callId, Long callerId) {
+    public AgoraCallResponseDto cancelCall(User user, Long callId) {
         Call call = getCall(callId);
 
         // 요청 상태가 아니면 취소 불가
@@ -91,7 +91,7 @@ public class AgoraCallService {
         }
 
         // 본인만 취소 가능
-        if (!call.getCaller().getId().equals(callerId)) {
+        if (!call.getCaller().getId().equals(user.getId())) {
             throw new ExpectedException(ErrorCode.ACCESS_DENIED);
         }
 
@@ -103,7 +103,7 @@ public class AgoraCallService {
         // 수신자에게 취소 알림 보내기
         notificationService.sendCallCanceledNotification(
                 call.getReceiver().getId(),
-                callerId,
+                user.getId(),
                 call.getId()
         );
 
