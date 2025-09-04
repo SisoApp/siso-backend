@@ -118,7 +118,6 @@ jobs:
           # (OIDC 전환 시 예시)
           # role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/<GITHUB_ROLE>
           # role-session-name: github-actions
-          # aws-region: ap-northeast-2
 
       # ── AWS CLI v2 보장 (없으면 설치, 있으면 버전만 출력) ───────────────
       - name: Ensure AWS CLI v2
@@ -154,8 +153,8 @@ jobs:
 
           if [ "$ACTIVE_ID" != "None" ] && [ -n "$ACTIVE_ID" ]; then
             echo "Another deployment is active: $ACTIVE_ID. Waiting for it to finish..."
-            aws deploy wait deployment-success --deployment-id "$ACTIVE_ID" || \
-            aws deploy wait deployment-failed --deployment-id "$ACTIVE_ID" || true
+            aws deploy wait deployment-successful --deployment-id "$ACTIVE_ID" || \
+            aws deploy wait deployment-failed     --deployment-id "$ACTIVE_ID" || true
           else
             echo "No active deployment. Proceeding."
           fi
@@ -178,4 +177,9 @@ jobs:
             --query "deploymentId" --output text)
 
           echo "Deployment ID: $DEPLOYMENT_ID"
-          aws deploy wait deployment-success --deployment-id "$DEPLOYMENT_ID"
+          aws deploy wait deployment-successful --deployment-id "$DEPLOYMENT_ID" || {
+            echo "::error::Deployment failed. Fetching last events…"
+            aws deploy get-deployment --deployment-id "$DEPLOYMENT_ID" --query "deploymentInfo.status"
+            aws deploy list-deployment-instances --deployment-id "$DEPLOYMENT_ID" --output table || true
+            exit 1
+          }
