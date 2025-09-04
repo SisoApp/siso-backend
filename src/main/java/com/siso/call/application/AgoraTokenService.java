@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class AgoraTokenService {
 
-    @Value("${agora.app.id}")
+    @Value("${agora.appId}")
     private String appId;
 
-    @Value("${agora.app.certificate}")
+    @Value("${agora.appCertificate}")
     private String appCertificate;
 
     private static final int TOKEN_EXPIRATION = 3600;
