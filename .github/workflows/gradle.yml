@@ -2,9 +2,14 @@ name: CI/CD with Docker & CodeDeploy
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
+
+# 동시에 겹치는 배포 방지
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -17,18 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      # 3. Firebase Admin Key 주입 (빌드 전에 실행)
+      # Firebase Admin Key 주입 (리포 체크아웃 후)
       - name: Set up Firebase Admin Key
         run: |
           mkdir -p src/main/resources/firebase
           echo '${{ secrets.FIREBASE_ADMIN_KEY }}' > src/main/resources/firebase/firebase-admin-key.json
 
+      # application-secret.yml 주입 (Base64 로 저장된 시크릿 가정)
       - name: Copy Secret (application-secret.yml)
         env:
           OCCUPY_SECRET: ${{ secrets.OCCUPY_SECRET }}
@@ -36,16 +36,33 @@ jobs:
           OCCUPY_SECRET_DIR_FILE_NAME: application-secret.yml
         run: echo "$OCCUPY_SECRET" | base64 --decode > "$OCCUPY_SECRET_DIR/$OCCUPY_SECRET_DIR_FILE_NAME"
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 실행용 JAR 확실히 생성
       - name: Gradle build
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean bootJar -x test
 
-      # ── 배포 번들 구성 (★ deploy.sh와 경로 일치: build/libs 유지) ─────────
+      # 배포에 필요한 파일 존재 확인
+      - name: Validate deployment files
+        run: |
+          test -f appspec.yml || (echo "appspec.yml not found" && exit 1)
+          if [ -d scripts ]; then
+            chmod +x scripts/* || true
+          else
+            echo "WARN: scripts/ not found (ensure hooks don't expect scripts)"
+          fi
+
+      # ── 배포 번들 구성 (deploy/build/libs/ 에 JAR 유지) ─────────────────
       - name: Make deploy bundle
         shell: bash
         run: |
@@ -53,11 +70,16 @@ jobs:
           rm -rf deploy bundle.zip
           mkdir -p deploy/build/libs deploy/scripts
 
-          # JAR 복사 (plain 제외, 1개 선택)
-          JAR="$(ls -1 build/libs/*.jar | grep -v -- '-plain' | head -n 1)"
+          # JAR 선택(-plain 제외) → deploy/build/libs/ 로 복사
+          JAR="$(ls -1 build/libs/*.jar | grep -v -- '-plain' | head -n 1 || true)"
+          if [ -z "${JAR:-}" ]; then
+            echo "ERROR: No bootable JAR found in build/libs"
+            exit 1
+          fi
+          echo "Found JAR: $JAR"
           cp "$JAR" deploy/build/libs/
 
-          # Docker 관련 파일(있으면 포함)
+          # Docker/Compose 파일(있으면 포함)
           [ -f Dockerfile ] && cp Dockerfile deploy/
           [ -f docker-compose.yml ] && cp docker-compose.yml deploy/
 
@@ -69,10 +91,22 @@ jobs:
           # 실행 권한
           if compgen -G "deploy/scripts/*.sh" > /dev/null; then chmod +x deploy/scripts/*.sh; fi
 
-          # zip 생성 (zip 루트에 appspec.yml 있어야 함)
+          # zip 생성 (루트에 appspec.yml 필수)
           (cd deploy && zip -r ../bundle.zip .)
 
-      # ── AWS 자격 증명 ───────────────────────────────────────────────────
+          # 번들 내용 확인(디버깅)
+          unzip -l bundle.zip
+
+      # (선택) 번들 아티팩트 보관 — 실패 시 디버깅 용이
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle
+          path: bundle.zip
+          if-no-files-found: error
+          retention-days: 7
+
+      # ── AWS 자격 증명 + CLI 설치 ────────────────────────────────────────
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -80,24 +114,53 @@ jobs:
           aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
           aws-region: ap-northeast-2
 
-      # ── S3 업로드 ───────────────────────────────────────────────────────
+      - name: Setup AWS CLI
+        uses: aws-actions/setup-aws-cli@v2
+
+      # ── S3 업로드 (커밋 SHA로 키 고유화) ───────────────────────────────
       - name: Upload to S3
         env:
-          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}  # e.g. siso-deploy
-          BUNDLE_KEY: bundle.zip
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}  # 예: siso-deploy
+          BUNDLE_KEY: releases/bundle-${{ github.sha }}.zip
         run: aws s3 cp ./bundle.zip "s3://$S3_BUCKET_NAME/$BUNDLE_KEY"
 
-      # ── CodeDeploy 트리거 ──────────────────────────────────────────────
+      # ── 기존 진행 중 배포가 있으면 완료까지 대기(충돌 방지) ────────────
+      - name: Wait for active deployment (if any)
+        env:
+          APPLICATION_NAME: siso
+          DEPLOYMENT_GROUP_NAME: siso-group
+        run: |
+          ACTIVE_ID=$(aws deploy list-deployments \
+            --application-name "$APPLICATION_NAME" \
+            --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
+            --include-only-statuses Created Queued InProgress \
+            --query "deployments[0]" --output text || echo "None")
+
+          if [ "$ACTIVE_ID" != "None" ] && [ -n "$ACTIVE_ID" ]; then
+            echo "Another deployment is active: $ACTIVE_ID. Waiting for it to finish..."
+            # 성공/실패 중 하나가 날 때까지 대기 (둘 다 실패하면 true로 계속 진행)
+            aws deploy wait deployment-success --deployment-id "$ACTIVE_ID" || \
+            aws deploy wait deployment-failed --deployment-id "$ACTIVE_ID" || true
+          else
+            echo "No active deployment. Proceeding."
+          fi
+
+      # ── CodeDeploy 트리거 (메인 브랜치에서만) + 성공까지 대기 ───────────
       - name: Create CodeDeploy deployment
+        if: github.ref == 'refs/heads/main'
         env:
           APPLICATION_NAME: siso
           DEPLOYMENT_GROUP_NAME: siso-group
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
-          BUNDLE_KEY: bundle.zip
+          BUNDLE_KEY: releases/bundle-${{ github.sha }}.zip
         run: |
-          aws deploy create-deployment \
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name "$APPLICATION_NAME" \
             --deployment-group-name "$DEPLOYMENT_GROUP_NAME" \
             --file-exists-behavior OVERWRITE \
             --s3-location bucket="$S3_BUCKET_NAME",bundleType=zip,key="$BUNDLE_KEY" \
-            --region ap-northeast-2
+            --region ap-northeast-2 \
+            --query "deploymentId" --output text)
+
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          aws deploy wait deployment-success --deployment-id "$DEPLOYMENT_ID"
