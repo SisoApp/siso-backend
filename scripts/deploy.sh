@@ -2,24 +2,51 @@
 set -euo pipefail
 
 APP_HOME="/opt/siso"
-LOG_DIR="${APP_HOME}/logs"
+ENV_FILE="${APP_HOME}/.env"
 COMPOSE_FILE="${APP_HOME}/docker-compose.yml"
+LOG_DIR="${APP_HOME}/logs"
 
 mkdir -p "${LOG_DIR}"
 
+# 0) .env 존재 확인
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "ERROR: env file ${ENV_FILE} not found"
+  exit 1
+fi
+
+# 1) compose 설정 검증(변수 확장 확인)
+echo "> Validate compose with env"
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config >/dev/null
+
 echo "> Stop old containers"
-docker compose -f "${COMPOSE_FILE}" down || true
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" down || true
 
 echo "> Build and start new containers"
-docker compose -f "${COMPOSE_FILE}" up -d --build
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --build --remove-orphans
 
+# 2) (선택) 간단 안정화 대기
 echo "> Wait for containers to stabilize"
 sleep 5
 
 echo "> Running containers:"
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
+
+# 3) (선택) 헬스체크 대기 루프: app, mariadb 둘 다 healthy 될 때까지(최대 60초)
+services=("mariadb" "app")
+deadline=$((SECONDS+60))
+for svc in "${services[@]}"; do
+  echo "> Waiting for ${svc} to be healthy..."
+  while true; do
+    # 헬스체크가 compose에 정의되어 있을 때만 동작
+    status=$(docker inspect --format='{{json .State.Health.Status}}' "${svc}" 2>/dev/null || echo '"unknown"')
+    [[ "${status}" == '"healthy"' ]] && break
+    [[ ${SECONDS} -gt ${deadline} ]] && { echo "WARN: ${svc} not healthy (status=${status})"; break; }
+    sleep 2
+  done
+done
 
 echo "> Deployment done"
+
 
 ##!/usr/bin/env bash
 #set -euo pipefail
