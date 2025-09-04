@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -35,10 +36,14 @@ public class ChatRoomService {
                 .map(chatRoom -> {
                     log.info("Processing chatRoomId={}", chatRoom.getId());
 
-                    ChatRoomMember otherMember = getOtherMember(chatRoom, userId);
+                    // 다른 멤버 가져오기 (자기 자신 제외)
+                    ChatRoomMember otherMember = chatRoom.getChatRoomMembers().stream()
+                            .filter(member -> !Objects.equals(member.getUser().getId(), userId)) // 자기 자신 제외
+                            .findFirst()
+                            .orElse(null);
+
                     log.info("OtherMember for chatRoomId {} = {}", chatRoom.getId(),
                             otherMember != null ? otherMember.getUser().getId() : "NULL");
-
                     ChatMessage lastMessage = getLastMessage(chatRoom);
                     log.info("LastMessage for chatRoomId {} = {}", chatRoom.getId(),
                             lastMessage != null ? lastMessage.getContent() : "NULL");

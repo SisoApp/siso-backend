@@ -39,7 +39,7 @@ public class Notification extends BaseTime {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "is_read", nullable = false)
+    @Column(name = "is_read", columnDefinition = "TINYINT(1) DEFAULT 0", nullable = false)
     private boolean isRead = false;
 
     @Column(nullable = false, length = 255)

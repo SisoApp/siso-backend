@@ -39,6 +39,23 @@ public interface FcmTokenRepository extends JpaRepository<FcmToken, Long> {
     Optional<FcmToken> findByUserIdAndTokenAndIsActiveTrue(Long userId, String token);
     
     /**
+     * 특정 토큰을 가진 모든 FCM 토큰 엔티티를 조회합니다.
+     * 
+     * @param token FCM 토큰 문자열
+     * @return 해당 토큰을 가진 모든 FCM 토큰 엔티티 목록
+     */
+    List<FcmToken> findByToken(String token);
+    
+    /**
+     * 특정 사용자의 특정 토큰이 존재하는지 조회합니다 (활성화 상태 무관).
+     * 
+     * @param userId 사용자 ID
+     * @param token FCM 토큰 문자열
+     * @return 조건에 맞는 FCM 토큰 엔티티 (Optional)
+     */
+    Optional<FcmToken> findByUserIdAndToken(Long userId, String token);
+    
+    /**
      * 특정 사용자의 활성화된 FCM 토큰 문자열만 조회합니다.
      * 
      * FCM 메시지 전송 시 토큰 문자열만 필요한 경우 사용됩니다.

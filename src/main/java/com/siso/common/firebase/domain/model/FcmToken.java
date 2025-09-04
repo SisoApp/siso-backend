@@ -45,14 +45,12 @@ public class FcmToken extends BaseTime {
     @Column(name = "token", nullable = false, length = 500)
     private String token;
 
-
-
     /**
      * 토큰 활성화 상태
      * true: 활성화된 토큰 (푸시 알림 전송 가능)
      * false: 비활성화된 토큰 (푸시 알림 전송 불가)
      * 기본값은 true입니다.
      */
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active", columnDefinition = "TINYINT(1) DEFAULT 1", nullable = false)
     private boolean isActive = true;
 }
