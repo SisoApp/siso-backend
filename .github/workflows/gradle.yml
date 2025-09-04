@@ -64,7 +64,18 @@ jobs:
             echo "WARN: scripts/ not found (ensure hooks don't expect scripts)"
           fi
 
-      # ── 배포 번들 구성 (deploy/build/libs/ 에 JAR 유지) ─────────────────
+      # ── .env 생성 (GitHub Secret에 base64로 저장했다고 가정) ───────────
+      - name: Create .env from secret (base64)
+        shell: bash
+        env:
+          SISO_ENV_B64: ${{ secrets.SISO_ENV_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "${SISO_ENV_B64:-}" || (echo "SISO_ENV_B64 secret missing" && exit 1)
+          echo "$SISO_ENV_B64" | base64 --decode > .env
+          echo "Created .env ($(wc -c < .env) bytes)"
+
+      # ── 배포 번들 구성 (deploy/build/libs/ 에 JAR 유지) ────────────────
       - name: Make deploy bundle
         shell: bash
         run: |
@@ -93,6 +104,9 @@ jobs:
           # 실행 권한
           if compgen -G "deploy/scripts/*.sh" > /dev/null; then chmod +x deploy/scripts/*.sh; fi
 
+          # ✅ .env 번들에 포함
+          cp .env deploy/
+
           # zip 생성 (루트에 appspec.yml 필수)
           (cd deploy && zip -r ../bundle.zip .)
 
@@ -115,9 +129,6 @@ jobs:
           aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
           aws-region: ap-northeast-2
-          # (OIDC 전환 시 예시)
-          # role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/<GITHUB_ROLE>
-          # role-session-name: github-actions
 
       # ── AWS CLI v2 보장 (없으면 설치, 있으면 버전만 출력) ───────────────
       - name: Ensure AWS CLI v2
