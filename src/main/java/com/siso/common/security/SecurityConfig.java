@@ -62,7 +62,7 @@ public class SecurityConfig {
                                         "/api/test/**",    // 테스트용 API 허용 (인증 없음)
                                         "/ws-stomp/**", // STOMP endpoint 허용
                                         "/topic/**",    // 구독 대상 허용 (필요시)
-                                        "/queue/**"
+                                        "/user/queue/**" // 1:1 개인 메시지
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )

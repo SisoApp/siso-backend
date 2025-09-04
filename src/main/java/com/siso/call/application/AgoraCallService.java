@@ -116,6 +116,7 @@ public class AgoraCallService {
     public AgoraCallResponseDto acceptCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
         call.updateCallStatus(CallStatus.ACCEPT);
+        call.startCall();
         callRepository.save(call);
 
         // 발신자에게 "수락됨" 알림 전송
