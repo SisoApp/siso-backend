@@ -2,8 +2,8 @@ version: 0.0
 os: linux
 
 files:
-  - source: app.jar
-    destination: /opt/siso
+  - source: build/libs/
+    destination: /opt/siso/build/libs
   - source: Dockerfile
     destination: /opt/siso
   - source: docker-compose.yml
