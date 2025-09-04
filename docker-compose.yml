@@ -22,7 +22,9 @@ services:
     restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: siso-app
     env_file: [.env]
     ports:
@@ -41,7 +43,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1234
 
       # ❗️운영은 테이블 절대 초기화 금지
-      SPRING_JPA_HIBERNATE_DDL_AUTO: create
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
       # schema.sql / data.sql 강제 실행 방지
       SPRING_SQL_INIT_MODE: never
 
