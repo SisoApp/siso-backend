@@ -8,10 +8,10 @@ services:
       - --max_connections=200
     environment:
       TZ: ${TZ:-Asia/Seoul}
-      MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_DATABASE: sisoappdb
-      MARIADB_USER: siso
-      MARIADB_PASSWORD: 1234
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-1234}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-sisoappdb}
+      MARIADB_USER: ${MARIADB_USER:-siso}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-1234}
     volumes:
       - siso-backend_dbdata:/var/lib/mysql
     healthcheck:
@@ -22,40 +22,45 @@ services:
     restart: unless-stopped
 
   app:
-    # 루트(=/opt/siso) 기준으로 Dockerfile 사용
+    # ⬇️ 여기 수정: 더 이상 /opt/siso/siso-backend 를 바라보지 않음
     build:
-      context: ./siso-backend
+      context: .          # 배포 번들 루트(/opt/siso)에 Dockerfile이 있어야 합니다
       dockerfile: Dockerfile
     container_name: siso-app
-    # 루트에 있는 .env를 사용 (CodeDeploy로 /opt/siso에 배포됨)
-    env_file: [.env]
+
+    # 컨테이너 환경변수 주입
+    env_file: [".env"]
+
     ports:
       - "8080:8080"
+
     depends_on:
       mariadb:
         condition: service_healthy
+
     secrets:
       - firebase-adminsdk
+
     environment:
       TZ: ${TZ:-Asia/Seoul}
 
-      # Spring profile & Datasource
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # === DB 연결값을 MARIADB_*로부터 바로 구성 ===
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/${MARIADB_DATABASE:-sisoappdb}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
+      SPRING_DATASOURCE_USERNAME: ${MARIADB_USER:-siso}
+      SPRING_DATASOURCE_PASSWORD: ${MARIADB_PASSWORD:-1234}
 
-      # 운영에서는 초기화 금지
-      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-none}
+      # 운영에서는 테이블 초기화 금지
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_SQL_INIT_MODE: never
 
-      # Agora
-      AGORA_APP_ID: ${AGORA_APP_ID}
-      AGORA_APP_CERTIFICATE: ${AGORA_APP_CERTIFICATE}
+      # Agora (값은 .env에서 오버라이드 가능)
+      AGORA_APP_ID: ${AGORA_APP_ID:-a914eda873c04f09a72ee7bd3e522300}
+      AGORA_APP_CERTIFICATE: ${AGORA_APP_CERTIFICATE:-8fe69592f65b4bc6ae550a5299eb7c36}
 
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_CONFIG_IMPORT: ${SPRING_CONFIG_IMPORT:-optional:application-secret.yml}
 
-      # Kakao OAuth2 / JWT
+      # OAuth2 / JWT
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
