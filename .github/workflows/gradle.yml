@@ -13,6 +13,8 @@ concurrency:
 
 permissions:
   contents: read
+  # (선택) OIDC로 전환할 계획이면 다음 권한도 추가
+  # id-token: write
 
 jobs:
   build-and-deploy:
@@ -106,18 +108,32 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      # ── AWS 자격 증명 + CLI 설치 ────────────────────────────────────────
+      # ── AWS 자격 증명 설정 ──────────────────────────────────────────────
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.CICD_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.CICD_SECRET_KEY }}
           aws-region: ap-northeast-2
+          # (OIDC 전환 시 예시)
+          # role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/<GITHUB_ROLE>
+          # role-session-name: github-actions
+          # aws-region: ap-northeast-2
 
-      - name: Setup AWS CLI
-        uses: aws-actions/setup-aws-cli@v2
+      # ── AWS CLI v2 보장 (없으면 설치, 있으면 버전만 출력) ───────────────
+      - name: Ensure AWS CLI v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v aws >/dev/null 2>&1; then
+            echo "AWS CLI not found, installing..."
+            curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install --update
+          fi
+          aws --version
 
-      # ── S3 업로드 (커밋 SHA로 키 고유화) ───────────────────────────────
+      # ── S3 업로드 (커밋 SHA로 키 고유화) ────────────────────────────────
       - name: Upload to S3
         env:
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}  # 예: siso-deploy
@@ -138,7 +154,6 @@ jobs:
 
           if [ "$ACTIVE_ID" != "None" ] && [ -n "$ACTIVE_ID" ]; then
             echo "Another deployment is active: $ACTIVE_ID. Waiting for it to finish..."
-            # 성공/실패 중 하나가 날 때까지 대기 (둘 다 실패하면 true로 계속 진행)
             aws deploy wait deployment-success --deployment-id "$ACTIVE_ID" || \
             aws deploy wait deployment-failed --deployment-id "$ACTIVE_ID" || true
           else
