@@ -36,10 +36,10 @@ public class S3PresignedUrlUtil {
      * 이미지 파일용 Presigned GET URL 생성
      * 
      * @param key S3 객체 키
-     * @return presigned GET URL (15분 유효)
+     * @return presigned GET URL (5분 유효)
      */
     public String generatePresignedGetUrl(String key) {
-        return generatePresignedGetUrl(key, Duration.ofMinutes(15));
+        return generatePresignedGetUrl(key, Duration.ofMinutes(5));
     }
 
     /**

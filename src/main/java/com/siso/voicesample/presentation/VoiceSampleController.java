@@ -290,4 +290,26 @@ public class VoiceSampleController {
         String presignedUrl = voiceSampleService.getVoicePresignedUrl(voiceId, userId);
         return ResponseEntity.ok(presignedUrl);
     }
+
+    // ===================== Presigned URL 관리 API =====================
+
+    /**
+     * 음성 샘플 Presigned URL 일괄 갱신 API
+     * 
+     * 현재 로그인한 사용자의 만료된 Presigned URL들을 갱신합니다.
+     * 인증된 사용자만 호출할 수 있습니다.
+     */
+    @Operation(summary = "음성 샘플 Presigned URL 일괄 갱신")
+    @PostMapping("/refresh-expired-urls")
+    public ResponseEntity<String> refreshExpiredPresignedUrls(@CurrentUser User user) {
+        // 인증 체크
+        if (user == null) {
+            throw new ExpectedException(ErrorCode.USER_NOT_FOUND);
+        }
+        
+        // 현재 로그인한 사용자의 만료된 Presigned URL들을 갱신
+        int refreshedCount = voiceSampleService.refreshExpiredPresignedUrlsByUserId(user.getId());
+        
+        return ResponseEntity.ok(String.format("사용자 %d의 만료된 음성 샘플 Presigned URL %d개가 갱신되었습니다.", user.getId(), refreshedCount));
+    }
 }
