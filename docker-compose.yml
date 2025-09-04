@@ -8,10 +8,10 @@ services:
       - --max_connections=200
     environment:
       TZ: ${TZ:-Asia/Seoul}
-      MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_DATABASE: sisoappdb
-      MARIADB_USER: siso
-      MARIADB_PASSWORD: 1234
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-1234}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-sisoappdb}
+      MARIADB_USER: ${MARIADB_USER:-siso}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-1234}
     volumes:
       - siso-backend_dbdata:/var/lib/mysql
     healthcheck:
@@ -22,36 +22,48 @@ services:
     restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: siso-app
-    env_file: [.env]
+
+    env_file: [".env"]
+
     ports:
       - "8080:8080"
+
     depends_on:
       mariadb:
         condition: service_healthy
-    secrets:
-      - firebase-adminsdk
+
+    volumes:
+      # ✅ secrets 바인드로 교체
+      - /opt/siso/secrets/firebase-adminsdk.json:/run/secrets/firebase-adminsdk.json:ro
+
     environment:
       TZ: ${TZ:-Asia/Seoul}
 
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/sisoappdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
-      SPRING_DATASOURCE_USERNAME: siso
-      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_DATASOURCE_URL: jdbc:mysql://mariadb:3306/${MARIADB_DATABASE:-sisoappdb}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&connectTimeout=10000&socketTimeout=20000
+      SPRING_DATASOURCE_USERNAME: ${MARIADB_USER:-siso}
+      SPRING_DATASOURCE_PASSWORD: ${MARIADB_PASSWORD:-1234}
 
-      # ❗️운영은 테이블 절대 초기화 금지
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
-      # schema.sql / data.sql 강제 실행 방지
       SPRING_SQL_INIT_MODE: never
 
-      # Agora
-      AGORA_APP_ID: a914eda873c04f09a72ee7bd3e522300
-      AGORA_APP_CERTIFICATE: 8fe69592f65b4bc6ae550a5299eb7c36
+      # 파일 업로드 설정
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 10MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 10MB
 
+      # AWS S3 설정
+      CLOUD_AWS_REGION_STATIC: ap-northeast-2
+      CLOUD_AWS_S3_BUCKET: siso-deploy
+
+      AGORA_APP_ID: ${AGORA_APP_ID:-a914eda873c04f09a72ee7bd3e522300}
+      AGORA_APP_CERTIFICATE: ${AGORA_APP_CERTIFICATE:-8fe69592f65b4bc6ae550a5299eb7c36}
+
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SPRING_CONFIG_IMPORT: ${SPRING_CONFIG_IMPORT:-optional:application-secret.yml}
 
-      # OAuth2/JWT (필요 시 .env에서 주입)
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
@@ -75,7 +87,3 @@ services:
 
 volumes:
   siso-backend_dbdata: {}
-
-secrets:
-  firebase-adminsdk:
-    file: /home/ec2-user/secrets/firebase-adminsdk.json

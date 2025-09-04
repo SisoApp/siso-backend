@@ -44,3 +44,5 @@ management:
       probes:
         enabled: true
       show-details: never
+
+      #자동배포 테스트 확인

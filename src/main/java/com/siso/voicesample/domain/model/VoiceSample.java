@@ -30,7 +30,7 @@ public class VoiceSample extends BaseTime {
     private Integer fileSize;
 
     // === Presigned URL 관리 필드들 ===
-    @Column(name = "presigned_url", length = 500)
+    @Column(name = "presigned_url", columnDefinition = "Text")
     private String presignedUrl; // 현재 유효한 Presigned URL
     
     @Column(name = "presigned_url_expires_at")
