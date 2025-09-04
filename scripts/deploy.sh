@@ -16,7 +16,8 @@ fi
 
 # 1) compose 설정 검증(변수 확장 확인)
 echo "> Validate compose with env"
-docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config >/dev/null
+#docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config >/dev/null
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" config | sed -n '/services:/,$p'
 
 echo "> Stop old containers"
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" down || true
