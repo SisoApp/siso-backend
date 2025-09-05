@@ -91,7 +91,7 @@ public class FirebaseService {
         data.put("timestamp", String.valueOf(System.currentTimeMillis()));
 
         MulticastResultConfig.SendMulticastResult result = multicast.sendMulticastResult(
-                tokens, title, body, data, DEFAULT_BATCH_SIZE, false
+                tokens, title, body, data, DEFAULT_BATCH_SIZE, true // <-- true로 변경: Notification + Data 메시지로 전송
         );
 
         log.info("Call notification sent: requested={}, success={}, failure={}, invalidTokens={}",
