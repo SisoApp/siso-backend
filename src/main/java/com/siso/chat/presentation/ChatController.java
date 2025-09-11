@@ -38,7 +38,7 @@ public class ChatController {
 //    }
 
     // 메시지 수정
-    @PatchMapping("/messages")
+    @PatchMapping(value = "/messages", produces = "application/json; charset=UTF-8")
     public SisoResponse<ChatMessageResponseDto> editMessage(@CurrentUser User user,
                                                             @Valid @RequestBody EditMessageRequestDto requestDto) {
         ChatMessageResponseDto response = chatMessageService.editMessage(requestDto, user);
@@ -46,7 +46,7 @@ public class ChatController {
     }
 
     // 메시지 삭제
-    @DeleteMapping("/messages/{messageId}")
+    @DeleteMapping(value = "/messages/{messageId}", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> deleteMessage(@PathVariable Long messageId,
                                             @CurrentUser User user) {
         chatMessageService.deleteMessage(messageId, user);
@@ -54,7 +54,7 @@ public class ChatController {
     }
 
     // 특정 채팅방 메시지 조회
-    @GetMapping("/rooms/{chatRoomId}/messages")
+    @GetMapping(value = "/rooms/{chatRoomId}/messages", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<ChatMessageResponseDto>> getMessages(@PathVariable Long chatRoomId) {
         List<ChatMessageResponseDto> messages = chatMessageService.getMessages(chatRoomId);
         return SisoResponse.success(messages);
@@ -63,14 +63,14 @@ public class ChatController {
     // ----------------- 채팅방 관리 -----------------
 
     // 사용자의 채팅방 조회
-    @GetMapping("/rooms")
+    @GetMapping(value = "/rooms", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<ChatRoomResponseDto>> getChatRooms(@CurrentUser User user) {
         List<ChatRoomResponseDto> chatRooms = chatRoomService.getChatRoomsForUser(user);
         return SisoResponse.success(chatRooms);
     }
 
     // 채팅 이어나가기
-    @PostMapping("/accept")
+    @PostMapping(value = "/accept", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> acceptChatRoom(@CurrentUser User user,
                                              @Valid @RequestBody ChatRoomRequestDto requestDto) {
         chatRoomService.acceptChatRoom(requestDto, user);
@@ -78,7 +78,7 @@ public class ChatController {
     }
 
     // 채팅방 나가기
-    @PostMapping("/leave")
+    @PostMapping(value = "/leave", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> leaveChatRoom(@CurrentUser User user,
                                             @Valid @RequestBody ChatRoomRequestDto requestDto) {
         chatRoomService.leaveChatRoom(requestDto, user);
@@ -96,14 +96,14 @@ public class ChatController {
     // ----------------- 채팅방 멤버 / 제한 -----------------
 
     // 채팅방 멤버 조회
-    @GetMapping("/rooms/{chatRoomId}/members")
+    @GetMapping(value = "/rooms/{chatRoomId}/members", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<ChatRoomMemberResponseDto>> getMembers(@PathVariable Long chatRoomId) {
         List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(chatRoomId);
         return SisoResponse.success(members);
     }
 
     // 사용자가 채팅방에서 메시지를 얼마나 보낼 수 있는지 제한 정보를 조회
-    @GetMapping("/rooms/limits")
+    @GetMapping(value = "/rooms/limits", produces = "application/json; charset=UTF-8")
     public SisoResponse<ChatRoomLimitResponseDto> getChatRoomLimit(@CurrentUser User user,
                                                                    @RequestParam(name = "chatRoomId") Long chatRoomId) {
         ChatRoomLimitResponseDto response = chatRoomLimitService.getLimit(chatRoomId, user);

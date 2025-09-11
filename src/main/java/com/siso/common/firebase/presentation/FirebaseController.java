@@ -45,7 +45,7 @@ public class FirebaseController {
      * @param requestDto FCM 토큰 등록 요청 데이터 (userId, token 포함)
      * @return 등록 성공/실패 메시지
      */
-    @PostMapping("/token")
+    @PostMapping(value = "/token", produces = "application/json; charset=UTF-8")
     @Operation(summary = "FCM 토큰 등록", description = "사용자의 FCM 토큰을 등록합니다.")
     public ResponseEntity<String> registerToken(@Valid @RequestBody FcmTokenRequestDto requestDto) {
         try {
@@ -69,7 +69,7 @@ public class FirebaseController {
      * @param requestDto FCM 토큰 해제 요청 데이터 (userId, token 포함)
      * @return 해제 성공/실패 메시지
      */
-    @DeleteMapping("/token")
+    @DeleteMapping(value = "/token", produces = "application/json; charset=UTF-8")
     @Operation(summary = "FCM 토큰 해제", description = "사용자의 FCM 토큰을 비활성화합니다.")
     public ResponseEntity<String> unregisterToken(@Valid @RequestBody FcmTokenRequestDto requestDto) {
         try {
@@ -90,7 +90,7 @@ public class FirebaseController {
      * @param requestDto 메시지 전송 요청 데이터 (userId, title, body 포함)
      * @return 전송 성공/실패 메시지 및 전송된 디바이스 수
      */
-    @PostMapping("/sendMessage")
+    @PostMapping(value = "/sendMessage",produces = "application/json; charset=UTF-8")
     @Operation(summary = "메시지 전송", description = "특정 사용자에게 푸시 알림을 전송합니다.")
     public ResponseEntity<String> sendMessage(@Valid @RequestBody FirebaseMessageRequestDto requestDto) {
         try {

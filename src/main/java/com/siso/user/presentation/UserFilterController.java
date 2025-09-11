@@ -29,7 +29,7 @@ public class UserFilterController {
      * @param count 조회할 프로필 개수 (기본값: 5)
      * @return 매칭용 프로필 리스트
      */
-    @GetMapping("/matching")
+    @GetMapping(value = "/matching", produces = "application/json; charset=UTF-8")
     public ResponseEntity<List<MatchingProfileResponseDto>> getMatchingProfiles(
             @CurrentUser User user,
             @RequestParam(defaultValue = "0") int page,

@@ -20,14 +20,14 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
-    @GetMapping("/info")
+    @GetMapping(value = "/info", produces = "application/json; charset=UTF-8")
     public SisoResponse<UserResponseDto> getUserInfo(@CurrentUser User user) {
         UserResponseDto userDto = userService.getUserInfo(user);
         return SisoResponse.success(userDto);
     }
 
     // 알림 동의 수정
-    @PatchMapping("/notification")
+    @PatchMapping(value = "/notification", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> updateNotificationSubscribed(@CurrentUser User user,
                                                            @Valid @RequestBody NotificationRequestDto notificationRequestDto) {
         userService.updateNotificationSubscribed(user, notificationRequestDto.isSubscribed());
@@ -35,13 +35,13 @@ public class UserController {
     }
 
     // 회원 탈퇴(소프트 삭제)
-    @DeleteMapping("/delete")
+    @DeleteMapping(value = "/delete", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> deleteUser(@CurrentUser User user) {
         userService.deleteUser(user);
         return SisoResponse.success(null);
     }
 
-    @PostMapping("/logout")
+    @PostMapping(value = "/logout", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> logout(@CurrentUser User user) {
         userService.logout(user);
         return SisoResponse.success(null);
