@@ -1,6 +1,7 @@
 package com.siso.chat.application;
 
 import com.siso.chat.domain.model.*;
+import com.siso.chat.domain.repository.ChatMessageRepository;
 import com.siso.chat.domain.repository.ChatRoomMemberRepository;
 import com.siso.chat.domain.repository.ChatRoomRepository;
 import com.siso.chat.dto.request.ChatRoomRequestDto;
@@ -8,16 +9,12 @@ import com.siso.chat.dto.response.ChatRoomResponseDto;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.model.UserProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,6 +22,7 @@ import java.util.Optional;
 @Transactional
 public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
 
     public List<ChatRoomResponseDto> getChatRoomsForUser(User user) {
@@ -36,15 +34,12 @@ public class ChatRoomService {
                 .map(chatRoom -> {
                     log.info("Processing chatRoomId={}", chatRoom.getId());
 
-                    // 다른 멤버 가져오기 (자기 자신 제외)
-                    ChatRoomMember otherMember = chatRoom.getChatRoomMembers().stream()
-                            .filter(member -> !Objects.equals(member.getUser().getId(), userId)) // 자기 자신 제외
-                            .findFirst()
-                            .orElse(null);
+                    // ✅ 반드시 다른 멤버가 존재해야 하므로 getOtherMember 사용
+                    ChatRoomMember otherMember = getOtherMember(chatRoom, userId);
+                    log.info("OtherMember for chatRoomId {} = {}", chatRoom.getId(), otherMember.getUser().getId());
 
-                    log.info("OtherMember for chatRoomId {} = {}", chatRoom.getId(),
-                            otherMember != null ? otherMember.getUser().getId() : "NULL");
-                    ChatMessage lastMessage = getLastMessage(chatRoom);
+                    // ✅ 메시지가 없을 수 있으므로 안전하게 조회
+                    ChatMessage lastMessage = getLastMessageSafely(chatRoom);
                     log.info("LastMessage for chatRoomId {} = {}", chatRoom.getId(),
                             lastMessage != null ? lastMessage.getContent() : "NULL");
 
@@ -54,24 +49,16 @@ public class ChatRoomService {
                                     && m.getLastReadMessageId() != null
                                     && lastMessage.getId() > m.getLastReadMessageId() ? 1 : 0)
                             .sum();
-
                     log.info("UnreadCount for chatRoomId {} = {}", chatRoom.getId(), unreadCount);
 
-                    // 첫 번째 이미지 경로
-                    String profileImagePath = Optional.ofNullable(otherMember)
-                            .map(ChatRoomMember::getUser)
-                            .map(User::getImages)
-                            .filter(images -> !images.isEmpty())
-                            .map(images -> images.get(0).getPath())
-                            .orElse("");
+                    // ✅ 프로필 이미지 (무조건 otherMember 존재하므로 바로 접근 가능)
+                    String profileImagePath = otherMember.getUser().getImages().isEmpty()
+                            ? ""
+                            : otherMember.getUser().getImages().get(0).getPath();
                     log.info("ProfileImagePath for chatRoomId {} = {}", chatRoom.getId(), profileImagePath);
 
-                    // 닉네임
-                    String nickname = Optional.ofNullable(otherMember)
-                            .map(ChatRoomMember::getUser)
-                            .map(User::getUserProfile)
-                            .map(UserProfile::getNickname)
-                            .orElse("익명");
+                    // ✅ 닉네임 (무조건 존재한다고 가정)
+                    String nickname = otherMember.getUser().getUserProfile().getNickname();
                     log.info("Nickname for chatRoomId {} = {}", chatRoom.getId(), nickname);
 
                     return new ChatRoomResponseDto(
@@ -133,10 +120,9 @@ public class ChatRoomService {
                 .orElseThrow(() -> new ExpectedException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
-    private ChatMessage getLastMessage(ChatRoom chatRoom) {
-        return chatRoom.getChatMessages().stream()
-                .max(Comparator.comparing(ChatMessage::getCreatedAt))
-                .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_EMPTY));
+    private ChatMessage getLastMessageSafely(ChatRoom chatRoom) {
+        return chatMessageRepository.findTopByChatRoomOrderByCreatedAtDesc(chatRoom)
+                .orElse(null); // ✅ 메시지 없으면 null
     }
 
     private void checkUserIsMember(ChatRoom chatRoom, Long userId) {
