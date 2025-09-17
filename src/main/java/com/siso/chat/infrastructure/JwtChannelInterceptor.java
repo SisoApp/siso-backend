@@ -1,5 +1,6 @@
 package com.siso.chat.infrastructure;
 
+import com.siso.user.domain.model.User;
 import com.siso.user.infrastructure.authentication.AccountAdapter;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             log.info("[JwtChannelInterceptor] CONNECT Authorization header: {}", token);
 
             if (token != null && jwtTokenUtil.validateToken(token)) {
-                AccountAdapter account = jwtTokenUtil.getAccountFromToken(token);
-                log.info("[JwtChannelInterceptor] Authenticated user: {}", account.getUsername());
+                User user = jwtTokenUtil.validateAndGetUserId(token); // 토큰 검증 및 User 조회
+                log.info("[JwtChannelInterceptor] Authenticated user: {} (id={})", user.getEmail(), user.getId());
+
+                AccountAdapter account = new AccountAdapter(user);
 
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+
                 accessor.setUser(auth);
             } else {
                 log.warn("[JwtChannelInterceptor] Missing or invalid token: {}", token);
