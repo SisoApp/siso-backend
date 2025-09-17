@@ -11,11 +11,13 @@ import com.siso.chat.infrastructure.OnlineUserRegistry;
 import com.siso.common.web.CurrentUser;
 import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
+import com.siso.user.infrastructure.authentication.AccountAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
@@ -36,7 +38,8 @@ public class StompChatController {
      */
     @MessageMapping("/chat.sendMessage") // /app/chat.sendMessage
     public void sendMessage(@Payload ChatMessageRequestDto requestDto,
-                            @CurrentUser User sender) {
+                            @AuthenticationPrincipal AccountAdapter account) {
+        User sender = account.getUser();
         // 1. 메시지 저장 및 제한 처리
         ChatMessageResponseDto savedMessage = chatMessageService.sendMessage(requestDto, sender);
 
@@ -69,7 +72,9 @@ public class StompChatController {
      */
     @MessageMapping("/chat.readMessage") // /app/chat.readMessage
     public void readMessage(@Payload ChatReadRequestDto requestDto,
-                            @CurrentUser User user) {
+                            @AuthenticationPrincipal AccountAdapter account) {
+        User user = account.getUser();
+
         // 1. 읽음 처리
         chatRoomMemberService.markAsRead(requestDto, user);
 
