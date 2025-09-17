@@ -43,7 +43,7 @@ public class ChatMessageService {
 
         // 메시지 제한 체크 (LIMITED 상태일 때만 적용)
         if (chatRoom.getChatRoomStatus() == ChatRoomStatus.LIMITED) {
-            log.info("🔒 ChatRoom is LIMITED. Checking message limit for senderId={}", sender.getId());
+            log.info("ChatRoom is LIMITED. Checking message limit for senderId={}", sender.getId());
             ChatRoomMember member = chatRoomMemberRepository.findMemberByChatRoomIdAndUserId(chatRoom.getId(), sender.getId())
                     .orElseThrow(() -> {
                         log.error("MEMBER_NOT_FOUND for chatRoomId={}, senderId={}", chatRoom.getId(), sender.getId());
@@ -66,7 +66,7 @@ public class ChatMessageService {
                 .content(requestDto.getContent())
                 .build();
 
-        log.info("💾 Saving ChatMessage...");
+        log.info("Saving ChatMessage...");
         ChatMessage saved = chatMessageRepository.save(message);
         log.info("Saved ChatMessage: id={}, content={}", saved.getId(), saved.getContent());
 
@@ -111,7 +111,7 @@ public class ChatMessageService {
      */
     @Transactional
     public void deleteMessage(Long messageId, User sender) {
-        log.info("🗑 Deleting messageId={} by senderId={}", messageId, sender.getId());
+        log.info("Deleting messageId={} by senderId={}", messageId, sender.getId());
         ChatMessage message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.MESSAGE_NOT_FOUND));
 
