@@ -3,6 +3,7 @@ package com.siso.chat.infrastructure;
 import com.siso.user.infrastructure.authentication.AccountAdapter;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -16,6 +17,7 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtTokenUtil jwtTokenUtil;
 
@@ -25,14 +27,20 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
         if (StompCommand.CONNECT.equals(Objects.requireNonNull(accessor).getCommand())) {
             String token = accessor.getFirstNativeHeader("Authorization");
+            log.info("[JwtChannelInterceptor] CONNECT Authorization header: {}", token);
+
             if (token != null && jwtTokenUtil.validateToken(token)) {
                 AccountAdapter account = jwtTokenUtil.getAccountFromToken(token);
+                log.info("[JwtChannelInterceptor] Authenticated user: {}", account.getUsername());
 
-                // STOMP 세션에 인증 정보 설정
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
                 accessor.setUser(auth);
+            } else {
+                log.warn("[JwtChannelInterceptor] Missing or invalid token: {}", token);
             }
         }
         return message;
     }
 }
+
