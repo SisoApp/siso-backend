@@ -1,6 +1,5 @@
 package com.siso.chat.infrastructure;
 
-import com.siso.user.domain.model.User;
 import com.siso.user.infrastructure.authentication.AccountAdapter;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
