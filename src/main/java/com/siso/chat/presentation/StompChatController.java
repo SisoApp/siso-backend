@@ -54,18 +54,17 @@ public class StompChatController {
         for (ChatRoomMemberResponseDto member : members) {
             if (!member.userId().equals(sender.getId())) {
                 boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(member.userId()));
+                log.info("[sendMessage] senderId={} -> member userId={} online={} | 현재 onlineUsers={}", sender.getId(), member.userId(), isOnline, onlineUserRegistry.getOnlineUsers().keySet());
 
                 if (isOnline) {
-                    log.info("[sendMessage] Member userId={} online={} -> Sending WS message",
-                            member.userId(), isOnline);
+                    log.info("[sendMessage] Member userId={} online={} -> Sending WS message", member.userId(), isOnline);
                     messagingTemplate.convertAndSendToUser(
                             String.valueOf(member.userId()),
                             "/queue/messages",
                             savedMessage
                     );
                 } else {
-                    log.info("[sendMessage] Member userId={} online={} -> Sending Notification",
-                            member.userId(), isOnline);
+                    log.info("[sendMessage] Member userId={} online={} -> Sending Notification", member.userId(), isOnline);
                     notificationService.sendMessageNotification(
                             member.userId(),
                             sender.getId(),
@@ -93,6 +92,7 @@ public class StompChatController {
         // 2. 1대1 채팅 상대방 조회
         ChatRoomMember otherMember = chatRoomMemberService.getOtherMember(requestDto.getChatRoomId(), user.getId());
         boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()));
+        log.info("[readMessage] readerId={} -> otherMember userId={} online={} | 현재 onlineUsers={}", user.getId(), otherMember.getUser().getId(), isOnline, onlineUserRegistry.getOnlineUsers().keySet());
 
         // 3. 상대방이 온라인이면 읽음 알림 전송
         if (isOnline) {

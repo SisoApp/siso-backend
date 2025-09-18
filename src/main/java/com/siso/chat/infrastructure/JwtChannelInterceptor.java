@@ -39,11 +39,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 log.info("[JwtChannelInterceptor] Authenticated user: {} (id={})", user.getEmail(), user.getId());
 
                 AccountAdapter account = new AccountAdapter(user);
-
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
 
+                // STOMP Principal 설정
                 accessor.setUser(auth);
+
+                // 세션 속성에도 저장 (SessionConnectEvent에서 꺼내기 용)
+                Objects.requireNonNull(accessor.getSessionAttributes()).put("user", auth);
             } else {
                 log.warn("[JwtChannelInterceptor] Missing or invalid token: {}", token);
             }
