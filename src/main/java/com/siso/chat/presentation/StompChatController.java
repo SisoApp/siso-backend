@@ -54,6 +54,7 @@ public class StompChatController {
             if (!member.userId().equals(sender.getId())) {
                 if (onlineUserRegistry.isOnline(String.valueOf(member.userId()))) {
                     // 2-1. 수신자가 온라인이면 WebSocket 전송
+                    log.info("Sending WS message to userId={}", member.userId());
                     messagingTemplate.convertAndSendToUser(
                             String.valueOf(member.userId()),
                             "/queue/messages",
@@ -90,6 +91,7 @@ public class StompChatController {
 
         // 3. 상대방이 온라인이면 읽음 알림 전송
         if (onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()))) {
+            log.info("Sending read receipt to userId={}", otherMember.getUser().getId());
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(otherMember.getUser().getId()),
                     "/queue/read-receipts",
