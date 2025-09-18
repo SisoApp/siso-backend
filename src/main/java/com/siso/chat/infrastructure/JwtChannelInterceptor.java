@@ -30,6 +30,10 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             String token = accessor.getFirstNativeHeader("Authorization");
             log.info("[JwtChannelInterceptor] CONNECT Authorization header: {}", token);
 
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
             if (token != null && jwtTokenUtil.validateToken(token)) {
                 User user = jwtTokenUtil.validateAndGetUserId(token); // 토큰 검증 및 User 조회
                 log.info("[JwtChannelInterceptor] Authenticated user: {} (id={})", user.getEmail(), user.getId());
