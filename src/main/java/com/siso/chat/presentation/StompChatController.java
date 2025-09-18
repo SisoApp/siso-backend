@@ -45,6 +45,7 @@ public class StompChatController {
         UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) principal;
         AccountAdapter account = (AccountAdapter) auth.getPrincipal();
         User sender = account.getUser();
+
         // 1. 메시지 저장 및 제한 처리
         ChatMessageResponseDto savedMessage = chatMessageService.sendMessage(requestDto, sender);
 
@@ -52,21 +53,24 @@ public class StompChatController {
         List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(requestDto.getChatRoomId());
         for (ChatRoomMemberResponseDto member : members) {
             if (!member.userId().equals(sender.getId())) {
-                if (onlineUserRegistry.isOnline(String.valueOf(member.userId()))) {
-                    // 2-1. 수신자가 온라인이면 WebSocket 전송
-                    log.info("Sending WS message to userId={}", member.userId());
+                boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(member.userId()));
+
+                if (isOnline) {
+                    log.info("[sendMessage] Member userId={} online={} -> Sending WS message",
+                            member.userId(), isOnline);
                     messagingTemplate.convertAndSendToUser(
                             String.valueOf(member.userId()),
                             "/queue/messages",
                             savedMessage
                     );
                 } else {
-                    // 2-2. 오프라인이면 NotificationService를 통해 알림 발송
+                    log.info("[sendMessage] Member userId={} online={} -> Sending Notification",
+                            member.userId(), isOnline);
                     notificationService.sendMessageNotification(
-                            member.userId(),          // 수신자
-                            sender.getId(),           // 발신자
+                            member.userId(),
+                            sender.getId(),
                             sender.getUserProfile() != null ? sender.getUserProfile().getNickname() : "익명",
-                            savedMessage.getContent() // 메시지 내용
+                            savedMessage.getContent()
                     );
                 }
             }
@@ -88,15 +92,20 @@ public class StompChatController {
 
         // 2. 1대1 채팅 상대방 조회
         ChatRoomMember otherMember = chatRoomMemberService.getOtherMember(requestDto.getChatRoomId(), user.getId());
+        boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()));
 
         // 3. 상대방이 온라인이면 읽음 알림 전송
-        if (onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()))) {
-            log.info("Sending read receipt to userId={}", otherMember.getUser().getId());
+        if (isOnline) {
+            log.info("[readMessage] OtherMember userId={} online={} -> Sending WS read receipt",
+                    otherMember.getUser().getId(), isOnline);
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(otherMember.getUser().getId()),
                     "/queue/read-receipts",
                     requestDto
             );
+        } else {
+            log.info("[readMessage] OtherMember userId={} online={} -> Skipping WS, offline user",
+                    otherMember.getUser().getId(), isOnline);
         }
     }
 }
