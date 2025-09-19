@@ -45,8 +45,9 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                 // STOMP Principal 설정
                 accessor.setUser(auth);
 
-                // 세션 속성에도 저장 (SessionConnectEvent에서 꺼내기 용)
+                // 세션에 userId 따로 저장 (email 말고 PK 사용)
                 Objects.requireNonNull(accessor.getSessionAttributes()).put("user", auth);
+                accessor.getSessionAttributes().put("userId", user.getId().toString());
             } else {
                 log.warn("[JwtChannelInterceptor] Missing or invalid token: {}", token);
             }

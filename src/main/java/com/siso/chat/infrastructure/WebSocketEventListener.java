@@ -9,6 +9,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -19,31 +20,26 @@ public class WebSocketEventListener {
     @EventListener
     public void handleSessionConnected(SessionConnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Principal user = accessor.getUser();
+        String userId = (String) Objects.requireNonNull(accessor.getSessionAttributes()).get("userId");
 
-        // 세션 속성에서 Principal 확인 (JwtChannelInterceptor에서 저장)
-        if (user == null && accessor.getSessionAttributes() != null) {
-            user = (Principal) accessor.getSessionAttributes().get("user");
-        }
-
-        if (user != null) {
-            log.info("[WS CONNECT] user.getName() = {}", user.getName());
-            registry.addOnlineUser(user.getName());
+        if (userId != null) {
+            log.info("[WS CONNECT] userId={}", userId);
+            registry.addOnlineUser(userId);
+        } else {
+            log.warn("[WS CONNECT] userId 찾을 수 없음, 온라인 등록 실패");
         }
     }
 
     @EventListener
     public void handleSessionDisconnected(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        Principal user = accessor.getUser();
+        String userId = (String) Objects.requireNonNull(accessor.getSessionAttributes()).get("userId");
 
-        if (user == null && accessor.getSessionAttributes() != null) {
-            user = (Principal) accessor.getSessionAttributes().get("user");
-        }
-
-        if (user != null) {
-            log.info("[WS DISCONNECT] user.getName() = {}", user.getName());
-            registry.removeOnlineUser(user.getName());
+        if (userId != null) {
+            log.info("[WS DISCONNECT] userId={}", userId);
+            registry.removeOnlineUser(userId);
+        } else {
+            log.warn("[WS DISCONNECT] userId 찾을 수 없음, 온라인 제거 실패");
         }
     }
 }
