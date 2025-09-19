@@ -126,34 +126,6 @@ public class ChatMessageService {
     }
 
     /**
-     * 채팅방의 다른 멤버들에게 알림 전송 (본인 제외)
-     */
-//    private void sendNotificationToOtherMembers(ChatRoom chatRoom, User sender, String messageContent) {
-//        try {
-//            String senderNickname = sender.getUserProfile() != null
-//                    ? sender.getUserProfile().getNickname()
-//                    : "익명";
-//
-//            chatRoom.getChatRoomMembers().stream()
-//                    .filter(member -> !member.getUser().getId().equals(sender.getId()))
-//                    .forEach(member -> {
-//                        try {
-//                            notificationService.sendMessageNotification(
-//                                    member.getUser().getId(),
-//                                    sender.getId(),
-//                                    senderNickname,
-//                                    messageContent
-//                            );
-//                        } catch (Exception e) {
-//                            log.warn("Failed to send notification to user {}: {}", member.getUser().getId(), e.getMessage());
-//                        }
-//                    });
-//        } catch (Exception e) {
-//            log.warn("Failed to send message notifications: {}", e.getMessage());
-//        }
-//    }
-
-    /**
      * ChatMessage → ChatMessageResponseDto 변환
      */
     private ChatMessageResponseDto toDto(ChatMessage message) {

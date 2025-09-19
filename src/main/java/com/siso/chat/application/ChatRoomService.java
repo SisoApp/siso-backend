@@ -101,8 +101,6 @@ public class ChatRoomService {
         chatRoomRepository.save(chatRoom);
     }
 
-    // =================== Helper Methods ===================
-
     private ChatRoom getChatRoom(Long chatRoomId) {
         return chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.CHATROOM_NOT_FOUND));
