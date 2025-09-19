@@ -21,10 +21,11 @@ public class WebSocketEventListener {
     public void handleSessionConnected(SessionConnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String userId = (String) Objects.requireNonNull(accessor.getSessionAttributes()).get("userId");
+        String sessionId = accessor.getSessionId();
 
         if (userId != null) {
             log.info("[WS CONNECT] userId={}", userId);
-            registry.addOnlineUser(userId);
+            registry.addOnlineUser(userId, sessionId);
         } else {
             log.warn("[WS CONNECT] userId 찾을 수 없음, 온라인 등록 실패");
         }

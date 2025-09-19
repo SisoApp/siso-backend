@@ -3,12 +3,12 @@ package com.siso.chat.presentation;
 import com.siso.chat.application.ChatMessageService;
 import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.domain.model.ChatRoomMember;
+import com.siso.chat.dto.request.ChatListUpdateDto;
 import com.siso.chat.dto.request.ChatMessageRequestDto;
 import com.siso.chat.dto.request.ChatReadRequestDto;
 import com.siso.chat.dto.response.ChatMessageResponseDto;
 import com.siso.chat.dto.response.ChatRoomMemberResponseDto;
 import com.siso.chat.infrastructure.OnlineUserRegistry;
-import com.siso.common.web.CurrentUser;
 import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
 import com.siso.user.infrastructure.authentication.AccountAdapter;
@@ -18,8 +18,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -60,7 +58,7 @@ public class StompChatController {
                     log.info("[sendMessage] Member userId={} online={} -> Sending WS message", member.userId(), isOnline);
                     messagingTemplate.convertAndSendToUser(
                             String.valueOf(member.userId()),
-                            "/queue/messages",
+                            "/queue/chat-room/" + requestDto.getChatRoomId(),
                             savedMessage
                     );
                 } else {
@@ -72,6 +70,14 @@ public class StompChatController {
                             savedMessage.getContent()
                     );
                 }
+
+                // 채팅 목록 unread count 증가
+                int unreadCount = chatRoomMemberService.getUnreadCount(member.userId(), requestDto.getChatRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        String.valueOf(member.userId()),
+                        "/queue/chat-list",
+                        new ChatListUpdateDto(requestDto.getChatRoomId(), unreadCount)
+                );
             }
         }
     }
@@ -100,12 +106,20 @@ public class StompChatController {
                     otherMember.getUser().getId(), isOnline);
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(otherMember.getUser().getId()),
-                    "/queue/read-receipts",
+                    "/queue/read-receipt/" + requestDto.getChatRoomId(),
                     requestDto
             );
         } else {
             log.info("[readMessage] OtherMember userId={} online={} -> Skipping WS, offline user",
                     otherMember.getUser().getId(), isOnline);
         }
+
+        // unread count 감소
+        int unreadCount = chatRoomMemberService.getUnreadCount(user.getId(), requestDto.getChatRoomId());
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(user.getId()),
+                "/queue/chat-list",
+                new ChatListUpdateDto(requestDto.getChatRoomId(), unreadCount)
+        );
     }
 }
