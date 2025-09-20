@@ -33,7 +33,8 @@ public class WebSocketEventListener {
     }
 
     @EventListener
-    public void handleSessionDisconnected(SessionDisconnectEvent event, CloseStatus status) {
+    public void handleSessionDisconnected(SessionDisconnectEvent event) {
+        CloseStatus status = event.getCloseStatus();
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String userId = (String) Objects.requireNonNull(accessor.getSessionAttributes()).get("userId");
 
