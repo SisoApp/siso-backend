@@ -27,7 +27,7 @@ public class WebSocketEventListener {
             log.info("[WS CONNECT] userId={}", userId);
             registry.addOnlineUser(userId, sessionId);
         } else {
-            log.warn("[WS CONNECT] userId 찾을 수 없음, 온라인 등록 실패");
+            log.warn("[WS CONNECT] userId 찾을 수 없음, 온라인 등록 실패.");
         }
     }
 
@@ -40,7 +40,7 @@ public class WebSocketEventListener {
             log.info("[WS DISCONNECT] userId={}", userId);
             registry.removeOnlineUser(userId);
         } else {
-            log.warn("[WS DISCONNECT] userId 찾을 수 없음, 온라인 제거 실패");
+            log.warn("[WS DISCONNECT] userId 찾을 수 없음, 온라인 제거 실패.");
         }
     }
 }
