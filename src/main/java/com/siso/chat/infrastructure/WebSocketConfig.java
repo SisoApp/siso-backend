@@ -20,8 +20,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setSendTimeLimit(15_000)               // 메시지 전송 최대 시간 (15초)
+                .setSendBufferSizeLimit(512 * 1024);    // 버퍼 크기 (512KB)
+    }
+
+    @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue"); // 구독 prefix
+        registry.enableSimpleBroker("/topic", "/queue").setHeartbeatValue(new long[]{10000, 10000});; // 구독 prefix 활성화 + 10초마다 heartbeat
         registry.setApplicationDestinationPrefixes("/app"); // 클라 -> 서버 보낼 때 prefix
         registry.setUserDestinationPrefix("/user"); // 개인 메시지(1:1 메시지용) prefix
     }
