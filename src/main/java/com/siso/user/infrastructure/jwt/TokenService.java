@@ -1,5 +1,6 @@
 package com.siso.user.infrastructure.jwt;
 
+import com.siso.chat.infrastructure.OnlineUserRegistry;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.application.UserProfileService;
@@ -20,6 +21,7 @@ public class TokenService {
     private final JwtTokenUtil jwtTokenUtil;
     private final UserRepository userRepository;
     private final UserProfileService userProfileService;
+    private final OnlineUserRegistry onlineUserRegistry;
 
     public Map<String, Object> refreshAccessToken(String oldRefreshToken) {
         // 1. RefreshToken 검증

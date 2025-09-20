@@ -21,7 +21,7 @@ public class UserInterestController {
     private final UserInterestService userInterestService;
 
     // 사용자의 관심사 목록 조회
-    @GetMapping("/list")
+    @GetMapping(value = "/list", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<UserInterestResponseDto>> getUserInterests(@CurrentUser User user) {
         List<UserInterestResponseDto> interests = userInterestService.getUserInterestByUserId(user)
                 .stream()
@@ -32,7 +32,7 @@ public class UserInterestController {
     }
 
     // 사용자의 관심사 선택
-    @PostMapping("/select")
+    @PostMapping(value = "/select", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> selectUserInterests(@CurrentUser User user,
                                                   @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()
@@ -44,7 +44,7 @@ public class UserInterestController {
     }
 
     // 사용자의 관심사 수정
-    @PatchMapping("/update")
+    @PatchMapping(value = "/update", produces = "application/json; charset=UTF-8")
     public SisoResponse<Void> updateUserInterests(@CurrentUser User user,
                                                   @RequestBody @Valid List<UserInterestRequestDto> interestsDto) {
         List<Interest> interests = interestsDto.stream()

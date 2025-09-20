@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-
 @Getter
 public class AccountAdapter implements UserDetails, OAuth2User {
     private final User user;

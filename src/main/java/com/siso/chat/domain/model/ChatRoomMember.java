@@ -5,6 +5,8 @@ import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "chat_room_members")
 @Getter
@@ -26,6 +28,9 @@ public class ChatRoomMember extends BaseTime {
     private ChatRoomMemberStatus chatRoomMemberStatus = ChatRoomMemberStatus.JOINED;
 
     private Long lastReadMessageId; // 읽음 처리
+
+    @Column(name = "last_read_at") // 마지막으로 읽은 시간
+    private LocalDateTime lastReadAt;
 
     @OneToOne(mappedBy = "chatRoomMember", cascade = CascadeType.ALL, orphanRemoval = true)
     protected ChatRoomLimit chatRoomLimit;

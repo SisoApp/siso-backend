@@ -34,7 +34,7 @@ public class ChatRoomLimit {
 
     // 메시지 전송 횟수 5
     public boolean canSendMessage() {
-        return sentCount <= 5;
+        return sentCount < 5;
     }
 
     // 메시지 전송 횟수 증가

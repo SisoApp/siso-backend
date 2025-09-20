@@ -226,7 +226,7 @@ public class NotificationService {
         );
 
         // senderNickname은 null 또는 "시스템" 등으로 처리
-        return createAndSendNotification(receiverId, null, "시스템", title, message, url,
+        return createAndSendNotification(receiverId, 0L, "시스템", title, message, url,
                 NotificationType.CALL, extraData);
     }
 
@@ -243,8 +243,8 @@ public class NotificationService {
                 "status", "DENY",
                 "timestamp", String.valueOf(System.currentTimeMillis())
         );
-
-        return createAndSendNotification(receiverId, null, "시스템", title, message, url,
+    
+        return createAndSendNotification(receiverId, 0L, "시스템", title, message, url,
                 NotificationType.CALL, extraData);
     }
 }

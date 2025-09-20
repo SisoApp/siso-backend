@@ -18,7 +18,7 @@ public class AgoraCallController {
     private final AgoraCallService agoraCallService;
 
     // 1. 통화 요청
-    @PostMapping("/request")
+    @PostMapping(value = "/request", produces = "application/json; charset=UTF-8")
     public SisoResponse<CallInfoDto> requestCall(@CurrentUser User caller,
                                                  @Valid @RequestBody CallRequestDto requestDto) {
         CallInfoDto callInfo = agoraCallService.requestCall(caller, requestDto);
@@ -26,21 +26,21 @@ public class AgoraCallController {
     }
 
     // 2. 통화 수락
-    @PostMapping("/accept")
+    @PostMapping(value = "/accept", produces = "application/json; charset=UTF-8")
     public SisoResponse<AgoraCallResponseDto> acceptCall(@Valid @RequestBody CallInfoDto callInfoDto) {
         AgoraCallResponseDto response = agoraCallService.acceptCall(callInfoDto);
         return SisoResponse.success(response);
     }
 
     // 3. 통화 거절
-    @PostMapping("/deny")
+    @PostMapping(value = "/deny", produces = "application/json; charset=UTF-8")
     public SisoResponse<AgoraCallResponseDto> denyCall(@Valid @RequestBody CallInfoDto callInfoDto) {
         AgoraCallResponseDto response = agoraCallService.denyCall(callInfoDto);
         return SisoResponse.success(response);
     }
 
     // 4. 통화 종료
-    @PostMapping("/end")
+    @PostMapping(value = "/end", produces = "application/json; charset=UTF-8")
     public SisoResponse<AgoraCallResponseDto> endCall(@Valid @RequestBody CallInfoDto callInfoDto,
                                                       @RequestParam boolean continueRelationship) {
         AgoraCallResponseDto response = agoraCallService.endCall(callInfoDto, continueRelationship);
@@ -48,7 +48,7 @@ public class AgoraCallController {
     }
 
     // 5. 통화 취소
-    @PostMapping("/cancel")
+    @PostMapping(value = "/cancel", produces = "application/json; charset=UTF-8")
     public SisoResponse<AgoraCallResponseDto> cancelCall(@CurrentUser User user,
                                                          @RequestParam Long callId) {
         AgoraCallResponseDto response = agoraCallService.cancelCall(user, callId);

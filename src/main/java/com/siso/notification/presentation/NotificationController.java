@@ -41,7 +41,7 @@ public class NotificationController {
      * @param requestDto 알림 생성 요청 데이터
      * @return 생성된 알림 정보
      */
-    @PostMapping
+    @PostMapping(produces = "application/json; charset=UTF-8")
     @Operation(summary = "알림 생성", description = "새로운 알림을 생성하고 FCM을 통해 전송합니다.")
     public SisoResponse<NotificationResponseDto> createNotification(
             @CurrentUser User user,
@@ -68,7 +68,7 @@ public class NotificationController {
      * @param user 현재 로그인한 사용자
      * @return 알림 목록 (최신순)
      */
-    @GetMapping
+    @GetMapping(produces = "application/json; charset=UTF-8")
     @Operation(summary = "알림 목록 조회", description = "현재 사용자의 모든 알림을 최신순으로 조회합니다.")
     public SisoResponse<List<NotificationResponseDto>> getNotifications(@CurrentUser User user) {
         List<NotificationResponseDto> notifications = notificationService.getNotificationsByUserId(user.getId());
@@ -81,7 +81,7 @@ public class NotificationController {
      * @param user 현재 로그인한 사용자
      * @return 읽지 않은 알림 목록 (최신순)
      */
-    @GetMapping("/unread")
+    @GetMapping(value = "/unread", produces = "application/json; charset=UTF-8")
     @Operation(summary = "읽지 않은 알림 조회", description = "현재 사용자의 읽지 않은 알림을 최신순으로 조회합니다.")
     public SisoResponse<List<NotificationResponseDto>> getUnreadNotifications(@CurrentUser User user) {
         List<NotificationResponseDto> notifications = notificationService.getUnreadNotificationsByUserId(user.getId());
@@ -94,7 +94,7 @@ public class NotificationController {
      * @param user 현재 로그인한 사용자
      * @return 읽지 않은 알림 개수
      */
-    @GetMapping("/unread/count")
+    @GetMapping(value = "/unread/count", produces = "application/json; charset=UTF-8")
     @Operation(summary = "읽지 않은 알림 개수 조회", description = "현재 사용자의 읽지 않은 알림 개수를 조회합니다.")
     public SisoResponse<UnreadCountResponseDto> getUnreadCount(@CurrentUser User user) {
         UnreadCountResponseDto unreadCount = notificationService.getUnreadCount(user.getId());
@@ -107,7 +107,7 @@ public class NotificationController {
      * @param notificationId 읽음 처리할 알림 ID
      * @return 성공 메시지
      */
-    @PatchMapping("/{notificationId}/read")
+    @PatchMapping(value = "/{notificationId}/read", produces = "application/json; charset=UTF-8")
     @Operation(summary = "알림 읽음 처리", description = "특정 알림을 읽음 상태로 변경합니다.")
     public SisoResponse<Void> markAsRead(
             @Parameter(description = "알림 ID", example = "1")
@@ -122,7 +122,7 @@ public class NotificationController {
      * @param user 현재 로그인한 사용자
      * @return 성공 메시지
      */
-    @PatchMapping("/read-all")
+    @PatchMapping(value = "/read-all", produces = "application/json; charset=UTF-8")
     @Operation(summary = "모든 알림 읽음 처리", description = "현재 사용자의 모든 알림을 읽음 상태로 변경합니다.")
     public SisoResponse<Void> markAllAsRead(@CurrentUser User user) {
         notificationService.markAllAsRead(user.getId());
@@ -136,7 +136,7 @@ public class NotificationController {
      * @param receiverId 수신자 ID
      * @return 생성된 알림 정보
      */
-    @PostMapping("/matching")
+    @PostMapping(value = "/matching", produces = "application/json; charset=UTF-8")
     @Operation(summary = "매칭 알림 전송", description = "새로운 매칭 알림을 생성하고 전송합니다.")
     public SisoResponse<NotificationResponseDto> sendMatchingNotification(
             @CurrentUser User user,

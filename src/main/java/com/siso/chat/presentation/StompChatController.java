@@ -3,21 +3,24 @@ package com.siso.chat.presentation;
 import com.siso.chat.application.ChatMessageService;
 import com.siso.chat.application.ChatRoomMemberService;
 import com.siso.chat.domain.model.ChatRoomMember;
+import com.siso.chat.dto.request.ChatListUpdateDto;
 import com.siso.chat.dto.request.ChatMessageRequestDto;
 import com.siso.chat.dto.request.ChatReadRequestDto;
 import com.siso.chat.dto.response.ChatMessageResponseDto;
 import com.siso.chat.dto.response.ChatRoomMemberResponseDto;
 import com.siso.chat.infrastructure.OnlineUserRegistry;
-import com.siso.common.web.CurrentUser;
 import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
+import com.siso.user.infrastructure.authentication.AccountAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
 import java.util.List;
 
 @Slf4j
@@ -36,7 +39,11 @@ public class StompChatController {
      */
     @MessageMapping("/chat.sendMessage") // /app/chat.sendMessage
     public void sendMessage(@Payload ChatMessageRequestDto requestDto,
-                            @CurrentUser User sender) {
+                            Principal principal) {
+        UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) principal;
+        AccountAdapter account = (AccountAdapter) auth.getPrincipal();
+        User sender = account.getUser();
+
         // 1. 메시지 저장 및 제한 처리
         ChatMessageResponseDto savedMessage = chatMessageService.sendMessage(requestDto, sender);
 
@@ -44,22 +51,33 @@ public class StompChatController {
         List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(requestDto.getChatRoomId());
         for (ChatRoomMemberResponseDto member : members) {
             if (!member.userId().equals(sender.getId())) {
-                if (onlineUserRegistry.isOnline(String.valueOf(member.userId()))) {
-                    // 2-1. 수신자가 온라인이면 WebSocket 전송
+                boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(member.userId()));
+                log.info("[sendMessage] senderId={} -> member userId={} online={} | 현재 onlineUsers={}", sender.getId(), member.userId(), isOnline, onlineUserRegistry.getOnlineUsers().keySet());
+
+                if (isOnline) {
+                    log.info("[sendMessage] Member userId={} online={} -> Sending WS message", member.userId(), isOnline);
                     messagingTemplate.convertAndSendToUser(
                             String.valueOf(member.userId()),
-                            "/queue/messages",
+                            "/queue/chat-room/" + requestDto.getChatRoomId(),
                             savedMessage
                     );
                 } else {
-                    // 2-2. 오프라인이면 NotificationService를 통해 알림 발송
+                    log.info("[sendMessage] Member userId={} online={} -> Sending Notification", member.userId(), isOnline);
                     notificationService.sendMessageNotification(
-                            member.userId(),          // 수신자
-                            sender.getId(),           // 발신자
+                            member.userId(),
+                            sender.getId(),
                             sender.getUserProfile() != null ? sender.getUserProfile().getNickname() : "익명",
-                            savedMessage.getContent() // 메시지 내용
+                            savedMessage.getContent()
                     );
                 }
+
+                // 채팅 목록 unread count 증가
+                int unreadCount = chatRoomMemberService.getUnreadCount(member.userId(), requestDto.getChatRoomId());
+                messagingTemplate.convertAndSendToUser(
+                        String.valueOf(member.userId()),
+                        "/queue/chat-list",
+                        new ChatListUpdateDto(requestDto.getChatRoomId(), unreadCount)
+                );
             }
         }
     }
@@ -69,20 +87,39 @@ public class StompChatController {
      */
     @MessageMapping("/chat.readMessage") // /app/chat.readMessage
     public void readMessage(@Payload ChatReadRequestDto requestDto,
-                            @CurrentUser User user) {
+                            Principal principal) {
+        UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) principal;
+        AccountAdapter account = (AccountAdapter) auth.getPrincipal();
+        User user = account.getUser();
+
         // 1. 읽음 처리
         chatRoomMemberService.markAsRead(requestDto, user);
 
         // 2. 1대1 채팅 상대방 조회
         ChatRoomMember otherMember = chatRoomMemberService.getOtherMember(requestDto.getChatRoomId(), user.getId());
+        boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()));
+        log.info("[readMessage] readerId={} -> otherMember userId={} online={} | 현재 onlineUsers={}", user.getId(), otherMember.getUser().getId(), isOnline, onlineUserRegistry.getOnlineUsers().keySet());
 
         // 3. 상대방이 온라인이면 읽음 알림 전송
-        if (onlineUserRegistry.isOnline(String.valueOf(otherMember.getUser().getId()))) {
+        if (isOnline) {
+            log.info("[readMessage] OtherMember userId={} online={} -> Sending WS read receipt",
+                    otherMember.getUser().getId(), isOnline);
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(otherMember.getUser().getId()),
-                    "/queue/read-receipts",
+                    "/queue/read-receipt/" + requestDto.getChatRoomId(),
                     requestDto
             );
+        } else {
+            log.info("[readMessage] OtherMember userId={} online={} -> Skipping WS, offline user",
+                    otherMember.getUser().getId(), isOnline);
         }
+
+        // unread count 감소
+        int unreadCount = chatRoomMemberService.getUnreadCount(user.getId(), requestDto.getChatRoomId());
+        messagingTemplate.convertAndSendToUser(
+                String.valueOf(user.getId()),
+                "/queue/chat-list",
+                new ChatListUpdateDto(requestDto.getChatRoomId(), unreadCount)
+        );
     }
 }

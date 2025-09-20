@@ -23,26 +23,26 @@ public class UserProfileController {
     private final UserProfileService userProfileService;
 
     // 단일 조회
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<UserProfileResponseDto> getProfile(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(userProfileService.findById(id));
     }
 
     // 전체 조회
-    @GetMapping
+    @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<List<UserProfileResponseDto>> getAllProfiles() {
         return ResponseEntity.ok(userProfileService.findAll());
     }
 
     // 사용자 기준 프로필 조회
-    @GetMapping("/me")
+    @GetMapping(value = "/me", produces = "application/json; charset=UTF-8")
     public ResponseEntity<UserProfileResponseDto> getProfileByUser(@CurrentUser User user) {
         UserProfileResponseDto profile = userProfileService.getUserProfileByUserId(user.getId());
         return ResponseEntity.ok(profile);
     }
 
     // 프로필 생성
-    @PostMapping
+    @PostMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<UserProfileResponseDto> createProfile(@CurrentUser User user,
                                                                 @Valid @RequestBody UserProfileRequestDto dto) {
         if (user == null) { // 인증 실패는 401로
@@ -54,28 +54,28 @@ public class UserProfileController {
     }
 
     // 프로필 수정
-    @PatchMapping
+    @PatchMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<UserProfileResponseDto> updateProfile(@CurrentUser User user,
                                                                 @Valid @RequestBody UserProfileRequestDto dto) {
         return ResponseEntity.ok(userProfileService.update(user, dto));
     }
 
     // 프로필 삭제
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<Void> deleteProfile(@PathVariable(name = "id") Long id) {
         userProfileService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     // 사용자의 모든 이미지 조회 (프로필 이미지 설정용)
-    @GetMapping("/images")
+    @GetMapping(value = "/images", produces = "application/json; charset=UTF-8")
     public ResponseEntity<List<ImageResponseDto>> getProfileImages(@CurrentUser User user) {
         List<ImageResponseDto> images = userProfileService.getUserImages(user.getId());
         return ResponseEntity.ok(images);
     }
 
     // 상대방 프로필 조회
-    @GetMapping("/user/{targetUserId}")
+    @GetMapping(value = "/user/{targetUserId}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<UserProfileResponseDto> getOtherUserProfile(
             @CurrentUser User user,
             @PathVariable(name = "targetUserId") Long targetUserId) {

@@ -4,6 +4,7 @@ import com.siso.user.domain.model.User;
 import com.siso.user.infrastructure.authentication.AccountAdapter;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -17,6 +18,7 @@ import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtTokenUtil jwtTokenUtil;
 
@@ -26,14 +28,31 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
         if (StompCommand.CONNECT.equals(Objects.requireNonNull(accessor).getCommand())) {
             String token = accessor.getFirstNativeHeader("Authorization");
-            if (token != null && jwtTokenUtil.validateToken(token)) {
-                AccountAdapter account = jwtTokenUtil.getAccountFromToken(token);
+            log.info("[JwtChannelInterceptor] CONNECT Authorization header: {}", token);
 
-                // STOMP 세션에 인증 정보 설정
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
+            if (token != null && jwtTokenUtil.validateToken(token)) {
+                User user = jwtTokenUtil.validateAndGetUserId(token); // 토큰 검증 및 User 조회
+                log.info("[JwtChannelInterceptor] Authenticated user: {} (id={})", user.getEmail(), user.getId());
+
+                AccountAdapter account = new AccountAdapter(user);
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+
+                // STOMP Principal 설정
                 accessor.setUser(auth);
+
+                // 세션에 userId 따로 저장 (email 말고 PK 사용)
+                Objects.requireNonNull(accessor.getSessionAttributes()).put("user", auth);
+                accessor.getSessionAttributes().put("userId", user.getId().toString());
+            } else {
+                log.warn("[JwtChannelInterceptor] Missing or invalid token: {}", token);
             }
         }
         return message;
     }
 }
+

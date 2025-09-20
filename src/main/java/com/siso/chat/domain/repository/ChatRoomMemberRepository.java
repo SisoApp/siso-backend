@@ -12,7 +12,11 @@ public interface ChatRoomMemberRepository extends JpaRepository<ChatRoomMember, 
     // 채팅방에 속한 모든 멤버 조회
     List<ChatRoomMember> findByChatRoomId(Long chatRoomId);
 
-    // 채팅방 + 용자 조합으로 멤버 엔티티 조회
+    // 1:1 채팅 상대방 찾기
     @Query("SELECT m FROM ChatRoomMember m " + "WHERE m.chatRoom.id = :chatRoomId " + "AND m.user.id = :userId")
     Optional<ChatRoomMember> findMemberByChatRoomIdAndUserId(@Param("chatRoomId") Long chatRoomId, @Param("userId") Long userId);
+
+    // 특정 사용자의 멤버 정보 조회
+    @Query("SELECT m FROM ChatRoomMember m WHERE m.user.id = :userId AND m.chatRoom.id = :chatRoomId")
+    Optional<ChatRoomMember> findByUserIdAndChatRoomId(@Param("userId") Long userId, @Param("chatRoomId") Long chatRoomId);
 }
