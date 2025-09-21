@@ -46,8 +46,10 @@ public class ChatController {
 
     // 특정 채팅방 메시지 조회
     @GetMapping(value = "/rooms/{chatRoomId}/messages", produces = "application/json; charset=UTF-8")
-    public SisoResponse<List<ChatMessageResponseDto>> getMessages(@PathVariable Long chatRoomId) {
-        List<ChatMessageResponseDto> messages = chatMessageService.getMessages(chatRoomId);
+    public SisoResponse<List<ChatMessageResponseDto>> getMessages(@PathVariable Long chatRoomId,
+                                                                  @RequestParam(required = false) Long lastMessageId, // 마지막 메시지 기준
+                                                                  @RequestParam(defaultValue = "30") int size) {
+        List<ChatMessageResponseDto> messages = chatMessageService.getMessages(chatRoomId, lastMessageId, size);
         return SisoResponse.success(messages);
     }
 

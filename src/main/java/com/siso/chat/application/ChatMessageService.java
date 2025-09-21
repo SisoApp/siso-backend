@@ -13,9 +13,13 @@ import com.siso.user.domain.model.User;
 import com.siso.notification.application.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.print.Pageable;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -77,11 +81,24 @@ public class ChatMessageService {
      * 채팅방의 메시지 조회
      */
     @Transactional(readOnly = true)
-    public List<ChatMessageResponseDto> getMessages(Long chatRoomId) {
-        log.info("Fetching messages for chatRoomId={}", chatRoomId);
-        return chatMessageRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId)
-                .stream()
+    public List<ChatMessageResponseDto> getMessages(Long chatRoomId, Long lastMessageId, int size) {
+        log.info("Fetching messages for chatRoomId={} lastMessageId={} size={}", chatRoomId, lastMessageId, size);
+
+        List<ChatMessage> messages;
+        if (lastMessageId == null) {
+            // 채팅방 진입 시 → 최신 메시지 30개
+            Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
+            messages = chatMessageRepository.findByChatRoomId(chatRoomId, pageable);
+        } else {
+            // 과거 메시지 요청 → lastMessageId 이전 메시지
+            Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
+            messages = chatMessageRepository.findByChatRoomIdAndIdLessThan(chatRoomId, lastMessageId, pageable);
+        }
+
+        // DTO로 변환 + 오래된 순서로 정렬
+        return messages.stream()
                 .map(this::toDto)
+                .sorted(Comparator.comparing(ChatMessageResponseDto::getCreatedAt))
                 .toList();
     }
 
