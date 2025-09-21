@@ -3,8 +3,8 @@ package com.siso.chat.domain.repository;
 import com.siso.chat.domain.model.ChatMessage;
 import com.siso.chat.domain.model.ChatRoom;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
 
-import java.awt.print.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
