@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.awt.print.Pageable;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -82,23 +83,23 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public List<ChatMessageResponseDto> getMessages(Long chatRoomId, Long lastMessageId, int size) {
-        log.info("Fetching messages for chatRoomId={} lastMessageId={} size={}", chatRoomId, lastMessageId, size);
+        // Pageable 생성
+        Pageable pageable = (Pageable) PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         List<ChatMessage> messages;
         if (lastMessageId == null) {
-            // 채팅방 진입 시 → 최신 메시지 30개
-            Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
+            // 최신 메시지 size개 조회
             messages = chatMessageRepository.findByChatRoomId(chatRoomId, pageable);
         } else {
-            // 과거 메시지 요청 → lastMessageId 이전 메시지
-            Pageable pageable = PageRequest.of(0, size, Sort.by("createdAt").descending());
+            // lastMessageId 이전 메시지 size개 조회
             messages = chatMessageRepository.findByChatRoomIdAndIdLessThan(chatRoomId, lastMessageId, pageable);
         }
 
-        // DTO로 변환 + 오래된 순서로 정렬
+        // 역순 정렬 (DB에서 내림차순 조회했으므로 클라이언트에는 올림차순으로)
+        Collections.reverse(messages);
+
         return messages.stream()
                 .map(this::toDto)
-                .sorted(Comparator.comparing(ChatMessageResponseDto::getCreatedAt))
                 .toList();
     }
 

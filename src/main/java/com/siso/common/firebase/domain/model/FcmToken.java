@@ -51,6 +51,7 @@ public class FcmToken extends BaseTime {
      * false: 비활성화된 토큰 (푸시 알림 전송 불가)
      * 기본값은 true입니다.
      */
+    @Builder.Default
     @Column(name = "is_active", columnDefinition = "TINYINT(1) DEFAULT 1", nullable = false)
     private boolean isActive = true;
 }
