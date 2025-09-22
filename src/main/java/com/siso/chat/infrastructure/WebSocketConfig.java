@@ -12,6 +12,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.handler.WebSocketHandlerDecorator;
 
+import java.io.EOFException;
+
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSocketMessageBroker
@@ -43,7 +45,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .addDecoratorFactory(handler -> new WebSocketHandlerDecorator(handler) {
                     @Override
                     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-                        log.error("[WebSocketTransportError] sessionId={}, cause={}", session.getId(), exception.getMessage(), exception);
+                        if (exception instanceof EOFException) {
+                            log.warn("[WebSocket EOF] sessionId={}", session.getId());
+                        } else {
+                            log.error("[WebSocketTransportError] sessionId={}, cause={}", session.getId(), exception.getMessage(), exception);
+                        }
                         super.handleTransportError(session, exception);
                     }
                 });
