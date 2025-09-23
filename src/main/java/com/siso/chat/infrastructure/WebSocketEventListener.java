@@ -10,6 +10,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 
@@ -60,7 +61,7 @@ public class WebSocketEventListener {
         }
 
         if (userId != null) {
-            log.info("[WS DISCONNECT] userId={} sessionId={} reason={}", userId, sessionId, status);
+            log.info("[WS DISCONNECT] userId={} sessionId={} CloseStatus: code={}, reason='{}', at={}", userId, sessionId, status.getCode(), status.getReason(), LocalDateTime.now());
             // sessionId 기준으로 제거 (멀티 세션 지원)
             registry.removeOnlineUser(userId, sessionId);
         } else if (sessionId != null) {

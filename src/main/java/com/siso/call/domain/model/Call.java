@@ -31,9 +31,6 @@ public class Call {
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
-    @OneToOne(mappedBy = "call", cascade = CascadeType.ALL, orphanRemoval = true)
-    private ChatRoom chatRoom;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CallStatus callStatus;
@@ -65,10 +62,6 @@ public class Call {
     public void linkReceiver(User user) {
         this.receiver = user;
         user.addReceiver(this);
-    }
-
-    public void linkChatRoom(ChatRoom chatRoom) {
-        this.chatRoom = chatRoom;
     }
 
     public void addCallReview(String comment, int rating) {
