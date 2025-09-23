@@ -21,14 +21,14 @@ import java.io.EOFException;
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtChannelInterceptor jwtChannelInterceptor;
 
-    @Bean
-    public TaskScheduler wsHeartbeatScheduler() {
-        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(1);
-        scheduler.setThreadNamePrefix("wss-heartbeat-");
-        scheduler.initialize();
-        return scheduler;
-    }
+//    @Bean
+//    public TaskScheduler wsHeartbeatScheduler() {
+//        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+//        scheduler.setPoolSize(1);
+//        scheduler.setThreadNamePrefix("wss-heartbeat-");
+//        scheduler.initialize();
+//        return scheduler;
+//    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -57,9 +57,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue") // 구독 prefix
-                .setHeartbeatValue(new long[]{20_000, 20_000})             // 활성화 + 10초마다 heartbeat
-                .setTaskScheduler(wsHeartbeatScheduler());         // TaskScheduler
+        registry.enableSimpleBroker("/topic", "/queue"); // 구독 prefix
+//                .setHeartbeatValue(new long[]{10_000, 10_000})             // 활성화 + 10초마다 heartbeat
+//                .setTaskScheduler(wsHeartbeatScheduler());         // TaskScheduler
         registry.setApplicationDestinationPrefixes("/app"); // 클라 -> 서버 보낼 때 prefix
         registry.setUserDestinationPrefix("/user"); // 개인 메시지(1:1 메시지용) prefix
     }
