@@ -47,7 +47,16 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
 
                     AccountAdapter account = new AccountAdapter(user);
                     // userId를 Principal 이름으로 설정
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getId().toString(), null, account.getAuthorities());
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                            account,
+                            null,
+                            account.getAuthorities()
+                    ) {
+                        @Override
+                        public String getName() {
+                            return String.valueOf(user.getId()); // Principal 이름을 userId로 강제
+                        }
+                    };
 
                     accessor.setUser(auth);
 
