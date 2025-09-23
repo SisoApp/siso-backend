@@ -15,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
@@ -47,8 +46,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
                     log.info("[JwtChannelInterceptor] Authenticated user: {} (id={})", user.getEmail(), user.getId());
 
                     AccountAdapter account = new AccountAdapter(user);
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+                    // userId를 Principal 이름으로 설정
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getId().toString(), null, account.getAuthorities());
 
                     accessor.setUser(auth);
 
