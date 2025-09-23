@@ -7,6 +7,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
+import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
@@ -42,6 +43,13 @@ public class WebSocketEventListener {
         } else {
             log.warn("[WS CONNECT] userId 찾을 수 없음, 온라인 등록 실패. sessionId={}", sessionId);
         }
+    }
+
+    @EventListener
+    public void handleSessionConnectedEvent(SessionConnectedEvent event) {
+        log.info("[WS CONNECTED] sessionId={} user={}",
+                event.getMessage().getHeaders().get("simpSessionId"),
+                event.getUser());
     }
 
     @EventListener

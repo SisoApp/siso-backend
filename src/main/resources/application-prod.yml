@@ -43,3 +43,4 @@ logging:
   level:
     root: INFO         # 전체 기본 레벨
     com.siso: DEBUG    # 우리 패키지 디버그
+    org.springframework.messaging.simp: DEBUG
