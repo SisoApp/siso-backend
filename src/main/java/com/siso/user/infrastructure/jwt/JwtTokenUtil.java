@@ -132,12 +132,4 @@ public class JwtTokenUtil {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
     }
-
-    /**
-     * UserDetails 래핑
-     */
-    public AccountAdapter getAccountFromToken(String token) {
-        User user = validateAndGetUserId(token);
-        return new AccountAdapter(user);
-    }
 }

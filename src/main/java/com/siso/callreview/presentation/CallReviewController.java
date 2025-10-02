@@ -21,7 +21,7 @@ public class CallReviewController {
     private final UserService userService;
 
     // 리뷰 작성
-    @PostMapping
+    @PostMapping(produces = "application/json; charset=UTF-8")
     public SisoResponse<CallReviewResponseDto> createReview(@CurrentUser User evaluator,
                                                             @Valid @RequestBody CallReviewRequestDto request) {
         CallReviewResponseDto response = callReviewService.createReview(evaluator, request);
@@ -29,7 +29,7 @@ public class CallReviewController {
     }
 
     // 평가 수정
-    @PatchMapping
+    @PatchMapping(produces = "application/json; charset=UTF-8")
     public SisoResponse<CallReviewResponseDto> updateReview(@CurrentUser User evaluator,
                                                             @Valid @RequestBody CallReviewRequestDto request) {
         CallReviewResponseDto response = callReviewService.updateReview(evaluator, request);
@@ -37,14 +37,14 @@ public class CallReviewController {
     }
 
     // 내가 받은 평가 목록 조회
-    @GetMapping("/received")
+    @GetMapping(value = "/received", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<CallReviewResponseDto>> getReceivedReviews(@CurrentUser User target) {
         List<CallReviewResponseDto> reviews = callReviewService.getReceivedReviews(target);
         return SisoResponse.success(reviews);
     }
 
     // 상대방이 받은 평가 목록 조회
-    @GetMapping("/other/{userId}")
+    @GetMapping(value = "/other/{userId}", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<CallReviewResponseDto>> getReviewsOfOtherUser(@PathVariable Long userId) {
         User otherUser = userService.getUserById(userId);
         List<CallReviewResponseDto> reviews = callReviewService.getReviewsOfOtherUser(otherUser);
@@ -52,7 +52,7 @@ public class CallReviewController {
     }
 
     // 내가 작성한 평가 목록 조회
-    @GetMapping("/written")
+    @GetMapping(value = "/written", produces = "application/json; charset=UTF-8")
     public SisoResponse<List<CallReviewResponseDto>> getMyWrittenReviews(@CurrentUser User evaluator) {
         List<CallReviewResponseDto> reviews = callReviewService.getMyWrittenReviews(evaluator);
         return SisoResponse.success(reviews);

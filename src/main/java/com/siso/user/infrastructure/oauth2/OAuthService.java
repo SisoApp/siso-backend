@@ -45,9 +45,6 @@ public class OAuthService {
         user.updateRefreshToken(jwtRefreshToken);
         userRepository.save(user);
 
-        // 실시간 온라인 판단용 등록
-        onlineUserRegistry.addOnlineUser(String.valueOf(user.getId()));
-
         boolean hasProfile = userProfileService.existsByUserId(user.getId());
         return new TokenResponseDto(jwtAccessToken, jwtRefreshToken, user.getRegistrationStatus(), hasProfile);
     }

@@ -59,9 +59,6 @@ public class UserService {
         user.updateRefreshToken(null);
         user.updatePresenceStatus(PresenceStatus.OFFLINE);
         userRepository.save(user);
-
-        // 실시간 온라인 판단용 제거
-        onlineUserRegistry.removeOnlineUser(String.valueOf(user.getId()));
     }
 }
 
