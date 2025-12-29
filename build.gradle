@@ -67,9 +67,26 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// 테스트 프레임워크
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// Testcontainers (실제 MySQL 컨테이너로 테스트)
+	testImplementation 'org.testcontainers:testcontainers:1.19.3'
+	testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+	testImplementation 'org.testcontainers:mysql:1.19.3'
+
+	// AssertJ (유창한 assertion)
+	testImplementation 'org.assertj:assertj-core:3.24.2'
+
+	// MockWebServer (외부 API 모킹 - OAuth, FCM 등)
+	testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+	// Awaitility (비동기 테스트)
+	testImplementation 'org.awaitility:awaitility:4.2.0'
+
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
 
