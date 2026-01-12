@@ -1,6 +1,5 @@
 package com.siso.user.domain.model;
 
-import com.siso.image.domain.model.Image;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import jakarta.persistence.*;
 import lombok.*;

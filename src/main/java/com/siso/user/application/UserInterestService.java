@@ -5,13 +5,12 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.Interest;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserInterest;
-import com.siso.user.domain.repository.UserInterestRepository;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserInterestRepository;
+import com.siso.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;

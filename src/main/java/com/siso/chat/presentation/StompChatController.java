@@ -2,6 +2,8 @@ package com.siso.chat.presentation;
 
 import com.siso.chat.application.ChatMessageService;
 import com.siso.chat.application.ChatRoomMemberService;
+import com.siso.chat.application.event.ChatMessageEvent;
+import com.siso.chat.application.publisher.ChatMessagePublisher;
 import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.chat.dto.request.ChatListUpdateDto;
 import com.siso.chat.dto.request.ChatMessageRequestDto;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Controller
@@ -29,12 +32,13 @@ import java.util.List;
 public class StompChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
+    private final ChatMessagePublisher chatMessagePublisher;  // 추가: RabbitMQ Publisher
     private final NotificationService notificationService;
     private final ChatRoomMemberService chatRoomMemberService;
     private final OnlineUserRegistry onlineUserRegistry;
 
     /**
-     * 채팅 메시지 전송
+     * 채팅 메시지 전송 (메시지 큐 방식)
      * 클라이언트 → /app/chat.sendMessage
      */
     @MessageMapping("/chat.sendMessage") // /app/chat.sendMessage
@@ -44,42 +48,24 @@ public class StompChatController {
         AccountAdapter account = (AccountAdapter) auth.getPrincipal();
         User sender = account.getUser();
 
-        // 1. 메시지 저장 및 제한 처리
+        log.info("[sendMessage] chatRoomId={}, senderId={}", requestDto.getChatRoomId(), sender.getId());
+
+        // 1. 메시지 저장 및 제한 처리 (DB에 저장)
         ChatMessageResponseDto savedMessage = chatMessageService.sendMessage(requestDto, sender);
 
-        // 2. 채팅방 멤버에게 실시간 전송 (본인 제외)
+        // 2. 수신자 목록 조회 (본인 제외)
         List<ChatRoomMemberResponseDto> members = chatRoomMemberService.getMembers(requestDto.getChatRoomId());
-        for (ChatRoomMemberResponseDto member : members) {
-            if (!member.userId().equals(sender.getId())) {
-                boolean isOnline = onlineUserRegistry.isOnline(String.valueOf(member.userId()));
-                log.info("[sendMessage] senderId={} -> member userId={} online={} | 현재 onlineUsers={}", sender.getId(), member.userId(), isOnline, onlineUserRegistry.getOnlineUsers().keySet());
+        List<Long> recipientUserIds = members.stream()
+                .map(ChatRoomMemberResponseDto::userId)
+                .filter(userId -> !userId.equals(sender.getId()))
+                .collect(Collectors.toList());
 
-                if (isOnline) {
-                    log.info("[sendMessage] Member userId={} online={} -> Sending WS message", member.userId(), isOnline);
-                    messagingTemplate.convertAndSendToUser(
-                            String.valueOf(member.userId()),
-                            "/queue/chat-room/" + requestDto.getChatRoomId(),
-                            savedMessage
-                    );
-                } else {
-                    log.info("[sendMessage] Member userId={} online={} -> Sending Notification", member.userId(), isOnline);
-                    notificationService.sendMessageNotification(
-                            member.userId(),
-                            sender.getId(),
-                            sender.getUserProfile() != null ? sender.getUserProfile().getNickname() : "익명",
-                            savedMessage.getContent()
-                    );
-                }
+        // 3. RabbitMQ에 이벤트 발행 (비동기)
+        ChatMessageEvent event = ChatMessageEvent.from(savedMessage, recipientUserIds);
+        chatMessagePublisher.publishMessage(event);
 
-                // 채팅 목록 unread count 증가
-                int unreadCount = chatRoomMemberService.getUnreadCount(member.userId(), requestDto.getChatRoomId());
-                messagingTemplate.convertAndSendToUser(
-                        String.valueOf(member.userId()),
-                        "/queue/chat-list",
-                        new ChatListUpdateDto(requestDto.getChatRoomId(), unreadCount)
-                );
-            }
-        }
+        log.info("[sendMessage] Published to RabbitMQ: messageId={}, recipients={}",
+                savedMessage.getId(), recipientUserIds.size());
     }
 
     /**

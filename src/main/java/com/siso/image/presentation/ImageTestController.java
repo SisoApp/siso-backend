@@ -3,7 +3,7 @@ package com.siso.image.presentation;
 import com.siso.image.dto.request.ImageRequestDto;
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.application.ImageTestService;
-import com.siso.image.infrastructure.properties.ImageProperties;
+import com.siso.image.infrastructure.ImageProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

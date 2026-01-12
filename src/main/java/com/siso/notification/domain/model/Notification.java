@@ -3,9 +3,6 @@ package com.siso.notification.domain.model;
 import com.siso.common.domain.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notifications")

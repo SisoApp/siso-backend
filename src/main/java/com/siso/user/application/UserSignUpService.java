@@ -6,7 +6,7 @@ import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

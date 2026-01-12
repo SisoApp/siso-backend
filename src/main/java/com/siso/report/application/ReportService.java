@@ -7,12 +7,11 @@ import com.siso.report.dto.response.ReportResponseDto;
 import com.siso.report.domain.repository.ReportRepository;
 import com.siso.report.dto.request.ReportRequestDto;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service

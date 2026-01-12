@@ -75,7 +75,10 @@ public enum ErrorCode {
     VOICE_SAMPLE_FILE_TOO_LARGE(HttpStatus.BAD_REQUEST, "음성 파일 크기가 너무 큽니다."),
     VOICE_SAMPLE_MAX_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "사용자당 최대 음성 샘플 개수를 초과했습니다."),
     VOICE_SAMPLE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "음성 파일 업로드에 실패했습니다."),
-    VOICE_SAMPLE_FILE_TOO_LONG(HttpStatus.BAD_REQUEST, "음성 파일 길이가 너무 깁니다.");
+    VOICE_SAMPLE_FILE_TOO_LONG(HttpStatus.BAD_REQUEST, "음성 파일 길이가 너무 깁니다."),
+
+    // AI 매칭
+    MATCHING_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "매칭 요청을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
