@@ -13,6 +13,9 @@ import com.siso.image.domain.repository.ImageRepository;
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.application.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +96,7 @@ public class UserFilterService {
     /**
      * 매칭용 프로필 조회 (무한 스크롤 지원)
      * 
+     * DB 레벨 페이지네이션을 사용하여 효율적으로 처리합니다.
      * Presigned URL을 활용하여 이미지를 효율적으로 처리합니다.
      * 
      * @param user 현재 사용자
@@ -107,8 +111,9 @@ public class UserFilterService {
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
 
-        // PreferenceSex에 해당하는 모든 사용자를 관심사 겹치는 순으로 조회
-        List<UserProfile> filteredProfiles = userProfileRepository.findFilteredUsersByPreferenceSex(
+        // DB 레벨 페이지네이션 적용
+        Pageable pageable = PageRequest.of(page, count);
+        Page<UserProfile> filteredProfilesPage = userProfileRepository.findFilteredUsersByPreferenceSexWithPagination(
                 userId,
                 userId, // 자기 자신 제외
                 userProfile.getPreferenceSex() != null ? userProfile.getPreferenceSex().name() : null,
@@ -116,14 +121,11 @@ public class UserFilterService {
                 userProfile.isSmoke(),
                 userProfile.getLocation() != null ? userProfile.getLocation() : null,
                 userProfile.getDrinkingCapacity() != null ? userProfile.getDrinkingCapacity().name() : null,
-                userProfile.getAge()
+                userProfile.getAge(),
+                pageable
         );
 
-        // 페이지네이션 적용 (중복 방지)
-        int offset = page * count;
-        return filteredProfiles.stream()
-                .skip(offset)
-                .limit(count)
+        return filteredProfilesPage.getContent().stream()
                 .map(profile -> {
                     // 각 프로필의 관심사 조회
                     List<UserInterest> interests = userInterestRepository.findByUserId(profile.getUser().getId());
@@ -141,5 +143,23 @@ public class UserFilterService {
                     return MatchingProfileResponseDto.fromUserProfile(profile, interestNames, imageUrls);
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 필터링된 사용자 총 개수 조회 (무한 스크롤 완료 판단용)
+     * 
+     * @param user 현재 사용자
+     * @return 필터링된 사용자 총 개수
+     */
+    @Transactional(readOnly = true)
+    public long getFilteredUsersCount(User user) {
+        Long userId = user.getId();
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ExpectedException(ErrorCode.USER_PROFILE_NOT_FOUND));
+
+        return userProfileRepository.countFilteredUsersByPreferenceSex(
+                userId, // 자기 자신 제외
+                userProfile.getPreferenceSex() != null ? userProfile.getPreferenceSex().name() : null
+        );
     }
 }

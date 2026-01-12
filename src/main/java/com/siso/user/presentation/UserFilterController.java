@@ -38,4 +38,16 @@ public class UserFilterController {
         List<MatchingProfileResponseDto> profiles = userFilterService.getMatchingProfiles(user, page, count);
         return ResponseEntity.ok(profiles);
     }
+
+    /**
+     * 필터링된 사용자 총 개수 조회 (무한 스크롤 완료 판단용)
+     * 
+     * @param user 현재 사용자
+     * @return 필터링된 사용자 총 개수
+     */
+    @GetMapping("/matching/count")
+    public ResponseEntity<Long> getFilteredUsersCount(@CurrentUser User user) {
+        long count = userFilterService.getFilteredUsersCount(user);
+        return ResponseEntity.ok(count);
+    }
 }
