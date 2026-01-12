@@ -5,7 +5,7 @@ import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,7 +45,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
                 .email("test@example.com")
                 .phoneNumber("010-1234-5678")
                 .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.COMPLETED)
+                .registrationStatus(RegistrationStatus.LOGIN)
                 .build();
 
         testUser = userRepository.save(testUser);
@@ -135,7 +134,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
                 .email("target@example.com")
                 .phoneNumber("010-9999-8888")
                 .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.COMPLETED)
+                .registrationStatus(RegistrationStatus.LOGIN)
                 .build();
 
         targetUser = userRepository.save(targetUser);

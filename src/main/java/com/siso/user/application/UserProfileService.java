@@ -5,7 +5,7 @@ import com.siso.common.exception.ExpectedException;
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
-import com.siso.user.domain.repository.UserProfileRepository;
+import com.siso.user.domain.UserProfileRepository;
 import com.siso.user.dto.request.UserProfileRequestDto;
 import com.siso.user.dto.response.UserProfileResponseDto;
 import com.siso.image.domain.model.Image;

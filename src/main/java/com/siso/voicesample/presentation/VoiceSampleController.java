@@ -4,24 +4,17 @@ import com.siso.common.web.CurrentUser;
 import com.siso.user.domain.model.User;
 import com.siso.voicesample.dto.request.VoiceSampleRequestDto;
 import com.siso.voicesample.dto.response.VoiceSampleResponseDto;
-import com.siso.voicesample.application.service.VoiceSampleService;
+import com.siso.voicesample.VoiceSampleService;
 import com.siso.voicesample.infrastructure.properties.VoiceMediaTypeProperties;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 /**

@@ -2,8 +2,6 @@ package com.siso.user.domain.model;
 
 import com.siso.call.domain.model.Call;
 import com.siso.chat.domain.model.ChatMessage;
-import com.siso.chat.domain.model.ChatRoom;
-import com.siso.chat.domain.model.ChatRoomLimit;
 import com.siso.chat.domain.model.ChatRoomMember;
 import com.siso.common.domain.BaseTime;
 import com.siso.image.domain.model.Image;
@@ -22,7 +20,13 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", indexes = {
+    @Index(name = "idx_email_provider", columnList = "email, provider"),
+    @Index(name = "idx_deleted_at", columnList = "is_deleted, deleted_at"),
+    @Index(name = "idx_presence_status", columnList = "presence_status"),
+    @Index(name = "idx_refresh_token", columnList = "refresh_token"),
+    @Index(name = "idx_last_active_at", columnList = "last_active_at")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTime {
@@ -225,5 +229,21 @@ public class User extends BaseTime {
         if (voiceSample != null) {
             voiceSample.setUser(this); // 양방향 동기화 (VoiceSample에도 setter 필요)
         }
+    }
+
+    public void updateLastActiveAt(LocalDateTime lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
+
+    public void setUserProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
+        if (userProfile != null && userProfile.getUser() != this) {
+            userProfile.linkUser(this); // UserProfile 엔티티에 linkUser 또는 setUser 메서드가 있어야 합니다.
+        }
+    }
+
+    public void updateContactInfo(String email, String phoneNumber) {
+        this.email = email;
+        this.phoneNumber = phoneNumber;
     }
 }

@@ -1,7 +1,7 @@
 package com.siso.common.S3Config;
 
 import com.siso.image.domain.repository.ImageRepository;
-import com.siso.image.infrastructure.properties.ImageProperties;
+import com.siso.image.infrastructure.ImageProperties;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;

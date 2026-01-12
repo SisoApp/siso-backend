@@ -8,7 +8,6 @@ import com.siso.chat.dto.response.ChatRoomMemberResponseDto;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

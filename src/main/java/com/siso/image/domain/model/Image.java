@@ -4,8 +4,6 @@ import com.siso.common.domain.BaseTime;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.*;
-import org.attoparser.dom.Text;
-import org.mariadb.jdbc.message.server.ColumnDefinitionPacket;
 
 import java.time.LocalDateTime;
 

@@ -3,14 +3,14 @@ package com.siso.user.infrastructure.jwt;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
-import com.siso.user.infrastructure.authentication.AccountAdapter;
+import com.siso.user.domain.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -22,19 +22,27 @@ import java.util.function.Function;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenUtil {
-    private static final String SECRET_KEY = "LikeLionRocketCorpsInternship12SeniorBlindDate_siso";
-    private static final SecretKey SECRET_KEY_OBJECT = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     private final UserRepository userRepository;
-    // 토큰 만료 시간
-    public static final long ACCESS_TOKEN_TTL = 1000 * 60 * 60 * 2;       // 액세스 토큰 2시간
-    public static final long REFRESH_TOKEN_TTL = 1000 * 60 * 60 * 24 * 14; // 리프레시 토큰 2주
+
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.access-token-ttl}")
+    private long accessTokenTtl;
+
+    @Value("${jwt.refresh-token-ttl}")
+    private long refreshTokenTtl;
+
+    private SecretKey getSecretKeyObject() {
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
 
     // ----------------------
     // Claims 추출
     // ----------------------
     public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY_OBJECT)
+                .setSigningKey(getSecretKeyObject())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -70,7 +78,7 @@ public class JwtTokenUtil {
     // refreshToken에서 email(subject) 추출
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY_OBJECT)
+                .setSigningKey(getSecretKeyObject())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -84,13 +92,13 @@ public class JwtTokenUtil {
     public String generateAccessToken(String email) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "access");
-        return createToken(claims, email, ACCESS_TOKEN_TTL);
+        return createToken(claims, email, accessTokenTtl);
     }
 
     public String generateRefreshToken(String email) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
-        return createToken(claims, email, REFRESH_TOKEN_TTL);
+        return createToken(claims, email, refreshTokenTtl);
     }
 
     private String createToken(Map<String, Object> claims, String subject, long ttl) {
@@ -99,7 +107,7 @@ public class JwtTokenUtil {
                 .setSubject(subject)       // 이메일을 subject로 설정
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + ttl))
-                .signWith(SECRET_KEY_OBJECT, SignatureAlgorithm.HS256)
+                .signWith(getSecretKeyObject(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -108,7 +116,7 @@ public class JwtTokenUtil {
     // ----------------------
     public Boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(SECRET_KEY_OBJECT).build().parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(getSecretKeyObject()).build().parseClaimsJws(token);
             return !isTokenExpired(token); // 만료 여부까지 체크
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -122,7 +130,7 @@ public class JwtTokenUtil {
     public User validateAndGetUserId(String token) {
         // 토큰에서 이메일 가져오기
         String email = Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY_OBJECT)
+                .setSigningKey(getSecretKeyObject())
                 .build()
                 .parseClaimsJws(token)
                 .getBody()

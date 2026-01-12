@@ -1,7 +1,6 @@
 package com.siso.call.domain.model;
 
 import com.siso.callreview.domain.model.CallReview;
-import com.siso.chat.domain.model.ChatRoom;
 import com.siso.user.domain.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -15,7 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "calls")
+@Table(name = "calls", indexes = {
+    @Index(name = "idx_caller_id", columnList = "caller_id"),
+    @Index(name = "idx_receiver_id", columnList = "receiver_id"),
+    @Index(name = "idx_call_status", columnList = "callStatus"),
+    @Index(name = "idx_start_time", columnList = "start_time")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Call {

@@ -3,7 +3,7 @@ package com.siso.user.infrastructure.jwt;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

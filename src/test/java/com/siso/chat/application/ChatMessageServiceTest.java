@@ -69,7 +69,7 @@ class ChatMessageServiceTest {
                 .provider(Provider.KAKAO)
                 .email("sender@test.com")
                 .phoneNumber("010-1234-5678")
-                .registrationStatus(RegistrationStatus.COMPLETED)
+                .registrationStatus(RegistrationStatus.LOGIN)
                 .build();
 
         // ID 설정
@@ -90,7 +90,7 @@ class ChatMessageServiceTest {
         // Given
         Long chatRoomId = 1L;
         String content = "안녕하세요";
-        ChatMessageRequestDto requestDto = new ChatMessageRequestDto(chatRoomId, content);
+        ChatMessageRequestDto requestDto = new ChatMessageRequestDto();
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
         when(chatRoom.getId()).thenReturn(chatRoomId);
@@ -130,7 +130,7 @@ class ChatMessageServiceTest {
         // Given
         Long chatRoomId = 1L;
         String content = "안녕하세요";
-        ChatMessageRequestDto requestDto = new ChatMessageRequestDto(chatRoomId, content);
+        ChatMessageRequestDto requestDto = new ChatMessageRequestDto();
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
         when(chatRoom.getId()).thenReturn(chatRoomId);
@@ -158,11 +158,11 @@ class ChatMessageServiceTest {
         // Given
         Long chatRoomId = 1L;
         String content = "안녕하세요";
-        ChatMessageRequestDto requestDto = new ChatMessageRequestDto(chatRoomId, content);
+        ChatMessageRequestDto requestDto = new ChatMessageRequestDto();
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.of(chatRoom));
         when(chatRoom.getId()).thenReturn(chatRoomId);
-        when(chatRoom.getChatRoomStatus()).thenReturn(ChatRoomStatus.UNLIMITED);
+        when(chatRoom.getChatRoomStatus()).thenReturn(ChatRoomStatus.MATCHED);
 
         ChatMessage savedMessage = ChatMessage.builder()
                 .sender(sender)
@@ -189,7 +189,7 @@ class ChatMessageServiceTest {
     void sendMessage_whenChatRoomNotFound_shouldThrowException() {
         // Given
         Long chatRoomId = 999L;
-        ChatMessageRequestDto requestDto = new ChatMessageRequestDto(chatRoomId, "안녕하세요");
+        ChatMessageRequestDto requestDto = new ChatMessageRequestDto();
 
         when(chatRoomRepository.findById(chatRoomId)).thenReturn(Optional.empty());
 
@@ -272,7 +272,7 @@ class ChatMessageServiceTest {
         // Given
         Long messageId = 1L;
         String newContent = "수정된 메시지";
-        EditMessageRequestDto requestDto = new EditMessageRequestDto(messageId, newContent);
+        EditMessageRequestDto requestDto = new EditMessageRequestDto();
 
         ChatMessage message = ChatMessage.builder()
                 .sender(sender)
@@ -297,7 +297,7 @@ class ChatMessageServiceTest {
     void editMessage_whenNotOwner_shouldThrowException() {
         // Given
         Long messageId = 1L;
-        EditMessageRequestDto requestDto = new EditMessageRequestDto(messageId, "수정된 메시지");
+        EditMessageRequestDto requestDto = new EditMessageRequestDto();
 
         User otherUser = User.builder()
                 .provider(Provider.KAKAO)

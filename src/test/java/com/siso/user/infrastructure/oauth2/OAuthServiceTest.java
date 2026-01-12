@@ -8,7 +8,7 @@ import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import org.junit.jupiter.api.DisplayName;
@@ -90,7 +90,7 @@ class OAuthServiceTest {
                 .email(TEST_EMAIL)
                 .phoneNumber(TEST_PHONE)
                 .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.PENDING)
+                .registrationStatus(RegistrationStatus.REGISTER)
                 .build();
 
         when(userSignUpService.getOrCreateUser(Provider.KAKAO, TEST_EMAIL, TEST_PHONE)).thenReturn(newUser);
@@ -106,7 +106,7 @@ class OAuthServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getAccessToken()).isEqualTo(TEST_JWT_ACCESS);
         assertThat(result.getRefreshToken()).isEqualTo(TEST_JWT_REFRESH);
-        assertThat(result.getRegistrationStatus()).isEqualTo(RegistrationStatus.PENDING);
+        assertThat(result.getRegistrationStatus()).isEqualTo(RegistrationStatus.LOGIN);
         assertThat(result.isHasProfile()).isFalse();
 
         // Verify: 메서드 호출 확인
@@ -136,7 +136,7 @@ class OAuthServiceTest {
                 .email(TEST_EMAIL)
                 .phoneNumber(TEST_PHONE)
                 .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.COMPLETED)
+                .registrationStatus(RegistrationStatus.LOGIN)
                 .build();
 
         when(clientFactory.getClient(TEST_PROVIDER)).thenReturn(oAuthProviderClient);
@@ -154,7 +154,7 @@ class OAuthServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getAccessToken()).isEqualTo(TEST_JWT_ACCESS);
         assertThat(result.getRefreshToken()).isEqualTo(TEST_JWT_REFRESH);
-        assertThat(result.getRegistrationStatus()).isEqualTo(RegistrationStatus.COMPLETED);
+        assertThat(result.getRegistrationStatus()).isEqualTo(RegistrationStatus.LOGIN);
         assertThat(result.isHasProfile()).isTrue();
     }
 
@@ -191,7 +191,7 @@ class OAuthServiceTest {
                 .email(TEST_EMAIL)
                 .phoneNumber(TEST_PHONE)
                 .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.PENDING)
+                .registrationStatus(RegistrationStatus.LOGIN)
                 .build();
 
         when(clientFactory.getClient(TEST_PROVIDER)).thenReturn(oAuthProviderClient);

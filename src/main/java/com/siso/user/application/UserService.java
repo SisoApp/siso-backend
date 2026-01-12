@@ -5,7 +5,7 @@ import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import com.siso.user.dto.response.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
 package com.siso.call.presentation;
 
-import com.siso.call.application.AgoraCallService;
+import com.siso.call.AgoraCallService;
 import com.siso.call.dto.CallInfoDto;
 import com.siso.call.dto.request.CallRequestDto;
 import com.siso.call.dto.response.AgoraCallResponseDto;

@@ -7,7 +7,7 @@ import com.siso.user.application.UserProfileService;
 import com.siso.user.application.UserSignUpService;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
+import com.siso.user.domain.UserRepository;
 import com.siso.user.dto.response.TokenResponseDto;
 import com.siso.user.infrastructure.jwt.JwtTokenUtil;
 import lombok.RequiredArgsConstructor;
