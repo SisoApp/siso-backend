@@ -1,6 +1,6 @@
 package com.siso.common.config;
 
-import com.siso.matching.application.dto.MatchingResult;
+import com.siso.matching.dto.MatchingResultDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +28,8 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, MatchingResult> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, MatchingResult> template = new RedisTemplate<>();
+    public RedisTemplate<String, MatchingResultDto> redisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, MatchingResultDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());

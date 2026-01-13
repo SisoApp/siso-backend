@@ -1,7 +1,7 @@
 package com.siso.chat.presentation;
 
-import com.siso.chat.application.ChatMessageService;
-import com.siso.chat.application.ChatRoomMemberService;
+import com.siso.chat.application.service.ChatMessageService;
+import com.siso.chat.application.service.ChatRoomMemberService;
 import com.siso.chat.application.event.ChatMessageEvent;
 import com.siso.chat.application.publisher.ChatMessagePublisher;
 import com.siso.chat.domain.model.ChatRoomMember;

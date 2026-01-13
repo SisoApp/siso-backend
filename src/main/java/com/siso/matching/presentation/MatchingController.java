@@ -1,9 +1,9 @@
 package com.siso.matching.presentation;
 
-import com.siso.matching.application.dto.MatchingResult;
+import com.siso.matching.dto.MatchingResultDto;
 import com.siso.matching.application.service.MatchingService;
 import com.siso.matching.domain.model.MatchingRequest;
-import com.siso.matching.presentation.dto.MatchingRequestResponseDto;
+import com.siso.matching.dto.MatchingRequestResponseDto;
 import com.siso.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class MatchingController {
 
     private final MatchingService matchingService;
-    private final RedisTemplate<String, MatchingResult> redisTemplate;
+    private final RedisTemplate<String, MatchingResultDto> redisTemplate;
 
     /**
      * 매칭 요청 (비동기)
@@ -52,14 +52,14 @@ public class MatchingController {
      * 매칭 결과 조회 (Redis 캐시에서)
      */
     @GetMapping("/results")
-    public ResponseEntity<MatchingResult> getMatchingResults(
+    public ResponseEntity<MatchingResultDto> getMatchingResults(
             @AuthenticationPrincipal User user
     ) {
         log.info("Get matching results: userId={}", user.getId());
 
         // Redis 캐시에서 조회
         String cacheKey = "matching:" + user.getId();
-        MatchingResult result = redisTemplate.opsForValue().get(cacheKey);
+        MatchingResultDto result = redisTemplate.opsForValue().get(cacheKey);
 
         if (result == null) {
             log.warn("Matching result not found in cache: userId={}", user.getId());

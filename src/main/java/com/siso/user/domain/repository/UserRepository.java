@@ -1,0 +1,56 @@
+package com.siso.user.domain.repository;
+
+import com.siso.user.domain.model.Provider;
+import com.siso.user.domain.model.User;
+import com.siso.user.infrastructure.persistence.UserRepositoryCustom;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * User Repository
+ * - UserRepositoryCustom 상속으로 QueryDSL 동적 쿼리 지원
+ * - N+1 쿼리 문제 해결 (Fetch Join)
+ */
+public interface UserRepository extends Repository<User, Long>, UserRepositoryCustom {
+    @Query("SELECT u FROM User u WHERE u.id = :id AND u.isBlock = false AND u.isDeleted = false")
+    Optional<User> findById(@Param("id") Long id);
+
+    boolean existsById(Long userId);
+
+    User save(User user);
+
+    // 하드 삭제용 메서드
+    void delete(User user);
+
+    // 하드 삭제 대상 조회용 메서드 (스케줄러에서 사용)
+    @Query("SELECT u FROM User u WHERE u.isDeleted = true AND u.deletedAt <= :threshold")
+    List<User> findUsersForHardDelete(@Param("threshold") LocalDateTime threshold);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.provider = :provider AND u.isDeleted = false AND u.isBlock = false")
+    Optional<User> findActiveUserByEmailAndProvider(@Param("email") String email, @Param("provider") Provider provider);
+
+    @Query("SELECT u FROM User u WHERE u.email = :email AND u.isBlock = false AND u.isDeleted = false")
+    Optional<User> findByEmail(@Param("email")String email);
+
+    Optional<User> findByRefreshToken(String refreshToken);
+
+    User getReferenceById(Long id);
+
+    @Query("""
+    select distinct u
+    from User u
+    left join fetch u.images
+    left join fetch u.userProfile
+    where u.id = :id and u.isBlock = false and u.isDeleted = false
+""")
+    Optional<User> findByIdWithImagesAndProfile(@Param("id") Long id);
+
+    void deleteAll();
+
+    List<User> findAll();
+}

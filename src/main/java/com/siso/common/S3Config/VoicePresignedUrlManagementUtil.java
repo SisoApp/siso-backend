@@ -43,8 +43,7 @@ public class VoicePresignedUrlManagementUtil {
             LocalDateTime expiresAt = now.plusMinutes(durationMinutes);
             
             // VoiceSample 엔티티에 Presigned URL 정보 저장
-            voiceSample.setPresignedUrl(presignedUrl);
-            voiceSample.setPresignedUrlExpiresAt(expiresAt);
+            voiceSample.updatePresignedUrl(presignedUrl, expiresAt);
             voiceSampleRepository.save(voiceSample);
             
             log.info("음성 샘플 Presigned URL 자동 생성 완료 - voiceId: {}, 유효시간: {}분, 생성시간: {}, 만료시간: {}", 

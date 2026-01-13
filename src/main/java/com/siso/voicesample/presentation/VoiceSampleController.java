@@ -4,7 +4,7 @@ import com.siso.common.web.CurrentUser;
 import com.siso.user.domain.model.User;
 import com.siso.voicesample.dto.request.VoiceSampleRequestDto;
 import com.siso.voicesample.dto.response.VoiceSampleResponseDto;
-import com.siso.voicesample.VoiceSampleService;
+import com.siso.voicesample.application.VoiceSampleService;
 import com.siso.voicesample.infrastructure.properties.VoiceMediaTypeProperties;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;

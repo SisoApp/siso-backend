@@ -1,10 +1,10 @@
 package com.siso.matching.application.service;
 
 import com.siso.image.domain.model.Image;
-import com.siso.matching.application.dto.MatchingResult;
+import com.siso.matching.dto.MatchingResultDto;
 import com.siso.user.domain.model.User;
 import com.siso.user.domain.model.UserProfile;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ public class MatchingAlgorithmService {
     /**
      * AI 매칭 알고리즘 실행
      */
-    public MatchingResult calculateMatches(User user) {
+    public MatchingResultDto calculateMatches(User user) {
         long startTime = System.currentTimeMillis();
 
         log.info("Starting matching algorithm for userId={}", user.getId());
@@ -41,15 +41,15 @@ public class MatchingAlgorithmService {
 
         if (candidates.isEmpty()) {
             log.warn("No candidates found for userId={}", user.getId());
-            return new MatchingResult(user.getId(), List.of(), LocalDateTime.now(), 0);
+            return new MatchingResultDto(user.getId(), List.of(), LocalDateTime.now(), 0);
         }
 
         // 2. 각 후보별 매칭 스코어 계산
-        List<MatchingResult.UserMatchScore> scoredMatches = candidates.stream()
+        List<MatchingResultDto.UserMatchScore> scoredMatches = candidates.stream()
                 .map(candidate -> calculateMatchScore(user, candidate))
                 .filter(score -> score.getMatchScore() >= 0.3)  // 30% 이상만
                 .sorted(Comparator.comparingDouble(
-                        MatchingResult.UserMatchScore::getMatchScore).reversed()
+                        MatchingResultDto.UserMatchScore::getMatchScore).reversed()
                 )
                 .limit(20)  // 상위 20명
                 .toList();
@@ -58,7 +58,7 @@ public class MatchingAlgorithmService {
         log.info("Matching completed: userId={}, matched={}/{}, time={}ms",
                 user.getId(), scoredMatches.size(), candidates.size(), processingTime);
 
-        return new MatchingResult(
+        return new MatchingResultDto(
                 user.getId(),
                 scoredMatches,
                 LocalDateTime.now(),
@@ -70,20 +70,20 @@ public class MatchingAlgorithmService {
      * 후보자 조회 (기본 필터링)
      */
     private List<User> findCandidates(User user) {
-        // 모든 사용자 조회 (자신 제외, 삭제/차단되지 않은 사용자)
-        return userRepository.findAll().stream()
-                .filter(candidate -> !candidate.getId().equals(user.getId()))
-                .filter(candidate -> !candidate.isDeleted())
-                .filter(candidate -> !candidate.isBlock())
-                .filter(candidate -> candidate.getUserProfile() != null)
-                .limit(100)  // 성능을 위해 최대 100명만
+        // findAll()이 List<User>를 확실히 반환하도록 하거나, 아래처럼 타입 명시
+        return (userRepository.findAll()).stream()
+                .filter(c -> !c.getId().equals(user.getId()))
+                .filter(c -> !c.isDeleted())
+                .filter(c -> !c.isBlock())
+                .filter(c -> c.getUserProfile() != null)
+                .limit(100)
                 .toList();
     }
 
     /**
      * 매칭 스코어 계산 (0.0 ~ 1.0)
      */
-    private MatchingResult.UserMatchScore calculateMatchScore(User user, User candidate) {
+    private MatchingResultDto.UserMatchScore calculateMatchScore(User user, User candidate) {
         UserProfile userProfile = user.getUserProfile();
         UserProfile candidateProfile = candidate.getUserProfile();
 
@@ -95,8 +95,8 @@ public class MatchingAlgorithmService {
 
         // 3. MBTI 호환성 (15%)
         double mbtiScore = calculateMbtiCompatibility(
-                userProfile.getMbti(),
-                candidateProfile.getMbti()
+                userProfile.getMbti().name(),
+                candidateProfile.getMbti().name()
         );
 
         // 4. 지역 근접성 (15%)
@@ -127,15 +127,15 @@ public class MatchingAlgorithmService {
 
         // 관심사 목록 가져오기
         List<String> interests = candidate.getUserInterests().stream()
-                .map(ui -> ui.getInterest().getName())
+                .map(ui -> ui.getInterest().name())
                 .limit(3)
                 .toList();
 
-        return new MatchingResult.UserMatchScore(
+        return new MatchingResultDto.UserMatchScore(
                 candidate.getId(),
                 candidateProfile.getNickname(),
                 candidateProfile.getAge(),
-                candidateProfile.getMbti(),
+                candidateProfile.getMbti().name(),
                 interests,
                 profileImageUrl,
                 Math.round(totalScore * 1000.0) / 1000.0  // 소수점 3자리
@@ -147,11 +147,11 @@ public class MatchingAlgorithmService {
      */
     private double calculateInterestSimilarity(User user, User candidate) {
         Set<String> userInterests = user.getUserInterests().stream()
-                .map(ui -> ui.getInterest().getName())
+                .map(ui -> ui.getInterest().name())
                 .collect(Collectors.toSet());
 
         Set<String> candidateInterests = candidate.getUserInterests().stream()
-                .map(ui -> ui.getInterest().getName())
+                .map(ui -> ui.getInterest().name())
                 .collect(Collectors.toSet());
 
         if (userInterests.isEmpty() && candidateInterests.isEmpty()) {
@@ -272,9 +272,8 @@ public class MatchingAlgorithmService {
         }
 
         // 흡연 호환성 (50%)
-        if (user.getSmoking() != null && candidate.getSmoking() != null) {
-            boolean sameSmoking = user.getSmoking().equals(candidate.getSmoking());
-            score += sameSmoking ? 0.5 : 0.0;
+        if (user.isSmoke() == candidate.isSmoke()) {
+            score += 0.5;
         } else {
             score += 0.25;  // 정보 없으면 중립
         }

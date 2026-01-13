@@ -183,7 +183,7 @@ import com.siso.call.domain.model.Call;
 import com.siso.call.domain.repository.CallRepository;
 import com.siso.config.IntegrationTestBase;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -278,7 +278,7 @@ package com.siso.user.presentation;
 
 import com.siso.config.IntegrationTestBase;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

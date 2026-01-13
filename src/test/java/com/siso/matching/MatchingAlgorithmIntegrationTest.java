@@ -1,10 +1,10 @@
 package com.siso.matching;
 
 import com.siso.config.IntegrationTestBase;
-import com.siso.matching.application.dto.MatchingResult;
+import com.siso.matching.dto.MatchingResultDto;
 import com.siso.matching.application.service.MatchingAlgorithmService;
 import com.siso.user.domain.model.*;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ class MatchingAlgorithmIntegrationTest extends IntegrationTestBase {
     @DisplayName("AI 매칭 알고리즘 실행 - 후보자 조회 및 스코어 계산")
     void calculateMatches_shouldReturnMatchedCandidates() {
         // When: 매칭 알고리즘 실행
-        MatchingResult result = matchingAlgorithmService.calculateMatches(testUser);
+        MatchingResultDto result = matchingAlgorithmService.calculateMatches(testUser);
 
         // Then: 결과 검증
         assertThat(result).isNotNull();
@@ -59,7 +59,7 @@ class MatchingAlgorithmIntegrationTest extends IntegrationTestBase {
 
         // 후보자가 있으면 스코어 검증
         if (!result.getMatches().isEmpty()) {
-            MatchingResult.UserMatchScore topMatch = result.getMatches().get(0);
+            MatchingResultDto.UserMatchScore topMatch = result.getMatches().get(0);
             assertThat(topMatch.getMatchScore()).isBetween(0.0, 1.0);
             assertThat(topMatch.getCandidateId()).isNotNull();
         }
@@ -69,13 +69,13 @@ class MatchingAlgorithmIntegrationTest extends IntegrationTestBase {
     @DisplayName("매칭 스코어 계산 - 나이가 비슷한 사용자가 높은 점수")
     void calculateMatches_shouldScoreHigherForSimilarAge() {
         // When: 매칭 알고리즘 실행
-        MatchingResult result = matchingAlgorithmService.calculateMatches(testUser);
+        MatchingResultDto result = matchingAlgorithmService.calculateMatches(testUser);
 
         // Then: 나이가 비슷한 candidate1이 candidate2보다 높은 점수를 가져야 함
         // (25살 vs 24살 vs 30살)
         if (result.getMatches().size() >= 2) {
             List<Long> candidateIds = result.getMatches().stream()
-                    .map(MatchingResult.UserMatchScore::getCandidateId)
+                    .map(MatchingResultDto.UserMatchScore::getCandidateId)
                     .toList();
 
             // candidate1 (24살)이 candidate2 (30살)보다 먼저 나와야 함
@@ -101,7 +101,7 @@ class MatchingAlgorithmIntegrationTest extends IntegrationTestBase {
         userRepository.save(candidate2);
 
         // When: 매칭 알고리즘 실행
-        MatchingResult result = matchingAlgorithmService.calculateMatches(testUser);
+        MatchingResultDto result = matchingAlgorithmService.calculateMatches(testUser);
 
         // Then: 결과가 있는지 확인
         assertThat(result).isNotNull();
@@ -116,7 +116,7 @@ class MatchingAlgorithmIntegrationTest extends IntegrationTestBase {
         testUser = userRepository.save(testUser);
 
         // When: 매칭 알고리즘 실행
-        MatchingResult result = matchingAlgorithmService.calculateMatches(testUser);
+        MatchingResultDto result = matchingAlgorithmService.calculateMatches(testUser);
 
         // Then: 빈 결과 반환
         assertThat(result).isNotNull();

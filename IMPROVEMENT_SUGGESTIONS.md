@@ -76,13 +76,15 @@ aws:
 
 ### 2. **성능 최적화**
 
-#### 2.1 N+1 쿼리 문제 해결
+#### 2.1 N+1 쿼리 문제 해결 **✅ 구현 완료**
 
-**현재 문제:**
-- User 조회 시 연관된 Image, UserProfile을 Lazy Loading으로 가져옴
-- 반복문 안에서 User를 조회하면 N+1 문제 발생
+**📁 구현 파일:**
+- `src/main/java/com/siso/common/config/QueryDSLConfig.java` - JPAQueryFactory 설정
+- `src/main/java/com/siso/user/infrastructure/persistence/UserRepositoryCustom.java` - Custom Repository 인터페이스
+- `src/main/java/com/siso/user/infrastructure/persistence/UserRepositoryImpl.java` - QueryDSL 구현체
+- `src/main/java/com/siso/user/domain/repository/UserRepository.java` - Custom Repository 상속
 
-**개선 방안:**
+**구현 내용:**
 ```java
 // UserRepository.java - 이미 있음!
 @Query("""
@@ -229,9 +231,15 @@ public class ChatMessage extends BaseTime { ... }
 
 ### 3. **에러 처리 및 로깅 개선**
 
-#### 3.1 구조화된 로깅 (Structured Logging)
+#### 3.1 구조화된 로깅 (Structured Logging) **✅ 구현 완료**
 
-**개선 방안:**
+**📁 구현 파일:**
+- `src/main/resources/logback-spring.xml` - Logback 설정 (JSON 로깅, MDC 지원)
+- `src/main/java/com/siso/common/filter/MDCLoggingFilter.java` - Request ID 추적 필터
+- `src/main/java/com/siso/common/util/LogUtil.java` - 구조화된 로깅 유틸리티
+- `build.gradle` - logstash-logback-encoder 의존성 추가
+
+**구현 내용:**
 ```java
 // build.gradle
 implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
@@ -536,9 +544,16 @@ public class MatchingAlgorithmService {
 
 ---
 
-#### 5.2 통화 품질 모니터링
+#### 5.2 통화 품질 모니터링 **✅ 구현 완료**
 
-**개선 방안:**
+**📁 구현 파일:**
+- `src/main/java/com/siso/call/domain/model/CallQualityMetrics.java` - 통화 품질 메트릭 엔티티
+- `src/main/java/com/siso/call/domain/repository/CallQualityMetricsRepository.java` - Repository
+- `src/main/java/com/siso/call/application/service/CallQualityService.java` - Service
+- `src/main/java/com/siso/call/presentation/CallQualityController.java` - REST API
+- `src/main/java/com/siso/call/application/dto/CallQualityMetricsRequestDto.java` - DTO
+
+**구현 내용:**
 ```java
 // CallQualityMetrics.java
 @Entity
@@ -634,9 +649,20 @@ management:
 
 ---
 
-#### 6.2 CI/CD 파이프라인
+#### 6.2 CI/CD 파이프라인 **✅ 구현 완료**
 
-**개선 방안:**
+**📁 구현 파일:**
+- `.github/workflows/gradle.yml` - GitHub Actions 워크플로우 (테스트 자동화 추가)
+
+**구현 내용:**
+- ✅ 자동화된 테스트 (MySQL, Redis, RabbitMQ 컨테이너)
+- ✅ 테스트 리포트 생성 (JUnit Report)
+- ✅ 빌드 및 아티팩트 생성
+- ✅ AWS S3 업로드 및 CodeDeploy 배포
+- ✅ 개발/프로덕션 환경 분리
+- ✅ 배포 충돌 방지 (concurrency control)
+
+**개선 방안 (원본):**
 ```yaml
 # .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
@@ -761,10 +787,10 @@ spec:
 | 🔴 높음 | RabbitMQ 메시지 큐 (채팅, AI 매칭) | ✅ **완료** | 1주 | ⭐⭐⭐⭐⭐ (안정성) |
 | 🟡 중간 | Redis 캐싱 (AI 매칭 결과) | ✅ **완료** | 1일 | ⭐⭐⭐⭐ (성능) |
 | 🟡 중간 | AI 매칭 알고리즘 (6가지 스코어) | ✅ **완료** | 2주 | ⭐⭐⭐⭐⭐ (UX) |
-| 🟡 중간 | Caffeine 로컬 캐시 | ⏳ 미구현 | 1일 | ⭐⭐⭐ (성능) |
-| 🟡 중간 | 이벤트 주도 아키텍처 | ⏳ 미구현 | 1주 | ⭐⭐⭐ (확장성) |
-| 🟢 낮음 | 모니터링 시스템 | ⏳ 미구현 | 1주 | ⭐⭐⭐ (운영) |
-| 🟢 낮음 | CI/CD 파이프라인 | ⏳ 미구현 | 3일 | ⭐⭐⭐ (개발 생산성) |
+| 🟡 중간 | N+1 쿼리 해결 (QueryDSL) | ✅ **완료** | 1주 | ⭐⭐⭐⭐ (성능) |
+| 🟡 중간 | 구조화된 로깅 (MDC, Logstash) | ✅ **완료** | 2일 | ⭐⭐⭐⭐ (운영) |
+| 🟢 낮음 | 통화 품질 모니터링 | ✅ **완료** | 2일 | ⭐⭐⭐ (품질) |
+| 🟢 낮음 | CI/CD 파이프라인 | ✅ **완료** | 3일 | ⭐⭐⭐ (개발 생산성) |
 
 ---
 
@@ -800,17 +826,17 @@ spec:
 - ✅ 데이터베이스 인덱스 추가
 - ✅ Redis 캐싱 전략 도입
 
-### **2개월차: 아키텍처 개선** 🚧 부분 완료
+### **2개월차: 아키텍처 개선** ✅ 완료
 - ✅ RabbitMQ 메시지 큐 도입
 - ✅ AI 매칭 비동기 처리
-- ⏳ N+1 쿼리 문제 해결 (QueryDSL)
-- ⏳ 구조화된 로깅 및 추적
+- ✅ N+1 쿼리 문제 해결 (QueryDSL)
+- ✅ 구조화된 로깅 및 추적
 
-### **3개월차: 기능 고도화** ✅ AI 매칭 완료
+### **3개월차: 기능 고도화** ✅ 완료
 - ✅ AI 매칭 알고리즘 구현 완료
 - ✅ 채팅 메시지 큐 구현 완료
-- ⏳ 통화 품질 모니터링
-- ⏳ CI/CD 파이프라인 구축
+- ✅ 통화 품질 모니터링
+- ✅ CI/CD 파이프라인 구축
 
 ---
 

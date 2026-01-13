@@ -1,6 +1,6 @@
 package com.siso.common.util;
 
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
 import lombok.RequiredArgsConstructor;

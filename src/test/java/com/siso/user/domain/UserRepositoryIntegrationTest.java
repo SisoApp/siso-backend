@@ -2,6 +2,7 @@ package com.siso.user.domain;
 
 import com.siso.config.IntegrationTestBase;
 import com.siso.user.domain.model.*;
+import com.siso.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

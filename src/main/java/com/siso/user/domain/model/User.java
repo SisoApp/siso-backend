@@ -181,6 +181,20 @@ public class User extends BaseTime {
         this.phoneNumber = phoneNumber;
     }
 
+    public void setUserProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
+        if (userProfile != null && userProfile.getUser() != this) {
+            userProfile.linkUser(this);
+        }
+    }
+
+    public void setVoiceSample(VoiceSample voiceSample) {
+        this.voiceSample = voiceSample;
+        if (voiceSample != null) {
+            voiceSample.linkUser(this);
+        }
+    }
+
     // 기존 관심사를 모두 삭제하고 새로운 관심사로 갱신
     public void updateUserInterests(List<Interest> interests) {
         this.userInterests.clear();
@@ -224,22 +238,8 @@ public class User extends BaseTime {
         this.isBlock = isBlock;
     }
 
-    public void setVoiceSample(VoiceSample voiceSample) {
-        this.voiceSample = voiceSample;
-        if (voiceSample != null) {
-            voiceSample.setUser(this); // 양방향 동기화 (VoiceSample에도 setter 필요)
-        }
-    }
-
     public void updateLastActiveAt(LocalDateTime lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
-    }
-
-    public void setUserProfile(UserProfile userProfile) {
-        this.userProfile = userProfile;
-        if (userProfile != null && userProfile.getUser() != this) {
-            userProfile.linkUser(this); // UserProfile 엔티티에 linkUser 또는 setUser 메서드가 있어야 합니다.
-        }
     }
 
     public void updateContactInfo(String email, String phoneNumber) {

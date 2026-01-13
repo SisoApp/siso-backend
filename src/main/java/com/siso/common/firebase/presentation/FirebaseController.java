@@ -5,7 +5,7 @@ import com.siso.common.firebase.application.FcmTokenService;
 import com.siso.common.firebase.dto.FirebaseMessageRequestDto;
 import com.siso.common.firebase.dto.FcmTokenRequestDto;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

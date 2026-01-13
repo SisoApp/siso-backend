@@ -1,6 +1,6 @@
 package com.siso.call.presentation;
 
-import com.siso.call.CallService;
+import com.siso.call.application.CallService;
 import com.siso.call.dto.response.CallResponseDto;
 import com.siso.common.response.SisoResponse;
 import com.siso.common.web.CurrentUser;

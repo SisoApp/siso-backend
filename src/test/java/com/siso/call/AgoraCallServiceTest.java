@@ -1,5 +1,8 @@
 package com.siso.call;
 
+import com.siso.call.application.AgoraCallService;
+import com.siso.call.application.AgoraChannelNameService;
+import com.siso.call.application.AgoraTokenService;
 import com.siso.call.domain.model.Call;
 import com.siso.call.domain.model.CallStatus;
 import com.siso.call.domain.repository.CallRepository;
@@ -15,7 +18,7 @@ import com.siso.user.domain.model.PresenceStatus;
 import com.siso.user.domain.model.Provider;
 import com.siso.user.domain.model.RegistrationStatus;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

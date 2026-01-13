@@ -1,7 +1,7 @@
 package com.siso.voicesample.presentation;
 
 import com.siso.voicesample.dto.response.VoiceSampleResponseDto;
-import com.siso.voicesample.VoiceSampleTestService;
+import com.siso.voicesample.application.VoiceSampleTestService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
