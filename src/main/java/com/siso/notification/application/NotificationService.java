@@ -8,7 +8,7 @@ import com.siso.notification.domain.repository.NotificationRepository;
 import com.siso.notification.dto.response.NotificationResponseDto;
 import com.siso.notification.dto.response.UnreadCountResponseDto;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

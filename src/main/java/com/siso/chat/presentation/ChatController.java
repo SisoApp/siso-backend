@@ -1,9 +1,9 @@
 package com.siso.chat.presentation;
 
-import com.siso.chat.application.ChatMessageService;
-import com.siso.chat.application.ChatRoomLimitService;
-import com.siso.chat.application.ChatRoomMemberService;
-import com.siso.chat.application.ChatRoomService;
+import com.siso.chat.application.service.ChatMessageService;
+import com.siso.chat.application.service.ChatRoomLimitService;
+import com.siso.chat.application.service.ChatRoomMemberService;
+import com.siso.chat.application.service.ChatRoomService;
 import com.siso.chat.dto.request.*;
 import com.siso.chat.dto.response.ChatMessageResponseDto;
 import com.siso.chat.dto.response.ChatRoomLimitResponseDto;

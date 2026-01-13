@@ -7,7 +7,7 @@ import com.siso.image.dto.request.ImageRequestDto;
 import com.siso.image.dto.response.ImageResponseDto;
 import com.siso.image.infrastructure.ImageProperties;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import com.siso.common.util.UserValidationUtil;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;

@@ -1,7 +1,7 @@
 package com.siso.user.application;
 
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;

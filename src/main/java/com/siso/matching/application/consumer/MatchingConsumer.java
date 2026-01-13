@@ -3,14 +3,14 @@ package com.siso.matching.application.consumer;
 import com.siso.common.config.RabbitMQConfig;
 import com.siso.common.exception.ErrorCode;
 import com.siso.common.exception.ExpectedException;
-import com.siso.matching.application.dto.MatchingResult;
+import com.siso.matching.dto.MatchingResultDto;
 import com.siso.matching.application.event.MatchingRequestEvent;
 import com.siso.matching.application.service.MatchingAlgorithmService;
 import com.siso.matching.domain.model.MatchingRequest;
 import com.siso.matching.domain.model.MatchingStatus;
 import com.siso.matching.domain.repository.MatchingRequestRepository;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -32,7 +32,7 @@ public class MatchingConsumer {
     private final MatchingRequestRepository matchingRequestRepository;
     private final UserRepository userRepository;
     private final MatchingAlgorithmService matchingAlgorithmService;
-    private final RedisTemplate<String, MatchingResult> redisTemplate;
+    private final RedisTemplate<String, MatchingResultDto> redisTemplate;
 
     @RabbitListener(queues = RabbitMQConfig.MATCHING_QUEUE, concurrency = "3-10")
     @Transactional
@@ -56,7 +56,7 @@ public class MatchingConsumer {
                     .orElseThrow(() -> new ExpectedException(ErrorCode.USER_NOT_FOUND));
 
             // 3. AI 매칭 알고리즘 실행 (시간이 오래 걸릴 수 있음: 3~5초)
-            MatchingResult result = matchingAlgorithmService.calculateMatches(user);
+            MatchingResultDto result = matchingAlgorithmService.calculateMatches(user);
 
             // 4. Redis에 결과 캐싱 (10분 TTL)
             String cacheKey = "matching:" + event.getUserId();

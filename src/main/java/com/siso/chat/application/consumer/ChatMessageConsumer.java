@@ -1,13 +1,13 @@
 package com.siso.chat.application.consumer;
 
-import com.siso.chat.application.ChatRoomMemberService;
+import com.siso.chat.application.service.ChatRoomMemberService;
 import com.siso.chat.application.event.ChatMessageEvent;
 import com.siso.chat.dto.request.ChatListUpdateDto;
 import com.siso.chat.infrastructure.OnlineUserRegistry;
 import com.siso.common.config.RabbitMQConfig;
 import com.siso.notification.application.NotificationService;
 import com.siso.user.domain.model.User;
-import com.siso.user.domain.UserRepository;
+import com.siso.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

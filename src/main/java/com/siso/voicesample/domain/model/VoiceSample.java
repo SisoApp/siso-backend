@@ -2,13 +2,14 @@ package com.siso.voicesample.domain.model;
 
 import com.siso.common.domain.BaseTime;
 import com.siso.user.domain.model.User;
-import lombok.*;
+
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "voice_samples")
-@Data
+@Getter
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class VoiceSample extends BaseTime {
@@ -16,6 +17,7 @@ public class VoiceSample extends BaseTime {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Setter
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -39,8 +41,20 @@ public class VoiceSample extends BaseTime {
     @Builder
     public VoiceSample(User user, String url, Integer duration, Integer fileSize) {
         this.user = user;
-        // 양방향 연관 관계 설정
-//        user.linkVoiceSample(this);
+        this.url = url;
+        this.duration = duration;
+        this.fileSize = fileSize;
+    }
+
+    public void linkUser(User user) {
+        this.user = user;
+    }
+
+    /**
+     * 새로운 음성 파일 정보로 업데이트
+     */
+    public void updateVoiceInfo(User user, String url, Integer duration, Integer fileSize) {
+        this.user = user;
         this.url = url;
         this.duration = duration;
         this.fileSize = fileSize;

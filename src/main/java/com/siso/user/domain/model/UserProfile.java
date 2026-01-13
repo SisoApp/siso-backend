@@ -81,6 +81,10 @@ public class UserProfile {
         this.meetings = meetings;
     }
 
+    public void linkUser(User user) {
+        this.user = user;
+    }
+
     public void updateProfile(UserProfileRequestDto dto) {
         this.drinkingCapacity = dto.getDrinkingCapacity();
         this.religion = dto.getReligion();

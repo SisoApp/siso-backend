@@ -1,5 +1,6 @@
 package com.siso.chat.application;
 
+import com.siso.chat.application.service.ChatMessageService;
 import com.siso.chat.domain.model.*;
 import com.siso.chat.domain.repository.ChatMessageRepository;
 import com.siso.chat.domain.repository.ChatRoomMemberRepository;
@@ -23,8 +24,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
