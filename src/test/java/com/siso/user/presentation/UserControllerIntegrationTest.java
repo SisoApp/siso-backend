@@ -55,95 +55,95 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("GET /api/users/{userId} - 사용자 조회 성공")
-    void getUser_shouldReturnUserDetails() throws Exception {
+    @DisplayName("GET /api/users/info - 내 정보 조회 성공")
+    void getUserInfo_shouldReturnUserDetails() throws Exception {
         // When & Then: API 호출 및 검증
-        mockMvc.perform(get("/api/users/{userId}", testUser.getId())
+        mockMvc.perform(get("/api/users/info")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@example.com"))
-                .andExpect(jsonPath("$.provider").value("KAKAO"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.provider").value("KAKAO"));
     }
 
     @Test
-    @DisplayName("GET /api/users/{userId} - 존재하지 않는 사용자 조회 시 404")
-    void getUser_whenUserNotExists_shouldReturn404() throws Exception {
-        // Given: 존재하지 않는 사용자 ID
-        Long nonExistentUserId = 999L;
-
-        // When & Then: 404 에러 발생
-        mockMvc.perform(get("/api/users/{userId}", nonExistentUserId)
-                .header("Authorization", "Bearer " + accessToken)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("GET /api/users/{userId} - 인증 없이 요청 시 401")
-    void getUser_whenNoAuthentication_shouldReturn401() throws Exception {
+    @DisplayName("GET /api/users/info - 인증 없이 요청 시 401")
+    void getUserInfo_whenNoAuthentication_shouldReturn401() throws Exception {
         // When & Then: 인증 없이 요청하면 401 에러
-        mockMvc.perform(get("/api/users/{userId}", testUser.getId())
+        mockMvc.perform(get("/api/users/info")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("DELETE /api/users/{userId} - 사용자 soft delete 성공")
-    void deleteUser_shouldSoftDelete() throws Exception {
-        // When: DELETE 요청
-        mockMvc.perform(delete("/api/users/{userId}", testUser.getId())
-                .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isNoContent());
-
-        // Then: DB에서 조회 시 isDeleted = true
-        User deletedUser = userRepository.findById(testUser.getId()).orElse(null);
-
-        // findById는 isDeleted = false인 사용자만 조회하므로 null이어야 함
-        // (UserRepository의 @Query 조건 참고)
-    }
-
-    @Test
-    @DisplayName("PATCH /api/users/{userId}/presence - Presence 상태 업데이트")
-    void updatePresenceStatus_shouldUpdateStatus() throws Exception {
-        // Given: 상태 업데이트 요청 JSON
+    @DisplayName("PATCH /api/users/notification - 알림 설정 변경 성공")
+    void updateNotification_shouldUpdateSettings() throws Exception {
+        // Given: 알림 설정 요청 JSON
         String requestBody = """
                 {
-                    "presenceStatus": "OFFLINE"
+                    "subscribed": false
                 }
                 """;
 
         // When & Then: PATCH 요청
-        mockMvc.perform(patch("/api/users/{userId}/presence", testUser.getId())
+        mockMvc.perform(patch("/api/users/notification")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
-        // Then: 상태가 변경되었는지 확인
+        // Then: 알림 설정이 변경되었는지 확인
         User updatedUser = userRepository.findByEmail(testUser.getEmail()).orElseThrow();
-        // presenceStatus가 OFFLINE으로 변경되었는지 검증 가능
+        // notificationSubscribed가 false로 변경되었는지 검증 가능
     }
 
     @Test
-    @DisplayName("POST /api/users/{userId}/block - 사용자 차단")
-    void blockUser_shouldBlockUser() throws Exception {
-        // Given: 차단할 다른 사용자 생성
-        User targetUser = User.builder()
-                .provider(Provider.KAKAO)
-                .email("target@example.com")
-                .phoneNumber("010-9999-8888")
-                .presenceStatus(PresenceStatus.ONLINE)
-                .registrationStatus(RegistrationStatus.LOGIN)
-                .build();
+    @DisplayName("PATCH /api/users/notification - 잘못된 요청 시 400")
+    void updateNotification_withInvalidRequest_shouldReturn400() throws Exception {
+        // Given: 잘못된 요청 JSON (필수 필드 누락)
+        String requestBody = "{}";
 
-        targetUser = userRepository.save(targetUser);
+        // When & Then: 400 에러
+        mockMvc.perform(patch("/api/users/notification")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
 
-        // When & Then: 차단 요청
-        mockMvc.perform(post("/api/users/{userId}/block", targetUser.getId())
+    @Test
+    @DisplayName("DELETE /api/users/delete - 회원 탈퇴 성공")
+    void deleteUser_shouldSoftDelete() throws Exception {
+        // When: DELETE 요청
+        mockMvc.perform(delete("/api/users/delete")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        // Then: DB에서 조회 시 isDeleted = true 또는 조회 불가
+        // (UserRepository의 @Query 조건에 따라 soft delete된 사용자는 조회되지 않음)
+    }
+
+    @Test
+    @DisplayName("POST /api/users/logout - 로그아웃 성공")
+    void logout_shouldSucceed() throws Exception {
+        // When & Then: 로그아웃 요청
+        mockMvc.perform(post("/api/users/logout")
                 .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @DisplayName("POST /api/users/logout - 인증 없이 요청 시 401")
+    void logout_whenNoAuthentication_shouldReturn401() throws Exception {
+        // When & Then: 인증 없이 요청하면 401 에러
+        mockMvc.perform(post("/api/users/logout")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -153,7 +153,7 @@ class UserControllerIntegrationTest extends IntegrationTestBase {
         String invalidToken = "invalid.jwt.token";
 
         // When & Then: 401 에러
-        mockMvc.perform(get("/api/users/{userId}", testUser.getId())
+        mockMvc.perform(get("/api/users/info")
                 .header("Authorization", "Bearer " + invalidToken)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
