@@ -1,5 +1,16 @@
 # SISO 프로젝트 테스트 가이드
 
+## 📚 목차
+1. [통합 테스트 구성 방법](#통합-테스트-구성-방법)
+2. [단위 테스트 작성법](#단위-테스트-작성법)
+3. [통합 테스트 작성법](#통합-테스트-작성법)
+4. [예외 처리 테스트](#예외-처리-테스트)
+5. [성능 및 동시성 테스트](#성능-및-동시성-테스트)
+6. [E2E 테스트](#e2e-테스트)
+7. [테스트 실행 방법](#테스트-실행-방법)
+
+---
+
 ## 통합 테스트 구성 방법
 
 ### 1. 필요한 의존성 추가
@@ -13,14 +24,13 @@ dependencies {
     // 테스트 프레임워크
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Testcontainers (실제 MySQL 컨테이너로 테스트)
     testImplementation 'org.testcontainers:testcontainers:1.19.3'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
     testImplementation 'org.testcontainers:mysql:1.19.3'
-
-    // WebSocket 테스트
-    testImplementation 'org.springframework.boot:spring-boot-starter-websocket'
+    testImplementation 'org.testcontainers:rabbitmq:1.19.3'
 
     // AssertJ (유창한 assertion)
     testImplementation 'org.assertj:assertj-core:3.24.2'
@@ -93,481 +103,535 @@ public abstract class IntegrationTestBase {
 }
 ```
 
-### 3. 통합 테스트 예시
+---
 
-#### 3.1 Repository 통합 테스트
+## 단위 테스트 작성법
 
-`src/test/java/com/siso/user/domain/repository/UserRepositoryIntegrationTest.java`:
+### 1. Service 단위 테스트 예시
 
 ```java
-package com.siso.user.domain.repository;
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
 
-import com.siso.config.IntegrationTestBase;
-import com.siso.user.domain.model.User;
-import com.siso.user.domain.model.UserProfile;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+    @Mock
+    private UserRepository userRepository;
 
-import java.time.LocalDateTime;
-import java.util.List;
+    @Mock
+    private JwtTokenUtil jwtTokenUtil;
 
-import static org.assertj.core.api.Assertions.assertThat;
+    @InjectMocks
+    private UserService userService;
 
+    @Test
+    @DisplayName("사용자 조회 성공")
+    void getUserById_shouldReturnUser() {
+        // Given
+        User mockUser = User.builder()
+                .id(1L)
+                .email("test@example.com")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(mockUser));
+
+        // When
+        User result = userService.getUserById(1L);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getEmail()).isEqualTo("test@example.com");
+        verify(userRepository, times(1)).findById(1L);
+    }
+}
+```
+
+---
+
+## 통합 테스트 작성법
+
+### 1. Repository 통합 테스트
+
+```java
+@DisplayName("UserRepository 통합 테스트")
 class UserRepositoryIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private UserRepository userRepository;
 
     @Test
-    @DisplayName("30일 지난 soft delete 사용자 조회")
-    void findUsersForHardDelete_shouldReturnUsersOlderThan30Days() {
-        // Given: 35일 전에 삭제된 사용자 생성
+    @DisplayName("이메일로 사용자 조회")
+    void findByEmail_shouldReturnUser() {
+        // Given
         User user = User.builder()
                 .email("test@example.com")
-                .provider("KAKAO")
+                .provider(Provider.KAKAO)
                 .providerId("12345")
-                .isDeleted(true)
-                .deletedAt(LocalDateTime.now().minusDays(35))
                 .build();
         userRepository.save(user);
 
-        // When: 30일 지난 사용자 조회
-        List<User> users = userRepository.findUsersForHardDelete(
-                LocalDateTime.now().minusDays(30)
-        );
+        // When
+        Optional<User> found = userRepository.findByEmail("test@example.com");
 
         // Then
-        assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo("test@example.com");
-    }
-
-    @Test
-    @DisplayName("N+1 문제 없이 사용자와 이미지, 프로필 조회")
-    void findByIdWithImagesAndProfile_shouldFetchInOneQuery() {
-        // Given: 사용자, 프로필, 이미지 생성
-        User user = User.builder()
-                .email("test@example.com")
-                .provider("KAKAO")
-                .providerId("12345")
-                .build();
-
-        UserProfile profile = UserProfile.builder()
-                .user(user)
-                .nickname("테스터")
-                .age(25)
-                .build();
-
-        user.setProfile(profile);
-        userRepository.save(user);
-
-        // When: JOIN FETCH로 조회
-        User found = userRepository.findByIdWithImagesAndProfile(user.getId())
-                .orElseThrow();
-
-        // Then: LazyInitializationException 없이 접근 가능
-        assertThat(found.getProfile().getNickname()).isEqualTo("테스터");
-        assertThat(found.getImages()).isNotNull();
+        assertThat(found).isPresent();
+        assertThat(found.get().getEmail()).isEqualTo("test@example.com");
     }
 }
 ```
 
-#### 3.2 Service 통합 테스트 (외부 서비스 Mock)
-
-`src/test/java/com/siso/call/application/AgoraCallServiceIntegrationTest.java`:
+### 2. Controller 통합 테스트 (MockMvc)
 
 ```java
-package com.siso.call.application;
-
-import com.siso.call.domain.model.Call;
-import com.siso.call.domain.repository.CallRepository;
-import com.siso.config.IntegrationTestBase;
-import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
-class AgoraCallServiceIntegrationTest extends IntegrationTestBase {
-
-    @Autowired
-    private AgoraCallService agoraCallService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private CallRepository callRepository;
-
-    // 외부 서비스는 Mock
-    @MockBean
-    private AgoraTokenService agoraTokenService;
-
-    @MockBean
-    private NotificationService notificationService;
-
-    @Test
-    @DisplayName("통화 요청 시 수신자가 IN_CALL 상태면 예외 발생")
-    void requestCall_whenReceiverInCall_shouldThrowException() {
-        // Given: 발신자, 수신자 생성
-        User caller = createUser("caller@test.com");
-        User receiver = createUser("receiver@test.com");
-
-        // 수신자를 IN_CALL 상태로 변경
-        receiver.updatePresenceStatus(PresenceStatus.IN_CALL);
-        userRepository.save(receiver);
-
-        // Mock Agora 토큰 생성
-        when(agoraTokenService.generateToken(anyString(), anyString()))
-                .thenReturn("mock-agora-token");
-
-        // When & Then: 예외 발생 확인
-        assertThatThrownBy(() ->
-                agoraCallService.requestCall(caller.getId(), receiver.getId())
-        )
-        .isInstanceOf(ExpectedException.class)
-        .hasMessageContaining("이미 통화 중");
-    }
-
-    @Test
-    @DisplayName("통화 수락 시 두 사용자 모두 IN_CALL 상태로 변경")
-    void acceptCall_shouldUpdateBothUsersToInCall() {
-        // Given
-        User caller = createUser("caller@test.com");
-        User receiver = createUser("receiver@test.com");
-
-        when(agoraTokenService.generateToken(anyString(), anyString()))
-                .thenReturn("mock-token");
-
-        Call call = agoraCallService.requestCall(caller.getId(), receiver.getId());
-
-        // When: 통화 수락
-        agoraCallService.acceptCall(call.getId(), receiver.getId());
-
-        // Then: 두 사용자 모두 IN_CALL 상태
-        User updatedCaller = userRepository.findById(caller.getId()).orElseThrow();
-        User updatedReceiver = userRepository.findById(receiver.getId()).orElseThrow();
-
-        assertThat(updatedCaller.getPresenceStatus()).isEqualTo(PresenceStatus.IN_CALL);
-        assertThat(updatedReceiver.getPresenceStatus()).isEqualTo(PresenceStatus.IN_CALL);
-    }
-
-    private User createUser(String email) {
-        User user = User.builder()
-                .email(email)
-                .provider("KAKAO")
-                .providerId(email)
-                .build();
-        return userRepository.save(user);
-    }
-}
-```
-
-#### 3.3 Controller 통합 테스트 (API 엔드포인트)
-
-`src/test/java/com/siso/user/presentation/UserControllerIntegrationTest.java`:
-
-```java
-package com.siso.user.presentation;
-
-import com.siso.config.IntegrationTestBase;
-import com.siso.user.domain.model.User;
-import com.siso.user.domain.repository.UserRepository;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import static org.hamcrest.Matchers.is;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+@DisplayName("UserController 통합 테스트")
 class UserControllerIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
     @Test
-    @DisplayName("GET /api/users/{userId} - 사용자 조회 성공")
-    @WithMockUser(username = "1")  // Mock 인증
-    void getUser_shouldReturnUserDetails() throws Exception {
-        // Given: 사용자 생성
+    @DisplayName("GET /api/users/info - 사용자 조회 성공")
+    void getUserInfo_shouldReturnUserDetails() throws Exception {
+        // Given
         User user = User.builder()
                 .email("test@example.com")
-                .provider("KAKAO")
-                .providerId("12345")
+                .provider(Provider.KAKAO)
+                .phoneNumber("010-1234-5678")
+                .presenceStatus(PresenceStatus.ONLINE)
                 .build();
         user = userRepository.save(user);
 
-        // When & Then: API 호출 및 검증
-        mockMvc.perform(get("/api/users/{userId}", user.getId())
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
+
+        // When & Then
+        mockMvc.perform(get("/api/users/info")
+                .header("Authorization", "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email", is("test@example.com")))
-                .andExpect(jsonPath("$.provider", is("KAKAO")));
-    }
-
-    @Test
-    @DisplayName("DELETE /api/users/{userId} - 사용자 soft delete 성공")
-    @WithMockUser(username = "1")
-    void deleteUser_shouldSoftDelete() throws Exception {
-        // Given
-        User user = User.builder()
-                .email("test@example.com")
-                .provider("KAKAO")
-                .providerId("12345")
-                .build();
-        user = userRepository.save(user);
-
-        // When: DELETE 요청
-        mockMvc.perform(delete("/api/users/{userId}", user.getId()))
-                .andExpect(status().isNoContent());
-
-        // Then: isDeleted = true 확인
-        User deletedUser = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(deletedUser.getIsDeleted()).isTrue();
-        assertThat(deletedUser.getDeletedAt()).isNotNull();
+                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.provider").value("KAKAO"));
     }
 }
 ```
-
-#### 3.4 파일 업로드 통합 테스트 (S3 Mock)
-
-`src/test/java/com/siso/voicesample/application/VoiceSampleServiceIntegrationTest.java`:
-
-```java
-package com.siso.voicesample.application;
-
-import com.siso.config.IntegrationTestBase;
-import com.siso.common.util.S3UploadUtil;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mock.web.MockMultipartFile;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-class VoiceSampleServiceIntegrationTest extends IntegrationTestBase {
-
-    @Autowired
-    private VoiceSampleService voiceSampleService;
-
-    @MockBean
-    private S3UploadUtil s3UploadUtil;
-
-    @Test
-    @DisplayName("음성 파일 20초 초과 시 예외 발생")
-    void uploadVoiceSample_whenDurationExceeds20s_shouldThrowException() {
-        // Given: 25초 길이의 Mock 음성 파일 (실제로는 메타데이터 조작 필요)
-        MockMultipartFile file = new MockMultipartFile(
-                "voice",
-                "sample.mp3",
-                "audio/mpeg",
-                "fake audio content".getBytes()
-        );
-
-        when(s3UploadUtil.upload(any(), any())).thenReturn("s3-url");
-
-        // When & Then: 20초 초과 예외
-        // 실제 구현에서는 JAVE/MP3AGIC로 길이 추출
-        assertThatThrownBy(() ->
-                voiceSampleService.uploadVoiceSample(1L, file)
-        )
-        .isInstanceOf(ExpectedException.class)
-        .hasMessageContaining("20초");
-    }
-}
-```
-
-### 4. 외부 서비스 Mock 전략
-
-#### 4.1 AWS S3 Mock
-
-`src/test/java/com/siso/config/S3MockConfig.java`:
-
-```java
-@TestConfiguration
-public class S3MockConfig {
-
-    @Bean
-    @Primary
-    public S3UploadUtil mockS3UploadUtil() {
-        S3UploadUtil mock = Mockito.mock(S3UploadUtil.class);
-
-        when(mock.upload(any(), any()))
-                .thenReturn("https://mock-s3.amazonaws.com/test.jpg");
-
-        when(mock.generatePresignedUrl(any()))
-                .thenReturn("https://mock-s3.amazonaws.com/presigned-url");
-
-        return mock;
-    }
-}
-```
-
-#### 4.2 Firebase FCM Mock
-
-`src/test/java/com/siso/config/FcmMockConfig.java`:
-
-```java
-@TestConfiguration
-public class FcmMockConfig {
-
-    @Bean
-    @Primary
-    public FirebaseMessaging mockFirebaseMessaging() {
-        return Mockito.mock(FirebaseMessaging.class);
-    }
-}
-```
-
-#### 4.3 OAuth Provider Mock (MockWebServer 사용)
-
-`src/test/java/com/siso/user/infrastructure/KakaoOAuthProviderTest.java`:
-
-```java
-class KakaoOAuthProviderTest {
-
-    private MockWebServer mockWebServer;
-    private KakaoOAuthProvider kakaoOAuthProvider;
-
-    @BeforeEach
-    void setUp() throws IOException {
-        mockWebServer = new MockWebServer();
-        mockWebServer.start();
-
-        String baseUrl = mockWebServer.url("/").toString();
-        kakaoOAuthProvider = new KakaoOAuthProvider(baseUrl);
-    }
-
-    @Test
-    @DisplayName("카카오 사용자 정보 조회 성공")
-    void getUserInfo_shouldReturnUserInfo() {
-        // Mock 응답 설정
-        mockWebServer.enqueue(new MockResponse()
-                .setBody("{\"id\":\"12345\",\"kakao_account\":{\"email\":\"test@kakao.com\"}}")
-                .addHeader("Content-Type", "application/json"));
-
-        // When
-        OAuthUserInfo userInfo = kakaoOAuthProvider.getUserInfo("mock-access-token");
-
-        // Then
-        assertThat(userInfo.getProviderId()).isEqualTo("12345");
-        assertThat(userInfo.getEmail()).isEqualTo("test@kakao.com");
-    }
-
-    @AfterEach
-    void tearDown() throws IOException {
-        mockWebServer.shutdown();
-    }
-}
-```
-
-### 5. WebSocket 통합 테스트
-
-`src/test/java/com/siso/chat/presentation/ChatWebSocketTest.java`:
-
-```java
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ChatWebSocketTest {
-
-    @LocalServerPort
-    private int port;
-
-    private StompSession stompSession;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        WebSocketStompClient stompClient = new WebSocketStompClient(
-                new SockJsClient(List.of(new WebSocketTransport(new StandardWebSocketClient())))
-        );
-        stompClient.setMessageConverter(new MappingJackson2MessageConverter());
-
-        String url = "ws://localhost:" + port + "/ws";
-        stompSession = stompClient.connectAsync(url, new StompSessionHandlerAdapter() {})
-                .get(5, TimeUnit.SECONDS);
-    }
-
-    @Test
-    @DisplayName("채팅 메시지 전송 및 수신")
-    void sendMessage_shouldReceiveMessage() throws Exception {
-        // Given
-        CompletableFuture<ChatMessage> future = new CompletableFuture<>();
-
-        stompSession.subscribe("/topic/chat/1", new StompFrameHandler() {
-            @Override
-            public Type getPayloadType(StompHeaders headers) {
-                return ChatMessage.class;
-            }
-
-            @Override
-            public void handleFrame(StompHeaders headers, Object payload) {
-                future.complete((ChatMessage) payload);
-            }
-        });
-
-        // When: 메시지 전송
-        ChatMessageRequest request = new ChatMessageRequest("안녕하세요");
-        stompSession.send("/app/chat/1/send", request);
-
-        // Then: 메시지 수신 확인
-        ChatMessage received = future.get(5, TimeUnit.SECONDS);
-        assertThat(received.getContent()).isEqualTo("안녕하세요");
-    }
-}
-```
-
-### 6. 테스트 실행 명령어
-
-```bash
-# 모든 테스트 실행
-./gradlew test
-
-# 통합 테스트만 실행
-./gradlew test --tests "*IntegrationTest"
-
-# 특정 테스트 클래스 실행
-./gradlew test --tests "UserRepositoryIntegrationTest"
-
-# 테스트 커버리지 확인
-./gradlew test jacocoTestReport
-```
-
-### 7. 테스트 작성 우선순위
-
-1. **최우선**: 인증, 통화 관리, 채팅 제한
-2. **높음**: 파일 업로드, 사용자 매칭, 삭제 로직
-3. **중간**: 알림, Repository 커스텀 쿼리
-4. **낮음**: 단순 CRUD, Getter/Setter
 
 ---
 
-## 단위 테스트 vs 통합 테스트 선택 기준
+## 예외 처리 테스트
 
-| 테스트 대상 | 단위 테스트 | 통합 테스트 |
-|------------|-----------|-----------|
-| **Service 비즈니스 로직** | ✅ (외부 의존성 Mock) | ✅ (전체 플로우 검증) |
-| **Repository 쿼리** | ❌ | ✅ (실제 DB 필요) |
-| **Controller API** | ✅ (MockMvc) | ✅ (전체 스택) |
-| **외부 API 호출** | ✅ (MockWebServer) | ✅ (실제 환경에서) |
-| **복잡한 트랜잭션** | ❌ | ✅ |
-| **WebSocket** | ❌ | ✅ |
+### 1. JWT 예외 테스트
+
+```java
+@DisplayName("JWT 인증 예외 테스트")
+class JwtAuthenticationExceptionTest extends IntegrationTestBase {
+
+    @Test
+    @DisplayName("토큰 없이 요청 시 401 Unauthorized")
+    void whenNoToken_shouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/users/info")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("만료된 토큰으로 요청 시 401 + TOKEN_EXPIRED 에러")
+    void whenExpiredToken_shouldReturn401WithError() throws Exception {
+        // Given: 만료된 토큰 생성
+        Date pastDate = new Date(System.currentTimeMillis() - 1000 * 60 * 60 * 24);
+        Date expiredDate = new Date(pastDate.getTime() + 1000);
+
+        String expiredToken = Jwts.builder()
+                .setSubject("test@example.com")
+                .claim("type", "access")
+                .setIssuedAt(pastDate)
+                .setExpiration(expiredDate)
+                .signWith(Keys.hmacShaKeyFor(getSecretKey().getBytes()), SignatureAlgorithm.HS256)
+                .compact();
+
+        // When & Then
+        mockMvc.perform(get("/api/users/info")
+                .header("Authorization", "Bearer " + expiredToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+}
+```
+
+### 2. 입력 검증 테스트
+
+```java
+@DisplayName("입력 검증 테스트")
+class InputValidationTest extends IntegrationTestBase {
+
+    @Test
+    @DisplayName("나이가 19세 미만이면 400 에러")
+    void whenAgeTooYoung_shouldReturn400() throws Exception {
+        // Given: 나이 18세
+        UserProfileRequestDto invalidDto = new UserProfileRequestDto(
+                null, null, false, 18, "테스터", "안녕하세요", "서울시 강남구",
+                Sex.MALE, PreferenceSex.FEMALE, null,
+                List.of(Meeting.FRIENDSHIP, Meeting.DATE, Meeting.CHAT)
+        );
+
+        // When & Then
+        mockMvc.perform(post("/api/profiles")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.field == 'age')].message")
+                        .value("나이는 최소 19세 이상이어야 합니다."));
+    }
+}
+```
+
+---
+
+## 성능 및 동시성 테스트
+
+### 1. 동시성 테스트
+
+```java
+@DisplayName("동시성 테스트")
+class ConcurrencyTest extends IntegrationTestBase {
+
+    @Test
+    @DisplayName("100개의 메시지를 동시에 전송해도 모두 저장")
+    void whenConcurrentMessageSending_allMessagesShouldBeSaved() throws InterruptedException {
+        // Given
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        // When: 동시에 메시지 전송
+        for (int i = 0; i < threadCount; i++) {
+            final int messageNum = i;
+            executorService.submit(() -> {
+                try {
+                    ChatMessage message = ChatMessage.builder()
+                            .chatRoom(chatRoom)
+                            .sender(messageNum % 2 == 0 ? user1 : user2)
+                            .message("메시지 " + messageNum)
+                            .build();
+                    chatMessageRepository.save(message);
+                    successCount.incrementAndGet();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(10, TimeUnit.SECONDS);
+        executorService.shutdown();
+
+        // Then: 모든 메시지가 저장되었는지 확인
+        assertThat(successCount.get()).isEqualTo(threadCount);
+        List<ChatMessage> savedMessages = chatMessageRepository.findAll();
+        assertThat(savedMessages).hasSize(threadCount);
+    }
+}
+```
+
+### 2. 성능 테스트
+
+```java
+@DisplayName("AI 매칭 성능 테스트")
+class MatchingAlgorithmPerformanceTest extends IntegrationTestBase {
+
+    @Test
+    @DisplayName("1000명 후보 대상 매칭이 150ms 이내에 완료")
+    void whenMatching1000Candidates_shouldCompleteUnder150ms() {
+        // Given: 1000명의 후보 사용자 생성
+        List<Interest> interests = interestRepository.findAll();
+        createCandidateUsers(1000, interests);
+
+        // When: 매칭 알고리즘 실행
+        long startTime = System.currentTimeMillis();
+        MatchingResultDto result = matchingAlgorithmService.calculateMatches(targetUser);
+        long executionTime = System.currentTimeMillis() - startTime;
+
+        // Then: 150ms 이내에 완료
+        assertThat(executionTime).isLessThan(150L);
+        assertThat(result.getMatches()).isNotEmpty();
+        assertThat(result.getMatches()).hasSizeLessThanOrEqualTo(20);
+
+        System.out.println("실행 시간: " + executionTime + "ms");
+    }
+}
+```
+
+---
+
+## E2E 테스트
+
+### 1. 사용자 전체 플로우 E2E 테스트
+
+E2E(End-to-End) 테스트는 실제 사용자 시나리오를 전체 플로우로 검증합니다.
+
+```java
+@DisplayName("사용자 전체 플로우 E2E 테스트")
+@TestPropertySource(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop"
+})
+class UserJourneyE2ETest extends IntegrationTestBase {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Test
+    @DisplayName("E2E: 회원가입 → 프로필 생성 → AI 매칭 → 매칭 결과 조회")
+    void completeUserMatchingJourney() throws Exception {
+        // 1. 사용자 생성 (회원가입)
+        User user = User.builder()
+                .provider(Provider.KAKAO)
+                .email("user@example.com")
+                .phoneNumber("010-1234-5678")
+                .presenceStatus(PresenceStatus.ONLINE)
+                .registrationStatus(RegistrationStatus.LOGIN)
+                .build();
+        user = userRepository.save(user);
+
+        String accessToken = jwtTokenUtil.generateAccessToken(user.getEmail());
+
+        // 2. 프로필 생성
+        UserProfileRequestDto profileDto = new UserProfileRequestDto(
+                DrinkingCapacity.MODERATE, Religion.NONE, false, 25, "테스터",
+                "안녕하세요", "서울시 강남구",
+                Sex.MALE, PreferenceSex.FEMALE, Mbti.ENFP,
+                List.of(Meeting.FRIENDSHIP, Meeting.DATE, Meeting.CHAT)
+        );
+
+        mockMvc.perform(post("/api/profiles")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(profileDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nickname").value("테스터"));
+
+        // 3. AI 매칭 요청
+        MvcResult matchingResult = mockMvc.perform(post("/api/matching/request")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String matchingResponse = matchingResult.getResponse().getContentAsString();
+        String requestId = JsonPath.read(matchingResponse, "$.requestId");
+
+        // 4. 매칭 결과 조회 (비동기 처리 대기)
+        Thread.sleep(2000);  // 실제로는 폴링이나 WebSocket 사용
+
+        mockMvc.perform(get("/api/matching/results")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(user.getId()))
+                .andExpect(jsonPath("$.matches").isArray());
+    }
+
+    @Test
+    @DisplayName("E2E: 통화 → 통화 품질 메트릭 제출 → 통화 리뷰 작성")
+    void completeCallReviewJourney() throws Exception {
+        // 1. 사용자 및 통화 설정
+        User caller = createUser("caller@example.com");
+        User receiver = createUser("receiver@example.com");
+
+        String callerToken = jwtTokenUtil.generateAccessToken(caller.getEmail());
+        String receiverToken = jwtTokenUtil.generateAccessToken(receiver.getEmail());
+
+        // 2. 통화 요청
+        CallRequestDto callRequest = new CallRequestDto(receiver.getId());
+
+        MvcResult callResult = mockMvc.perform(post("/api/calls/request")
+                .header("Authorization", "Bearer " + callerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(callRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Long callId = JsonPath.read(callResult.getResponse().getContentAsString(), "$.id");
+
+        // 3. 통화 수락
+        mockMvc.perform(post("/api/calls/" + callId + "/accept")
+                .header("Authorization", "Bearer " + receiverToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        // 4. 통화 종료
+        mockMvc.perform(post("/api/calls/" + callId + "/end")
+                .header("Authorization", "Bearer " + callerToken)
+                .param("createChatRoom", "true")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        // 5. 통화 품질 메트릭 제출
+        CallQualityMetricsRequestDto qualityDto = new CallQualityMetricsRequestDto(
+                callId, 2, 50, 120, 128, 512, "opus", "VP8"
+        );
+
+        mockMvc.perform(post("/api/call-quality/metrics")
+                .header("Authorization", "Bearer " + callerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(qualityDto)))
+                .andExpect(status().isOk());
+
+        // 6. 통화 리뷰 작성
+        CallReviewRequestDto reviewDto = new CallReviewRequestDto(
+                null, callId, 5, "아주 좋았습니다!"
+        );
+
+        mockMvc.perform(post("/api/call-reviews")
+                .header("Authorization", "Bearer " + callerToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reviewDto)))
+                .andExpect(status().isOk());
+
+        // Then: 전체 플로우 성공 확인
+        mockMvc.perform(get("/api/call-reviews/call/" + callId)
+                .header("Authorization", "Bearer " + callerToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rating").value(5))
+                .andExpect(jsonPath("$.comment").value("아주 좋았습니다!"));
+    }
+}
+```
+
+### E2E 테스트 작성 시 주의사항
+
+1. **비동기 처리**: 메시지 큐, 캐시 등 비동기 처리는 충분한 대기 시간 필요
+2. **외부 서비스 Mock**: AWS S3, FCM, Agora 등은 Mock 사용
+3. **데이터 정합성**: 각 단계마다 DB 상태 검증
+4. **트랜잭션 롤백**: `@Transactional`로 테스트 후 자동 롤백
+
+---
+
+## 테스트 실행 방법
+
+### 1. 모든 테스트 실행
+```bash
+./gradlew test
+```
+
+### 2. 특정 카테고리만 실행
+```bash
+# 통합 테스트만 실행
+./gradlew test --tests "*IntegrationTest"
+
+# 단위 테스트만 실행
+./gradlew test --tests "*Test" --exclude-task "*IntegrationTest"
+
+# E2E 테스트만 실행
+./gradlew test --tests "*E2ETest"
+
+# 성능 테스트만 실행
+./gradlew test --tests "*PerformanceTest"
+
+# 동시성 테스트만 실행
+./gradlew test --tests "*ConcurrencyTest"
+
+# JWT 예외 테스트만 실행
+./gradlew test --tests "JwtAuthenticationExceptionTest"
+```
+
+### 3. 테스트 커버리지 확인
+```bash
+./gradlew test jacocoTestReport
+
+# 리포트 위치: build/reports/jacoco/test/html/index.html
+```
+
+### 4. 특정 테스트 메서드만 실행
+```bash
+./gradlew test --tests "UserRepositoryIntegrationTest.findByEmail_shouldReturnUser"
+```
+
+---
+
+## 테스트 작성 우선순위
+
+### 최우선
+1. **인증/보안** (JWT, OAuth)
+2. **통화 관리** (중복 방지, 상태 전환)
+3. **채팅 메시지 제한** (LIMITED/UNLIMITED)
+
+### 높음
+4. **AI 매칭** (성능, 정확도)
+5. **파일 업로드** (크기, 시간 제한)
+6. **예외 처리** (JWT 만료, 입력 검증)
+
+### 중간
+7. **동시성** (메시지 유실 방지)
+8. **성능** (대규모 데이터 처리)
+9. **E2E** (전체 사용자 플로우)
+
+### 낮음
+10. 단순 CRUD
+11. Getter/Setter
+12. DTO 변환
+
+---
+
+## 단위 테스트 vs 통합 테스트 vs E2E 테스트
+
+| 테스트 유형 | 목적 | 속도 | 범위 | 예시 |
+|-----------|-----|------|-----|-----|
+| **단위 테스트** | 개별 메서드/클래스 검증 | 빠름 | 좁음 | Service 메서드 1개 |
+| **통합 테스트** | 여러 컴포넌트 협업 검증 | 중간 | 중간 | Controller + Service + DB |
+| **E2E 테스트** | 전체 사용자 시나리오 검증 | 느림 | 넓음 | 회원가입 → 프로필 → 매칭 |
+
+---
+
+## 외부 서비스 Mock 전략
+
+### AWS S3 Mock
+```java
+@MockBean
+private S3UploadUtil s3UploadUtil;
+
+when(s3UploadUtil.upload(any(), any()))
+        .thenReturn("https://mock-s3.amazonaws.com/test.jpg");
+```
+
+### Firebase FCM Mock
+```java
+@MockBean
+private NotificationService notificationService;
+
+doNothing().when(notificationService).sendPushNotification(any(), any());
+```
+
+### OAuth Provider Mock (MockWebServer)
+```java
+mockWebServer.enqueue(new MockResponse()
+        .setBody("{\"id\":\"12345\",\"email\":\"test@kakao.com\"}")
+        .addHeader("Content-Type", "application/json"));
+```
 
 ---
 
 ## 추가 참고사항
 
-- **Testcontainers**는 Docker를 사용하므로 Docker가 설치되어 있어야 합니다
-- 통합 테스트는 단위 테스트보다 느리므로, CI/CD에서는 병렬 실행을 고려하세요
-- 민감한 정보(API Key 등)는 테스트 환경 변수로 관리하세요
-- 테스트 데이터는 `@Transactional`로 자동 롤백되지만, Testcontainers는 테스트 종료 시 자동 삭제됩니다
+- **Testcontainers**는 Docker를 사용하므로 Docker 설치 필수
+- 통합 테스트는 단위 테스트보다 느리므로, CI/CD에서는 병렬 실행 권장
+- 민감한 정보(API Key 등)는 테스트 환경 변수로 관리
+- `@Transactional`로 자동 롤백되지만, Testcontainers는 테스트 종료 시 자동 삭제됨
+- E2E 테스트는 최소한으로 유지하고, 핵심 사용자 플로우만 검증
+
+---
+
+## 참고 자료
+
+- [JUnit 5 Documentation](https://junit.org/junit5/docs/current/user-guide/)
+- [Testcontainers Documentation](https://www.testcontainers.org/)
+- [Spring Boot Testing](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing)
+- [AssertJ Documentation](https://assertj.github.io/doc/)
+- [MockMvc Documentation](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/test/web/servlet/MockMvc.html)

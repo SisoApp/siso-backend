@@ -12,6 +12,13 @@ public enum ErrorCode {
     USER_NOT_FOUND_OR_DELETED(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없거나 삭제된 계정입니다."),
     UNAUTHROIZED(HttpStatus.UNAUTHORIZED, "인증되지 않는 사용자입니다."),
 
+    // JWT 인증
+    TOKEN_MISSING(HttpStatus.UNAUTHORIZED, "인증 토큰이 필요합니다."),
+    TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다. 다시 로그인해주세요."),
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
+    TOKEN_MALFORMED(HttpStatus.UNAUTHORIZED, "잘못된 형식의 토큰입니다."),
+    ACCESS_DENIED_ERROR(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+
     // 사용자 프로필
     PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."),
     USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자의 프로필을 찾을 수 없습니다."),
