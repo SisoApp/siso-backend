@@ -37,6 +37,7 @@ public class UserProfileRequestDto {
     private PreferenceSex preferenceSex;
     private Mbti mbti;
 
+    @NotNull(message = "Meeting은 필수입니다.")
     @Size(min = 3, max = 7, message = "Meeting은 최소 3개 이상, 최대 7개 이하로 선택해야 합니다.")
     private List<Meeting> meetings;
 }

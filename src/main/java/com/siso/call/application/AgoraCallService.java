@@ -96,8 +96,7 @@ public class AgoraCallService {
         }
 
         // 상태 업데이트
-        call.updateCallStatus(CallStatus.CANCELED);
-        call.endCall();
+        call.cancelCall();
         callRepository.save(call);
 
         // 수신자에게 취소 알림 보내기
@@ -135,8 +134,7 @@ public class AgoraCallService {
      */
     public AgoraCallResponseDto denyCall(CallInfoDto callInfoDto) {
         Call call = getCall(callInfoDto.getId());
-        call.updateCallStatus(CallStatus.DENY);
-        call.endCall();
+        call.denyCall();
         callRepository.save(call);
 
         // 발신자에게 "거절됨" 알림 보내기

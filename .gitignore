@@ -6,6 +6,9 @@ build/
 !**/src/test/**/build/
 *.sql
 
+### QueryDSL ###
+src/main/generated/
+
 ### STS ###
 .apt_generated
 .classpath

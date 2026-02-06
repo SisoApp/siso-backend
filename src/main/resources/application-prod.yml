@@ -6,7 +6,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create     # ⚠️ 첫 실행만 create, 이후 반드시 update/none 으로 변경
+      ddl-auto: validate     # ⚠️ 첫 실행만 create, 이후 반드시 update/validate 으로 변경
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect

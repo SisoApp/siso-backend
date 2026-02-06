@@ -7,4 +7,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CallRequestDto {
     private Long receiverId;
+
+    public CallRequestDto(Long receiverId) {
+        this.receiverId = receiverId;
+    }
 }
