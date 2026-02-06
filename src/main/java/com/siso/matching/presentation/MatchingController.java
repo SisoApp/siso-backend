@@ -4,6 +4,7 @@ import com.siso.matching.dto.MatchingResultDto;
 import com.siso.matching.application.service.MatchingService;
 import com.siso.matching.domain.model.MatchingRequest;
 import com.siso.matching.dto.MatchingRequestResponseDto;
+import com.siso.common.web.CurrentUser;
 import com.siso.user.domain.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @SecurityRequirement(name = "bearerAuth")
 public class MatchingController {
-
     private final MatchingService matchingService;
     private final RedisTemplate<String, MatchingResultDto> redisTemplate;
 
@@ -50,9 +49,7 @@ public class MatchingController {
             @ApiResponse(responseCode = "404", description = "사용자 프로필 없음", content = @Content)
     })
     @PostMapping("/request")
-    public ResponseEntity<MatchingRequestResponseDto> requestMatching(
-            @Parameter(hidden = true) @AuthenticationPrincipal User user
-    ) {
+    public ResponseEntity<MatchingRequestResponseDto> requestMatching(@Parameter(hidden = true) @CurrentUser User user) {
         log.info("Matching request: userId={}", user.getId());
 
         // 1. 매칭 요청 생성 및 DB 저장 (즉시)
@@ -84,9 +81,7 @@ public class MatchingController {
             @ApiResponse(responseCode = "404", description = "매칭 결과 없음 (아직 처리 중이거나 만료됨)", content = @Content)
     })
     @GetMapping("/results")
-    public ResponseEntity<MatchingResultDto> getMatchingResults(
-            @Parameter(hidden = true) @AuthenticationPrincipal User user
-    ) {
+    public ResponseEntity<MatchingResultDto> getMatchingResults(@Parameter(hidden = true) @CurrentUser User user) {
         log.info("Get matching results: userId={}", user.getId());
 
         // Redis 캐시에서 조회

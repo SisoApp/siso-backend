@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -27,7 +28,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<SisoResponse<Void>> handleExpectedException(ExpectedException ex) {
         ErrorCode errorCode = ex.getErrorCode();
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(errorCode.getHttpStatus())
                 .body(SisoResponse.error(errorCode));
     }
 
@@ -58,6 +59,22 @@ public class GlobalExceptionHandler {
         );
 
         log.warn("Validation failed: {} errors on {}", fieldErrors.size(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * 필수 Request Parameter 누락 시(Spring MVC) 500이 아닌 400 Bad Request로 변환
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestParam(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "MISSING_REQUEST_PARAMETER",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        log.warn("Missing request parameter: {} on {}", ex.getParameterName(), request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 

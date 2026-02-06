@@ -1,5 +1,6 @@
 package com.siso.user.dto.request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,5 +8,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NotificationRequestDto {
-    private boolean subscribed;
+    @NotNull(message = "subscribed는 필수입니다.")
+    private Boolean subscribed;
 }

@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'idea'
 	id 'org.springframework.boot' version '3.5.4'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -89,8 +90,6 @@ dependencies {
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
-
-
     //websocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
@@ -119,6 +118,77 @@ dependencies {
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 }
 
+// ===== Source Sets =====
+sourceSets {
+	testUnit {
+		java.srcDir 'src/test_unit/java'
+		resources.srcDir 'src/test/resources'
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+	testIntegration {
+		java.srcDir 'src/test_integration/java'
+		resources.srcDir 'src/test/resources'
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
+	}
+}
+
+// annotation processor 출력을 build/ 하위로 지정
+tasks.named('compileTestUnitJava') {
+	options.generatedSourceOutputDirectory.set(file("${buildDir}/generated/sources/annotationProcessor/java/testUnit"))
+}
+tasks.named('compileTestIntegrationJava') {
+	options.generatedSourceOutputDirectory.set(file("${buildDir}/generated/sources/annotationProcessor/java/testIntegration"))
+}
+
+// ===== Configurations =====
+configurations {
+	testUnitImplementation.extendsFrom testImplementation
+	testUnitRuntimeOnly.extendsFrom testRuntimeOnly
+	testUnitCompileOnly.extendsFrom compileOnly
+	testUnitAnnotationProcessor.extendsFrom annotationProcessor
+
+	testIntegrationImplementation.extendsFrom testImplementation
+	testIntegrationRuntimeOnly.extendsFrom testRuntimeOnly
+	testIntegrationCompileOnly.extendsFrom compileOnly
+	testIntegrationAnnotationProcessor.extendsFrom annotationProcessor
+}
+
+// ===== Test Tasks =====
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.register('unitTest', Test) {
+	description = 'Run unit tests'
+	group = 'verification'
+	testClassesDirs = sourceSets.testUnit.output.classesDirs
+	classpath = sourceSets.testUnit.runtimeClasspath
+	useJUnitPlatform()
+}
+
+tasks.register('integrationTest', Test) {
+	description = 'Run integration tests'
+	group = 'verification'
+	testClassesDirs = sourceSets.testIntegration.output.classesDirs
+	classpath = sourceSets.testIntegration.runtimeClasspath
+	useJUnitPlatform()
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('unitTest')
+	dependsOn tasks.named('integrationTest')
+}
+
+/* =======================
+   IntelliJ IDEA 커스텀 소스셋 인식
+ ======================= */
+idea {
+	module {
+		testSources.from(sourceSets.testUnit.java.srcDirs)
+		testSources.from(sourceSets.testIntegration.java.srcDirs)
+		testResources.from(sourceSets.testUnit.resources.srcDirs)
+		testResources.from(sourceSets.testIntegration.resources.srcDirs)
+	}
 }

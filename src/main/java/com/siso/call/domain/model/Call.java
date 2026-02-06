@@ -101,12 +101,29 @@ public class Call {
         this.duration = 0L;
     }
 
-    // 종료
-    public void endCall() {
+    // 종료 시간 기록
+    private void recordEndTime() {
         this.endTime = LocalDateTime.now();
         if (this.startTime != null) {
             this.duration = Duration.between(this.startTime, this.endTime).getSeconds();
         }
+    }
+
+    // 종료
+    public void endCall() {
+        recordEndTime();
         this.callStatus = CallStatus.ENDED;
+    }
+
+    // 거절
+    public void denyCall() {
+        this.callStatus = CallStatus.DENY;
+        recordEndTime();
+    }
+
+    // 취소
+    public void cancelCall() {
+        this.callStatus = CallStatus.CANCELED;
+        recordEndTime();
     }
 }

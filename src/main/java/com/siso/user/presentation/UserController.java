@@ -56,7 +56,7 @@ public class UserController {
             )
             @Valid @RequestBody NotificationRequestDto notificationRequestDto
     ) {
-        userService.updateNotificationSubscribed(user, notificationRequestDto.isSubscribed());
+        userService.updateNotificationSubscribed(user, notificationRequestDto.getSubscribed());
         return SisoResponse.success(null);
     }
 

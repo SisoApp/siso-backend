@@ -1,0 +1,90 @@
+spring:
+  autoconfigure:
+    exclude:
+      - io.awspring.cloud.autoconfigure.s3.S3AutoConfiguration
+      - io.awspring.cloud.autoconfigure.core.AwsAutoConfiguration
+      - io.awspring.cloud.autoconfigure.core.CredentialsProviderAutoConfiguration
+      - io.awspring.cloud.autoconfigure.core.RegionProviderAutoConfiguration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # OAuth2 비활성화
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: test-client-id
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            scope: phone_number,account_email
+            authorization-grant-type: authorization_code
+
+  # RabbitMQ 테스트 설정
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin123
+
+  # Redis 테스트 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  image:
+    use_s3: false
+    max-images-per-user: 5
+
+# JWT 테스트 설정
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-must-be-at-least-256-bits-long-for-hs256
+  access-token-ttl: 7200000
+  refresh-token-ttl: 1209600000
+
+# AWS S3 비활성화
+cloud:
+  aws:
+    stack:
+      auto: false
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: test-bucket
+
+# FCM 비활성화
+fcm:
+  enabled: false
+
+# Agora 테스트 설정
+agora:
+  appId: test-agora-app-id
+  appCertificate: test-agora-app-certificate
+
+# Firebase 비활성화
+firebase:
+  service-account: classpath:firebase/firebase-admin-key.json
+  project-id: test-project
+  database-url: https://test-project.firebaseio.com
+  admin-key: classpath:firebase/firebase-admin-key.json
+
+# 앱 설정
+app:
+  voice-sample:
+    upload-dir: ./test-uploads/voice
+    base-url: http://localhost:8080/voice
+
+  image:
+    upload-dir: ./test-uploads/images
+    base-url: http://localhost:8080/images
+
+# 캐시 설정
+cache:
+  caffeine:
+    spec: maximumSize=100,expireAfterWrite=5m
+  type: caffeine

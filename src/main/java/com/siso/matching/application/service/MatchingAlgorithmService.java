@@ -145,7 +145,7 @@ public class MatchingAlgorithmService {
     /**
      * 1. 관심사 유사도 계산 (Jaccard Similarity)
      */
-    private double calculateInterestSimilarity(User user, User candidate) {
+    public double calculateInterestSimilarity(User user, User candidate) {
         Set<String> userInterests = user.getUserInterests().stream()
                 .map(ui -> ui.getInterest().name())
                 .collect(Collectors.toSet());
@@ -172,7 +172,7 @@ public class MatchingAlgorithmService {
     /**
      * 2. 나이 호환성 계산
      */
-    private double calculateAgeCompatibility(UserProfile userProfile, UserProfile candidateProfile) {
+    public double calculateAgeCompatibility(UserProfile userProfile, UserProfile candidateProfile) {
         int ageDiff = Math.abs(userProfile.getAge() - candidateProfile.getAge());
 
         // 나이 차이가 0이면 1.0, 10살 이상이면 0.0
@@ -182,7 +182,7 @@ public class MatchingAlgorithmService {
     /**
      * 3. MBTI 호환성 계산
      */
-    private double calculateMbtiCompatibility(String mbti1, String mbti2) {
+    public double calculateMbtiCompatibility(String mbti1, String mbti2) {
         if (mbti1 == null || mbti2 == null) {
             return 0.5;  // MBTI 정보 없으면 중립
         }
@@ -223,7 +223,7 @@ public class MatchingAlgorithmService {
     /**
      * 4. 지역 근접성 계산
      */
-    private double calculateLocationProximity(String location1, String location2) {
+    public double calculateLocationProximity(String location1, String location2) {
         if (location1 == null || location2 == null) {
             return 0.5;  // 위치 정보 없으면 중립
         }
@@ -243,7 +243,7 @@ public class MatchingAlgorithmService {
     /**
      * 5. 활동성 점수 (최근 접속 시간 기반)
      */
-    private double calculateActivityScore(LocalDateTime lastActiveAt) {
+    public double calculateActivityScore(LocalDateTime lastActiveAt) {
         if (lastActiveAt == null) {
             return 0.0;
         }
@@ -257,7 +257,7 @@ public class MatchingAlgorithmService {
     /**
      * 6. 생활습관 호환성 (음주, 흡연)
      */
-    private double calculateLifestyleCompatibility(UserProfile user, UserProfile candidate) {
+    public double calculateLifestyleCompatibility(UserProfile user, UserProfile candidate) {
         double score = 0.0;
 
         // 음주 호환성 (50%)
