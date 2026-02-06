@@ -66,12 +66,7 @@ agora:
   appId: test-agora-app-id
   appCertificate: test-agora-app-certificate
 
-# Firebase 비활성화
-firebase:
-  service-account: classpath:firebase/firebase-admin-key.json
-  project-id: test-project
-  database-url: https://test-project.firebaseio.com
-  admin-key: classpath:firebase/firebase-admin-key.json
+# Firebase 비활성화 (@Profile("!test")로 FirebaseConfig 제외됨)
 
 # 앱 설정
 app:
