@@ -192,7 +192,7 @@ class AgoraCallServiceTest {
     }
 
     @Test
-    @DisplayName("통화 거절 성공(통화 상태 종료)")
+    @DisplayName("통화 거절 성공(통화 상태 DENY)")
     void denyCall_shouldUpdateCallStatusToDeny() {
         // Given
         Call call = Call.builder()
@@ -216,7 +216,7 @@ class AgoraCallServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.isAccepted()).isFalse();
-        assertThat(call.getCallStatus()).isEqualTo(CallStatus.ENDED);
+        assertThat(call.getCallStatus()).isEqualTo(CallStatus.DENY);
 
         verify(callRepository).findById(1L);
         verify(callRepository).save(call);
@@ -239,7 +239,7 @@ class AgoraCallServiceTest {
     }
 
     @Test
-    @DisplayName("통화 취소 성공(통화 상태 종료) - 발신자만 취소 가능")
+    @DisplayName("통화 취소 성공(통화 상태 CANCELED) - 발신자만 취소 가능")
     void cancelCall_whenCallerCancels_shouldUpdateStatus() {
         // Given
         Long callId = 1L;
@@ -272,7 +272,7 @@ class AgoraCallServiceTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(call.getCallStatus()).isEqualTo(CallStatus.ENDED);
+        assertThat(call.getCallStatus()).isEqualTo(CallStatus.CANCELED);
 
         verify(callRepository).findById(callId);
         verify(callRepository).save(call);
