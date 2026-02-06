@@ -64,6 +64,8 @@ keystore.p12
 *.pem
 .json
 *.json
+# 테스트용 Firebase 설정은 예외
+!src/test/resources/firebase/*.json
 .DS_Store
 .swift
 *.swift
