@@ -9,6 +9,10 @@ build/
 ### QueryDSL ###
 src/main/generated/
 
+### Generated Test Files ###
+**/generated_tests/
+src/testUnit/
+
 ### STS ###
 .apt_generated
 .classpath
