@@ -78,8 +78,3 @@ app:
     upload-dir: ./test-uploads/images
     base-url: http://localhost:8080/images
 
-# 캐시 설정
-cache:
-  caffeine:
-    spec: maximumSize=100,expireAfterWrite=5m
-  type: caffeine

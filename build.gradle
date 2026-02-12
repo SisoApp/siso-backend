@@ -104,10 +104,6 @@ dependencies {
     // Redis (캐싱 및 세션)
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // Caffeine Cache (로컬 캐싱)
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
-
     // QueryDSL (동적 쿼리)
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
